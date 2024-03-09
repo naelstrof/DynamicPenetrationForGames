@@ -50,6 +50,17 @@ public class Dick : MonoBehaviour {
             Gizmos.DrawLine(lastPoint, newPoint);
             lastPoint = newPoint;
         }
+
+        var save = Gizmos.matrix;
+        foreach(var weight in path.GetWeights()) {
+            Vector3 pointA = CatmullSpline.GetPosition(weight, 0f);
+            Vector3 normalA = CatmullSpline.GetVelocity(weight, 0f);
+            Gizmos.color = Color.green;
+            Gizmos.matrix = Matrix4x4.TRS(pointA, Quaternion.FromToRotation(Vector3.forward, normalA.normalized), Vector3.one - Vector3.forward * 0.8f);
+            Gizmos.DrawCube(Vector3.zero, Vector3.one*0.025f);
+        }
+        Gizmos.matrix = save;
+
         penetratorRenderers.Initialize();
         penetratorRenderers.Update(path, distanceAlongSpline, penetrator.GetRootTransform(), penetrator.GetRootForward(), penetrator.GetRootRight(), penetrator.GetRootUp());
     }

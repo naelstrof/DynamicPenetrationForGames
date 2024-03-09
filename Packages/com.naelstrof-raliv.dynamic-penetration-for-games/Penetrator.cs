@@ -59,7 +59,7 @@ public class Penetrator {
         points.Clear();
 
         Vector3 startPoint = dickRootTransform.TransformPoint(dickRootPositionOffset);
-        points.Add(startPoint + rootRotation * dickRootForward * girthData.GetWorldLength() * -0.1f);
+        points.Add(startPoint + rootRotation * dickRootForward * girthData.GetWorldLength() * -0.25f);
         points.Add(startPoint);
         points.AddRange(inputPoints);
 
