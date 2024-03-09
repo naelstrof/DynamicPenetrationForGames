@@ -148,7 +148,7 @@ Transform:
   m_GameObject: {fileID: 171877512}
   serializedVersion: 2
   m_LocalRotation: {x: 0.00000008940696, y: 5.8207654e-11, z: 1.4551914e-10, w: 1}
-  m_LocalPosition: {x: -0, y: 0.45, z: -0.012}
+  m_LocalPosition: {x: -0, y: 0.699, z: -0.001}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -283,13 +283,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 658976709}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0, y: 0.422, z: 0.009}
+  m_LocalRotation: {x: -0, y: -0, z: -5.2041696e-18, w: 1}
+  m_LocalPosition: {x: 0, y: 0.22299984, z: 0.009000312}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 171877513}
-  m_Father: {fileID: 1786496130}
+  m_Father: {fileID: 926480393}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &705507993
 GameObject:
@@ -385,6 +385,38 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!1 &926480392
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 926480393}
+  m_Layer: 0
+  m_Name: Penis.001 (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &926480393
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 926480392}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.00000008940696, y: 5.8207654e-11, z: 1.4551914e-10, w: 1}
+  m_LocalPosition: {x: -0, y: 0.093, z: 0.003}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 658976710}
+  m_Father: {fileID: 1786496130}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -534,7 +566,7 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -3019428014052059092, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 658976710}
+      addedObject: {fileID: 926480393}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       insertIndex: -1
@@ -573,13 +605,15 @@ MonoBehaviour:
       renderer: {fileID: 1786496131}
       mask: -1
     dickRootTransform: {fileID: 1786496130}
-    dickRootPositionOffset: {x: 0, y: 0, z: 0}
-    dickRootForward: {x: 0, y: 1, z: 0}
-    dickRootUp: {x: 0, y: 0, z: -1}
+    dickRootPositionOffset: {x: 0.000000027157512, y: 0.01425472, z: 0.016976876}
+    dickRootForward: {x: -0.00000039138823, y: 0.999976, z: 0.0069349417}
+    dickRootUp: {x: 0.00000038421774, y: 0.006934941, z: -0.99997586}
   transforms:
-  - {fileID: 1786496130}
   - {fileID: 658976710}
   - {fileID: 171877513}
+  penetratorRenderers:
+    renderers:
+    - {fileID: 1786496131}
 --- !u!1001 &2110675128
 PrefabInstance:
   m_ObjectHideFlags: 0

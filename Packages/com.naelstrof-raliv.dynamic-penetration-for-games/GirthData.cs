@@ -216,6 +216,7 @@ namespace PenetrationTech {
         private Vector3 rootLocalDickForward;
         private Vector3 rootLocalDickUp;
         private Vector3 rootLocalDickRight;
+        private Vector3 rootLocalDickRoot;
 
         private static float GetPiecewiseDerivative(AnimationCurve curve, float t) {
             float epsilon = 0.00001f;
@@ -546,6 +547,7 @@ namespace PenetrationTech {
             this.rootLocalDickUp = rootDickUp;
             this.rootLocalDickForward = rootDickForward;
             this.rootLocalDickRight = rootDickRight;
+            this.rootLocalDickRoot = rootLocalDickRoot;
             if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
                 int rootBoneID = -1;
                 for (int i = 0; i < skinnedMeshRenderer.bones.Length; i++) {
