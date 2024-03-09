@@ -58,12 +58,14 @@ public class Penetrator {
         }
         points.Clear();
 
-        Vector3 startPoint = inputPoints[0];
+        Vector3 startPoint = dickRootTransform.TransformPoint(dickRootPositionOffset);
         points.Add(startPoint + rootRotation * dickRootForward * girthData.GetWorldLength() * -0.1f);
+        points.Add(startPoint);
         points.AddRange(inputPoints);
 
         spline = new CatmullSpline();
         spline.SetWeightsFromPoints(points);
+        
         baseDistanceAlongSpline = spline.GetDistanceFromSubT(0, 1, 1f);
     }
 
