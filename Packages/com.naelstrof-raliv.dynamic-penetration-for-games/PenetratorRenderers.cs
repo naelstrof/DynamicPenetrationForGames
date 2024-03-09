@@ -24,7 +24,7 @@ public class PenetratorRenderers {
 
     private unsafe struct CatmullSplineData {
         private const int subSplineCount = 8;
-        private const int binormalCount = 16;
+        private const int binormalCount = CatmullSpline.BINORMAL_LUT_COUNT;
         private const int distanceCount = 32;
         int pointCount;
         float arcLength;
