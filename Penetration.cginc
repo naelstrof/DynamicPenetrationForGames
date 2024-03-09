@@ -1,5 +1,5 @@
 #define SUB_SPLINE_COUNT 8 
-#define BINORMAL_COUNT 16
+#define BINORMAL_COUNT 32
 #define DISTANCE_COUNT 32
 
 struct CatmullSplineData {
