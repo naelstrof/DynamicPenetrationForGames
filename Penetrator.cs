@@ -17,16 +17,28 @@ public class Penetrator {
     public Vector3 GetRootForward() => dickRootForward;
     public Vector3 GetRootUp() => dickRootUp;
     public Vector3 GetRootRight() => Vector3.Cross(dickRootUp, dickRootForward);
+    // TODO: Girth Data World Length does not take root position into account
+    public float GetPenetratorWorldLength() => girthData.GetWorldLength();
 
     public void SetDickPositionInfo(Vector3 position, Quaternion rotation) {
         dickRootPositionOffset = position;
+        dickRootForward = rotation * Vector3.forward;
+        dickRootUp = rotation * Vector3.up;
+        Reinitialize();
     }
     
     private GirthData girthData;
     private static List<Vector3> points = new List<Vector3>();
 
-    private bool GetInitialized() => girthData != null; 
-
+    private bool GetInitialized() => girthData != null;
+    
+    private void Reinitialize() {
+        // TODO: There should be a way to update the girthdata
+        girthData.Release();
+        girthData = null;
+        Initialize();
+    }
+    
     public void Initialize() {
         if (GetInitialized()) {
             return;
