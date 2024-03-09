@@ -20,6 +20,7 @@ public class PenetratorRenderers {
     private NativeArray<CatmullSplineData> data;
     private MaterialPropertyBlock propertyBlock;
     private static readonly int dickOffsetLengthID = Shader.PropertyToID("_DickOffsetLength");
+    private static readonly int dickStartWorldID = Shader.PropertyToID("_DickStartWorld");
 
     private unsafe struct CatmullSplineData {
         private const int subSplineCount = 8;
@@ -88,6 +89,7 @@ public class PenetratorRenderers {
         foreach(Renderer renderer in renderers) {
             renderer.GetPropertyBlock(propertyBlock);
             propertyBlock.SetFloat(dickOffsetLengthID, baseDistanceAlongSpline);
+            propertyBlock.SetVector(dickStartWorldID, spline.GetPositionFromDistance(baseDistanceAlongSpline));
             propertyBlock.SetFloat(curveBlendID, 1f);
             propertyBlock.SetVector(dickForwardID, rootBone.TransformDirection(localRootForward));
             propertyBlock.SetVector(dickRightID, rootBone.TransformDirection(localRootRight));
