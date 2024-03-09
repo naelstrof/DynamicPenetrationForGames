@@ -19,12 +19,14 @@ public class DickInspector : Editor {
 public class Dick : MonoBehaviour {
     [SerializeField] private Penetrator penetrator;
     [SerializeField] private Transform[] transforms;
+    [SerializeField] private PenetratorRenderers penetratorRenderers;
 
     private List<Vector3> points;
 
     private void Start() {
         points = new List<Vector3>();
         penetrator.Initialize();
+        penetratorRenderers.Initialize();
     }
 
     protected virtual void OnDrawGizmos() {
@@ -36,7 +38,9 @@ public class Dick : MonoBehaviour {
         foreach (var t in transforms) {
             points.Add(t.position);
         }
-        var path = penetrator.GetSpline(transforms[0].rotation, points);
+
+        penetrator.Initialize();
+        penetrator.GetSpline(transforms[0].rotation, points, out var path, out var distanceAlongSpline);
         Gizmos.color = Color.red;
         Vector3 lastPoint = path.GetPositionFromT(0f);
         for (int i = 0; i < 64; i++) {
@@ -44,6 +48,8 @@ public class Dick : MonoBehaviour {
             Gizmos.DrawLine(lastPoint, newPoint);
             lastPoint = newPoint;
         }
+        penetratorRenderers.Initialize();
+        penetratorRenderers.Update(path, distanceAlongSpline, penetrator.GetRootTransform(), penetrator.GetRootForward(), penetrator.GetRootRight(), penetrator.GetRootUp());
     }
     
 #if UNITY_EDITOR
