@@ -11,6 +11,15 @@ public class Penetrator {
     [SerializeField] private Vector3 dickRootPositionOffset;
     [SerializeField] private Vector3 dickRootForward;
     [SerializeField] private Vector3 dickRootUp;
+
+    public Transform GetRootTransform() => dickRootTransform;
+    public Vector3 GetRootPositionOffset() => dickRootPositionOffset;
+    public Vector3 GetRootForward() => dickRootForward;
+    public Vector3 GetRootUp() => dickRootUp;
+
+    public void SetDickPositionInfo(Vector3 position, Quaternion rotation) {
+        dickRootPositionOffset = position;
+    }
     
     private GirthData girthData;
     private static List<Vector3> points = new List<Vector3>();
@@ -44,4 +53,5 @@ public class Penetrator {
         spline.SetWeightsFromPoints(points);
         return spline;
     }
+
 }
