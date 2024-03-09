@@ -1,5 +1,20 @@
 {
   "dependencies": {
+    "com.naelstrof-raliv.dynamic-penetration-for-games": {
+      "version": "file:com.naelstrof-raliv.dynamic-penetration-for-games",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.naelstrof.splines": "0.0.1"
+      }
+    },
+    "com.naelstrof.splines": {
+      "version": "https://github.com/naelstrof/com.naelstrof.splines.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "a318657e5ac7871694c7f01fba873dd529f4dcb6"
+    },
     "com.unity.collab-proxy": {
       "version": "2.3.1",
       "depth": 0,

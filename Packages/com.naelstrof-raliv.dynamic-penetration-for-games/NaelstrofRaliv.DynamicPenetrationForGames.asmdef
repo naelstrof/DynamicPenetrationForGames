@@ -1,0 +1,16 @@
+{
+    "name": "NaelstrofRaliv.DynamicPenetrationForGames",
+    "rootNamespace": "",
+    "references": [
+        "GUID:880f2853ab841af4d9c4c9005d2585b0"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

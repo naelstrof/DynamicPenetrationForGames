@@ -1,0 +1,10 @@
+{
+    "name": "com.naelstrof-raliv.dynamic-penetration-for-games",
+    "displayName": "Dynamic Penetration for Games",
+    "version": "0.0.1",
+    "dependencies": {
+        "com.naelstrof.splines": "0.0.1"
+    },
+    "unity": "2022.3",
+    "description": "Tools to assist with penetration in games."
+}
