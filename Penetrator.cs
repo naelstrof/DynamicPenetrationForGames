@@ -16,6 +16,7 @@ public class Penetrator {
     public Vector3 GetRootPositionOffset() => dickRootPositionOffset;
     public Vector3 GetRootForward() => dickRootForward;
     public Vector3 GetRootUp() => dickRootUp;
+    public Vector3 GetRootRight() => Vector3.Cross(dickRootUp, dickRootForward);
 
     public void SetDickPositionInfo(Vector3 position, Quaternion rotation) {
         dickRootPositionOffset = position;
@@ -39,7 +40,7 @@ public class Penetrator {
         girthData = new GirthData(mask, girthUnwrapShader, dickRootTransform, dickRootPositionOffset, dickRootForward, dickRootUp, right);
     }
     
-    public CatmullSpline GetSpline(Quaternion rootRotation, IList<Vector3> inputPoints) {
+    public void GetSpline(Quaternion rootRotation, IList<Vector3> inputPoints, out CatmullSpline spline, out float baseDistanceAlongSpline) {
         if (!GetInitialized()) {
             Initialize();
         }
@@ -49,9 +50,9 @@ public class Penetrator {
         points.Add(startPoint + rootRotation * dickRootForward * girthData.GetWorldLength() * -0.1f);
         points.AddRange(inputPoints);
 
-        CatmullSpline spline = new CatmullSpline();
+        spline = new CatmullSpline();
         spline.SetWeightsFromPoints(points);
-        return spline;
+        baseDistanceAlongSpline = spline.GetDistanceFromSubT(0, 1, 1f);
     }
 
 }

@@ -216,7 +216,6 @@ namespace PenetrationTech {
         private Vector3 rootLocalDickForward;
         private Vector3 rootLocalDickUp;
         private Vector3 rootLocalDickRight;
-        private Vector3 rootLocalDickRoot;
 
         private static float GetPiecewiseDerivative(AnimationCurve curve, float t) {
             float epsilon = 0.00001f;
@@ -533,7 +532,6 @@ namespace PenetrationTech {
         public GirthData(RendererSubMeshMask rendererWithMask, Shader girthUnwrapShader, Transform root, Vector3 rootLocalDickRoot, Vector3 rootDickForward, Vector3 rootDickUp, Vector3 rootDickRight) {
             rendererMask = rendererWithMask;
             dickRoot = root;
-            this.rootLocalDickRoot = rootLocalDickRoot;
             this.rootLocalDickUp = rootDickUp;
             this.rootLocalDickForward = rootDickForward;
             this.rootLocalDickRight = rootDickRight;
