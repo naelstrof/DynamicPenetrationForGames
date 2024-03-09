@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_EDITOR
+using PenetrationTech;
 using UnityEditor;
 
 [CustomEditor(typeof(Dick))]
@@ -22,6 +23,7 @@ public class Dick : MonoBehaviour {
     [SerializeField] private PenetratorRenderers penetratorRenderers;
 
     private List<Vector3> points;
+    private bool isEditingRoot;
 
     private void Start() {
         points = new List<Vector3>();
@@ -57,9 +59,8 @@ public class Dick : MonoBehaviour {
         Undo.RecordObject(this, "Transforms Updated");
         EditorGUI.BeginChangeCheck();
         Handles.color = Color.white;
-        var rotation = penetrator.GetRootTransform().rotation * Quaternion.LookRotation(penetrator.GetRootForward(), penetrator.GetRootUp());
+        var globalDickRootPositionRotation = Quaternion.LookRotation(penetrator.GetRootTransform().TransformDirection(penetrator.GetRootForward()), penetrator.GetRootTransform().TransformDirection(penetrator.GetRootUp()));
         var globalDickRootPositionOffset = penetrator.GetRootTransform().TransformPoint(penetrator.GetRootPositionOffset());
-        var globalDickRootPositionRotation = rotation * penetrator.GetRootTransform().rotation;
         globalDickRootPositionOffset = Handles.PositionHandle(globalDickRootPositionOffset, globalDickRootPositionRotation);
         globalDickRootPositionRotation = Handles.RotationHandle(globalDickRootPositionRotation, globalDickRootPositionOffset);
         if (EditorGUI.EndChangeCheck()) {
@@ -68,6 +69,11 @@ public class Dick : MonoBehaviour {
                 Quaternion.Inverse(penetrator.GetRootTransform().rotation) * globalDickRootPositionRotation
             );
         }
+        Handles.DrawWireDisc(
+            globalDickRootPositionOffset+globalDickRootPositionRotation*Vector3.forward * penetrator.GetPenetratorWorldLength(),
+            globalDickRootPositionRotation*Vector3.forward,
+            0.1f
+            );
     }
 #endif
     
