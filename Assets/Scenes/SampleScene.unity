@@ -628,7 +628,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1786496129}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87f9c4b092c484247a2eee8f1f504e76, type: 3}
+  m_Script: {fileID: 11500000, guid: 743b11c141364134d9671bbc4c861731, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   penetratorData:
@@ -636,15 +636,14 @@ MonoBehaviour:
       renderer: {fileID: 1786496131}
       mask: -2
     penetratorRootTransform: {fileID: 1786496130}
-    penetratorRootPositionOffset: {x: -0.0000000058846914, y: -0.0000022160102, z: 0.0000034110078}
-    penetratorRootForward: {x: -4.222377e-10, y: 0.99912834, z: 0.041743215}
-    penetratorRootUp: {x: 4.5625323e-10, y: 0.04174322, z: -0.99912846}
+    penetratorRootPositionOffset: {x: -0.000000016923877, y: 0.061390705, z: 0.0053564124}
+    penetratorRootForward: {x: -0.0000000017681234, y: 0.9999782, z: -0.006610751}
+    penetratorRootUp: {x: 0.000000016208144, y: -0.006610751, z: -0.9999782}
   penetratorRenderers:
     renderers:
     - {fileID: 1786496131}
-  transforms:
-  - {fileID: 658976710}
-  - {fileID: 171877513}
+  simulatedPointCount: 3
+  jiggleSettings: {fileID: 11400000, guid: 4ca2d81757477b54e920f4ae97317be4, type: 2}
 --- !u!1001 &2110675128
 PrefabInstance:
   m_ObjectHideFlags: 0
