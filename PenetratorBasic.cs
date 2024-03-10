@@ -36,8 +36,10 @@ public class PenetratorBasic : Penetrator {
     }
 
     protected void Update() {
+        if (transforms == null || transforms.Length == 0) {
+            return;
+        }
         penetratorData.GetSpline(GetPoints(), out var path, out float distanceAlongSpline);
-        penetratorRenderers.Initialize();
         penetratorRenderers.Update(path, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
     }
 
