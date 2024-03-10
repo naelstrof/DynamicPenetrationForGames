@@ -1,15 +1,13 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 #if UNITY_EDITOR
-using PenetrationTech;
 using UnityEditor;
 
-[CustomEditor(typeof(Dick))]
+[CustomEditor(typeof(Penetrator))]
 public class DickInspector : Editor {
     void OnSceneGUI() {
-        var script = (Dick)target;
+        var script = (Penetrator)target;
         Undo.RecordObject(this, "Transforms Updated");
         script.DrawSceneGUI();
     }
@@ -17,32 +15,24 @@ public class DickInspector : Editor {
 
 #endif
 
-public class Dick : MonoBehaviour {
-    [SerializeField] private Penetrator penetrator;
-    [SerializeField] private Transform[] transforms;
+public abstract class Penetrator : MonoBehaviour {
+    [FormerlySerializedAs("penetrator")]
+    [SerializeField] protected PenetratorData penetratorData;
     [SerializeField] private PenetratorRenderers penetratorRenderers;
+    
+    protected abstract IList<Vector3> GetPoints();
+    protected abstract Quaternion GetDickRotation();
 
-    private List<Vector3> points;
     private bool isEditingRoot;
 
-    private void Start() {
-        points = new List<Vector3>();
-        penetrator.Initialize();
+    protected virtual void Start() {
+        penetratorData.Initialize();
         penetratorRenderers.Initialize();
     }
 
     protected virtual void OnDrawGizmos() {
-        points ??= new List<Vector3>();
-        if (transforms == null || transforms.Length == 0) {
-            return;
-        }
-        points.Clear();
-        foreach (var t in transforms) {
-            points.Add(t.position);
-        }
-
-        penetrator.Initialize();
-        penetrator.GetSpline(transforms[0].rotation, points, out var path, out var distanceAlongSpline);
+        penetratorData.Initialize();
+        penetratorData.GetSpline(GetDickRotation(), GetPoints(), out var path, out var distanceAlongSpline);
         Gizmos.color = Color.red;
         Vector3 lastPoint = path.GetPositionFromT(0f);
         for (int i = 0; i < 64; i++) {
@@ -62,7 +52,7 @@ public class Dick : MonoBehaviour {
         Gizmos.matrix = save;
 
         penetratorRenderers.Initialize();
-        penetratorRenderers.Update(path, distanceAlongSpline, penetrator.GetRootTransform(), penetrator.GetRootForward(), penetrator.GetRootRight(), penetrator.GetRootUp());
+        penetratorRenderers.Update(path, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
     }
     
 #if UNITY_EDITOR
@@ -70,18 +60,18 @@ public class Dick : MonoBehaviour {
         Undo.RecordObject(this, "Transforms Updated");
         EditorGUI.BeginChangeCheck();
         Handles.color = Color.white;
-        var globalDickRootPositionRotation = Quaternion.LookRotation(penetrator.GetRootTransform().TransformDirection(penetrator.GetRootForward()), penetrator.GetRootTransform().TransformDirection(penetrator.GetRootUp()));
-        var globalDickRootPositionOffset = penetrator.GetRootTransform().TransformPoint(penetrator.GetRootPositionOffset());
+        var globalDickRootPositionRotation = Quaternion.LookRotation(penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootForward()), penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootUp()));
+        var globalDickRootPositionOffset = penetratorData.GetRootTransform().TransformPoint(penetratorData.GetRootPositionOffset());
         globalDickRootPositionOffset = Handles.PositionHandle(globalDickRootPositionOffset, globalDickRootPositionRotation);
         globalDickRootPositionRotation = Handles.RotationHandle(globalDickRootPositionRotation, globalDickRootPositionOffset);
         if (EditorGUI.EndChangeCheck()) {
-            penetrator.SetDickPositionInfo(
-                penetrator.GetRootTransform().InverseTransformPoint(globalDickRootPositionOffset),
-                Quaternion.Inverse(penetrator.GetRootTransform().rotation) * globalDickRootPositionRotation
+            penetratorData.SetDickPositionInfo(
+                penetratorData.GetRootTransform().InverseTransformPoint(globalDickRootPositionOffset),
+                Quaternion.Inverse(penetratorData.GetRootTransform().rotation) * globalDickRootPositionRotation
             );
         }
         Handles.DrawWireDisc(
-            globalDickRootPositionOffset+globalDickRootPositionRotation*Vector3.forward * penetrator.GetPenetratorWorldLength(),
+            globalDickRootPositionOffset+globalDickRootPositionRotation*Vector3.forward * penetratorData.GetPenetratorWorldLength(),
             globalDickRootPositionRotation*Vector3.forward,
             0.1f
             );
