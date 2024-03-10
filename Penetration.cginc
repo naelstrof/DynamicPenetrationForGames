@@ -102,11 +102,11 @@ float3 SampleCurveSegmentVelocity(int curveIndex, int curveSegmentIndex, float t
         _CatmullSplines[curveIndex].weightArray[index+12],_CatmullSplines[curveIndex].weightArray[index+13],_CatmullSplines[curveIndex].weightArray[index+14],_CatmullSplines[curveIndex].weightArray[index+15]);
     return mul(mat,float4(0,1,2*t,3*t*t)).xyz;
 }
-void ToCatmullRomSpace_float(float3 worldDickRootPos, float3 worldPosition, float3 worldDickForward, float3 worldDickUp, float3 worldDickRight, float3 worldNormal, float4 worldTangent, out float3 worldPositionOUT, out float3 worldNormalOUT, out float4 worldTangentOUT) {
+void ToCatmullRomSpace_float(float3 worldPenetratorRootPos, float3 worldPosition, float3 worldPenetratorForward, float3 worldPenetratorUp, float3 worldPenetratorRight, float3 worldNormal, float4 worldTangent, out float3 worldPositionOUT, out float3 worldNormalOUT, out float4 worldTangentOUT) {
     // We want to work in world space, as everything we're working with is there.
     
-    // Dot product gives us how far along an axis a position is. This is the dick length distance from the dick root to the particular position.
-    float preDist = dot(worldDickForward,(worldPosition - worldDickRootPos));
+    // Dot product gives us how far along an axis a position is. This is the penetrator length distance from the penetrator root to the particular position.
+    float preDist = dot(worldPenetratorForward,(worldPosition - worldPenetratorRootPos));
     float dist = max(preDist,0);
 
     // Convert the distance into an overall t sample value
@@ -133,54 +133,54 @@ void ToCatmullRomSpace_float(float3 worldDickRootPos, float3 worldPosition, floa
 
     // Change of basis https://math.stackexchange.com/questions/3540973/change-of-coordinates-and-change-of-basis-matrices
     // It also shows up here: https://docs.unity3d.com/ScriptReference/Vector3.OrthoNormalize.html
-    // Goes from dick space into catmull rom space.
-    float3x3 dickToCatmullBasisTransform = 0;
-    dickToCatmullBasisTransform[0][0] = catRight.x;
-    dickToCatmullBasisTransform[0][1] = catRight.y;
-    dickToCatmullBasisTransform[0][2] = catRight.z;
-    dickToCatmullBasisTransform[1][0] = catUp.x;
-    dickToCatmullBasisTransform[1][1] = catUp.y;
-    dickToCatmullBasisTransform[1][2] = catUp.z;
-    dickToCatmullBasisTransform[2][0] = catForward.x;
-    dickToCatmullBasisTransform[2][1] = catForward.y;
-    dickToCatmullBasisTransform[2][2] = catForward.z;
-    dickToCatmullBasisTransform = transpose(dickToCatmullBasisTransform);
+    // Goes from penetrator space into catmull rom space.
+    float3x3 penetratorToCatmullBasisTransform = 0;
+    penetratorToCatmullBasisTransform[0][0] = catRight.x;
+    penetratorToCatmullBasisTransform[0][1] = catRight.y;
+    penetratorToCatmullBasisTransform[0][2] = catRight.z;
+    penetratorToCatmullBasisTransform[1][0] = catUp.x;
+    penetratorToCatmullBasisTransform[1][1] = catUp.y;
+    penetratorToCatmullBasisTransform[1][2] = catUp.z;
+    penetratorToCatmullBasisTransform[2][0] = catForward.x;
+    penetratorToCatmullBasisTransform[2][1] = catForward.y;
+    penetratorToCatmullBasisTransform[2][2] = catForward.z;
+    penetratorToCatmullBasisTransform = transpose(penetratorToCatmullBasisTransform);
 
-    // Goes from XYZ world space, into dX,dY,dZ space (where dX,dY,dZ are dick orientations.)
-    float3x3 worldToDickBasisTransform = 0;
-    worldToDickBasisTransform[0][0] = worldDickRight.x;
-    worldToDickBasisTransform[0][1] = worldDickRight.y;
-    worldToDickBasisTransform[0][2] = worldDickRight.z;
-    worldToDickBasisTransform[1][0] = worldDickUp.x;
-    worldToDickBasisTransform[1][1] = worldDickUp.y;
-    worldToDickBasisTransform[1][2] = worldDickUp.z;
-    worldToDickBasisTransform[2][0] = worldDickForward.x;
-    worldToDickBasisTransform[2][1] = worldDickForward.y;
-    worldToDickBasisTransform[2][2] = worldDickForward.z;
+    // Goes from XYZ world space, into dX,dY,dZ space (where dX,dY,dZ are penetrator orientations.)
+    float3x3 worldToPenetratorBasisTransform = 0;
+    worldToPenetratorBasisTransform[0][0] = worldPenetratorRight.x;
+    worldToPenetratorBasisTransform[0][1] = worldPenetratorRight.y;
+    worldToPenetratorBasisTransform[0][2] = worldPenetratorRight.z;
+    worldToPenetratorBasisTransform[1][0] = worldPenetratorUp.x;
+    worldToPenetratorBasisTransform[1][1] = worldPenetratorUp.y;
+    worldToPenetratorBasisTransform[1][2] = worldPenetratorUp.z;
+    worldToPenetratorBasisTransform[2][0] = worldPenetratorForward.x;
+    worldToPenetratorBasisTransform[2][1] = worldPenetratorForward.y;
+    worldToPenetratorBasisTransform[2][2] = worldPenetratorForward.z;
 
-    // Get the rotation around dickforward that we need to do.
-    float2 worldDickUpFlat = float2(dot(worldDickUp,initialRight), dot(worldDickUp,initialUp));
-    float angle = atan2(worldDickUpFlat.y, worldDickUpFlat.x)-1.57079632679;
+    // Get the rotation around penetratorforward that we need to do.
+    float2 worldPenetratorUpFlat = float2(dot(worldPenetratorUp,initialRight), dot(worldPenetratorUp,initialUp));
+    float angle = atan2(worldPenetratorUpFlat.y, worldPenetratorUpFlat.x)-1.57079632679;
 
     // Frame refers to the particular slice of the model we're working on, normals don't really have anything special about them in the frame.
     float3 worldFrameNormal = worldNormal;
-    float3 localFrameNormal = mul(worldToDickBasisTransform, worldFrameNormal.xyz).xyz;
-    float3 worldFrameNormalRotated = mul(dickToCatmullBasisTransform, localFrameNormal.xyz);
+    float3 localFrameNormal = mul(worldToPenetratorBasisTransform, worldFrameNormal.xyz).xyz;
+    float3 worldFrameNormalRotated = mul(penetratorToCatmullBasisTransform, localFrameNormal.xyz);
     worldFrameNormalRotated = RotateAroundAxisPenetration(worldFrameNormalRotated, catForward, angle);
     worldNormalOUT = lerp(worldNormal, normalize(worldFrameNormalRotated), isPenetrator);
 
     float3 worldFrameTangent = worldTangent;
-    float3 localFrameTangent = mul(worldToDickBasisTransform, worldFrameTangent.xyz).xyz;
-    float3 worldFrameTangentRotated = mul(dickToCatmullBasisTransform, localFrameTangent.xyz).xyz;
+    float3 localFrameTangent = mul(worldToPenetratorBasisTransform, worldFrameTangent.xyz).xyz;
+    float3 worldFrameTangentRotated = mul(penetratorToCatmullBasisTransform, localFrameTangent.xyz).xyz;
     worldFrameTangentRotated = RotateAroundAxisPenetration(worldFrameTangentRotated, catForward, angle);
     worldTangentOUT = lerp(worldTangent, float4(normalize(worldFrameTangentRotated).xyz, worldTangent.w), isPenetrator);
 
     // Frame refers to the particular slice of the model we're working on, 0,0,0 being the core of the cylinder.
-    float3 worldFrame = (worldPosition - (worldDickRootPos+worldDickForward*dist));
-    // Rotate into dick space, using the basis transform
-    float3 localFrame = mul(worldToDickBasisTransform, worldFrame.xyz).xyz;
+    float3 worldFrame = (worldPosition - (worldPenetratorRootPos+worldPenetratorForward*dist));
+    // Rotate into penetrator space, using the basis transform
+    float3 localFrame = mul(worldToPenetratorBasisTransform, worldFrame.xyz).xyz;
     // Then we basis transform it again into catmull rom-space, with another basis transform.
-    float3 worldFrameRotated = mul(dickToCatmullBasisTransform,localFrame).xyz;
+    float3 worldFrameRotated = mul(penetratorToCatmullBasisTransform,localFrame).xyz;
     // Finally rotate it to face our original updir
     worldFrameRotated = RotateAroundAxisPenetration(worldFrameRotated, catForward, angle);
 
@@ -192,14 +192,14 @@ void ToCatmullRomSpace_float(float3 worldDickRootPos, float3 worldPosition, floa
 }
 
 // Penetratable stuff down below
-sampler2D _DickGirthMapX;
-sampler2D _DickGirthMapY;
-sampler2D _DickGirthMapZ;
-sampler2D _DickGirthMapW;
+sampler2D _PenetratorGirthMapX;
+sampler2D _PenetratorGirthMapY;
+sampler2D _PenetratorGirthMapZ;
+sampler2D _PenetratorGirthMapW;
 
 struct PenetratorData {
     float blend;
-    float worldDickLength;
+    float worldPenetratorLength;
     float worldDistance;
     float girthScaleFactor;
     float angle;
@@ -237,7 +237,7 @@ void GetDeformationFromPenetrator(inout float3 worldPosition, float holeT, float
     float diffDistance = length(diff);
 
     float dist = TimeToDistance(curveIndex, holeT)+data.worldDistance;
-    float2 girthSampleUV = float2(dist/data.worldDickLength, (-holeAngle+data.angle)/6.28318530718);
+    float2 girthSampleUV = float2(dist/data.worldPenetratorLength, (-holeAngle+data.angle)/6.28318530718);
 
     float girthSample = tex2Dlod(girthMap,float4(frac(girthSampleUV.xy),0,diffDistance*smoothness*smoothness)).r*data.girthScaleFactor;
 
@@ -272,7 +272,7 @@ void GetDetailFromPenetrator(inout float3 worldPosition, float holeT, float comp
 
     float diffDistance = length(diff);
     float dist = TimeToDistance(curveIndex, holeT)+data.worldDistance;
-    float2 girthSampleUV = float2(dist/data.worldDickLength, (-holeAngle+data.angle)/6.28318530718);
+    float2 girthSampleUV = float2(dist/data.worldPenetratorLength, (-holeAngle+data.angle)/6.28318530718);
 
     float girthSample = (tex2Dlod(girthMap,float4(frac(girthSampleUV.xy),0,diffDistance*smoothness*smoothness)).r-0.5)*data.girthScaleFactor;
 
@@ -284,15 +284,15 @@ void GetDetailFromPenetrator(inout float3 worldPosition, float holeT, float comp
 
 void GetDeformationFromPenetrators_float(float3 worldPosition, float4 uv2, float compressibleDistance, float smoothness, out float3 deformedPosition) {
     #if !defined(_PENETRATION_DEFORMATION_DETAIL_ON)
-    GetDeformationFromPenetrator(worldPosition, uv2.x, compressibleDistance, _DickGirthMapX, _PenetratorData[0], 0, smoothness);
-    GetDeformationFromPenetrator(worldPosition, uv2.y, compressibleDistance, _DickGirthMapY, _PenetratorData[1], 1, smoothness);
-    GetDeformationFromPenetrator(worldPosition, uv2.z, compressibleDistance, _DickGirthMapZ, _PenetratorData[2], 2, smoothness);
-    GetDeformationFromPenetrator(worldPosition, uv2.w, compressibleDistance, _DickGirthMapW, _PenetratorData[3], 3, smoothness);
+    GetDeformationFromPenetrator(worldPosition, uv2.x, compressibleDistance, _PenetratorGirthMapX, _PenetratorData[0], 0, smoothness);
+    GetDeformationFromPenetrator(worldPosition, uv2.y, compressibleDistance, _PenetratorGirthMapY, _PenetratorData[1], 1, smoothness);
+    GetDeformationFromPenetrator(worldPosition, uv2.z, compressibleDistance, _PenetratorGirthMapZ, _PenetratorData[2], 2, smoothness);
+    GetDeformationFromPenetrator(worldPosition, uv2.w, compressibleDistance, _PenetratorGirthMapW, _PenetratorData[3], 3, smoothness);
     #else
-    GetDetailFromPenetrator(worldPosition, uv2.x, compressibleDistance, _DickGirthMapX, _PenetratorData[0], 0, smoothness);
-    GetDetailFromPenetrator(worldPosition, uv2.y, compressibleDistance, _DickGirthMapY, _PenetratorData[1], 1, smoothness);
-    GetDetailFromPenetrator(worldPosition, uv2.z, compressibleDistance, _DickGirthMapZ, _PenetratorData[2], 2, smoothness);
-    GetDetailFromPenetrator(worldPosition, uv2.w, compressibleDistance, _DickGirthMapW, _PenetratorData[3], 3, smoothness);
+    GetDetailFromPenetrator(worldPosition, uv2.x, compressibleDistance, _PenetratorGirthMapX, _PenetratorData[0], 0, smoothness);
+    GetDetailFromPenetrator(worldPosition, uv2.y, compressibleDistance, _PenetratorGirthMapY, _PenetratorData[1], 1, smoothness);
+    GetDetailFromPenetrator(worldPosition, uv2.z, compressibleDistance, _PenetratorGirthMapZ, _PenetratorData[2], 2, smoothness);
+    GetDetailFromPenetrator(worldPosition, uv2.w, compressibleDistance, _PenetratorGirthMapW, _PenetratorData[3], 3, smoothness);
     #endif
     deformedPosition = worldPosition;
 }

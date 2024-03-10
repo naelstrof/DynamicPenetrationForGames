@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using PenetrationTech;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CustomPropertyDrawer(typeof(PenetratorData))]
 public class PenetratorDataPropertyDrawer : PropertyDrawer {
@@ -21,12 +22,12 @@ public class PenetratorDataPropertyDrawer : PropertyDrawer {
             EditorGUI.PropertyField(rect, property.FindPropertyRelative("mask"), GUIContent.none);
             rect.y += 20;
             var subRect = EditorGUI.PrefixLabel(rect, new GUIContent("Root Transform"));
-            EditorGUI.PropertyField(subRect, property.FindPropertyRelative("dickRootTransform"), GUIContent.none);
+            EditorGUI.PropertyField(subRect, property.FindPropertyRelative("penetratorRootTransform"), GUIContent.none);
             rect.y += 20;
             if (GUI.Button(rect, "Reset position and orientation")) {
-                property.FindPropertyRelative("dickRootPositionOffset").vector3Value = Vector3.zero;
-                property.FindPropertyRelative("dickRootForward").vector3Value = Vector3.forward;
-                property.FindPropertyRelative("dickRootUp").vector3Value = Vector3.up;
+                property.FindPropertyRelative("penetratorRootPositionOffset").vector3Value = Vector3.zero;
+                property.FindPropertyRelative("penetratorRootForward").vector3Value = Vector3.forward;
+                property.FindPropertyRelative("penetratorRootUp").vector3Value = Vector3.up;
             }
         }
         EditorGUI.EndFoldoutHeaderGroup();
@@ -44,29 +45,29 @@ public class PenetratorDataPropertyDrawer : PropertyDrawer {
 public class PenetratorData {
     [SerializeField] private RendererSubMeshMask mask;
     
-    [SerializeField] private Transform dickRootTransform;
-    [SerializeField] private Vector3 dickRootPositionOffset;
-    [SerializeField] private Vector3 dickRootForward;
-    [SerializeField] private Vector3 dickRootUp;
+    [SerializeField] private Transform penetratorRootTransform;
+    [SerializeField] private Vector3 penetratorRootPositionOffset;
+    [SerializeField] private Vector3 penetratorRootForward;
+    [SerializeField] private Vector3 penetratorRootUp;
 
-    public Transform GetRootTransform() => dickRootTransform;
-    public Vector3 GetRootPositionOffset() => dickRootPositionOffset;
-    public Vector3 GetRootForward() => dickRootForward;
-    public Vector3 GetRootUp() => dickRootUp;
-    public Vector3 GetRootRight() => Vector3.Cross(dickRootUp, dickRootForward);
+    public Transform GetRootTransform() => penetratorRootTransform;
+    public Vector3 GetRootPositionOffset() => penetratorRootPositionOffset;
+    public Vector3 GetRootForward() => penetratorRootForward;
+    public Vector3 GetRootUp() => penetratorRootUp;
+    public Vector3 GetRootRight() => Vector3.Cross(penetratorRootUp, penetratorRootForward);
     // TODO: Girth Data World Length does not take root position into account
     public float GetPenetratorWorldLength() => girthData.GetWorldLength();
 
     public void ResetRoot() {
-        dickRootPositionOffset = Vector3.zero;
-        dickRootForward = Vector3.forward;
-        dickRootUp = Vector3.up;
+        penetratorRootPositionOffset = Vector3.zero;
+        penetratorRootForward = Vector3.forward;
+        penetratorRootUp = Vector3.up;
     }
 
     public void SetPenetratorPositionInfo(Vector3 position, Quaternion rotation) {
-        dickRootPositionOffset = position;
-        dickRootForward = rotation * Vector3.forward;
-        dickRootUp = rotation * Vector3.up;
+        penetratorRootPositionOffset = position;
+        penetratorRootForward = rotation * Vector3.forward;
+        penetratorRootUp = rotation * Vector3.up;
         Reinitialize();
     }
     
@@ -90,13 +91,13 @@ public class PenetratorData {
         if (GetInitialized()) {
             return;
         }
-        Vector3 up = dickRootUp;
-        if (up == dickRootForward) {
+        Vector3 up = penetratorRootUp;
+        if (up == penetratorRootForward) {
             throw new UnityException("Non-orthogonal basis given!!!");
         }
         Vector3 right = Vector3.right;
-        Vector3.OrthoNormalize(ref dickRootForward, ref up, ref right);
-        girthData = new GirthData(mask, Shader.Find("Hidden/DPG/GirthUnwrapRaw"), dickRootTransform, dickRootPositionOffset, dickRootForward, dickRootUp, right);
+        Vector3.OrthoNormalize(ref penetratorRootForward, ref up, ref right);
+        girthData = new GirthData(mask, Shader.Find("Hidden/DPG/GirthUnwrapRaw"), penetratorRootTransform, penetratorRootPositionOffset, penetratorRootForward, penetratorRootUp, right);
     }
     
     public void GetSpline(IList<Vector3> inputPoints, out CatmullSpline spline, out float baseDistanceAlongSpline) {
@@ -105,8 +106,8 @@ public class PenetratorData {
         }
         points.Clear();
 
-        Vector3 startPoint = dickRootTransform.TransformPoint(dickRootPositionOffset);
-        points.Add(startPoint + dickRootTransform.TransformDirection(dickRootForward) * (girthData.GetWorldLength() * -0.25f));
+        Vector3 startPoint = penetratorRootTransform.TransformPoint(penetratorRootPositionOffset);
+        points.Add(startPoint + penetratorRootTransform.TransformDirection(penetratorRootForward) * (girthData.GetWorldLength() * -0.25f));
         points.Add(startPoint);
         points.AddRange(inputPoints);
 

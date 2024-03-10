@@ -10,17 +10,17 @@ public class PenetratorRenderers {
     private List<Renderer> renderers;
     
     private static readonly int catmullSplinesID = Shader.PropertyToID("_CatmullSplines");
-    private static readonly int penetratorForwardID = Shader.PropertyToID("_DickForwardWorld");
-    private static readonly int penetratorRightID = Shader.PropertyToID("_DickRightWorld");
-    private static readonly int penetratorUpID = Shader.PropertyToID("_DickUpWorld");
-    private static readonly int penetratorRootID = Shader.PropertyToID("_DickRootWorld");
+    private static readonly int penetratorForwardID = Shader.PropertyToID("_PenetratorForwardWorld");
+    private static readonly int penetratorRightID = Shader.PropertyToID("_PenetratorRightWorld");
+    private static readonly int penetratorUpID = Shader.PropertyToID("_PenetratorUpWorld");
+    private static readonly int penetratorRootID = Shader.PropertyToID("_PenetratorRootWorld");
     private static readonly int curveBlendID = Shader.PropertyToID("_CurveBlend");
 
     private ComputeBuffer catmullBuffer;
     private NativeArray<CatmullSplineData> data;
     private MaterialPropertyBlock propertyBlock;
-    private static readonly int penetratorOffsetLengthID = Shader.PropertyToID("_DickOffsetLength");
-    private static readonly int penetratorStartWorldID = Shader.PropertyToID("_DickStartWorld");
+    private static readonly int penetratorOffsetLengthID = Shader.PropertyToID("_PenetratorOffsetLength");
+    private static readonly int penetratorStartWorldID = Shader.PropertyToID("_PenetratorStartWorld");
 
     private unsafe struct CatmullSplineData {
         private const int subSplineCount = 8;

@@ -1,13 +1,13 @@
-// Made with Amplify Shader Editor v1.9.3.2
+// Made with Amplify Shader Editor v1.9.1.5
 // Available at the Unity Asset Store - http://u3d.as/y3X 
 Shader "Hidden/DPG/GirthUnwrapRaw"
 {
 	Properties
 	{
-		_DickForward("DickForward", Vector) = (0,1,0,0)
-		_DickOrigin("DickOrigin", Vector) = (0,0,0,0)
-		_DickRight("DickRight", Vector) = (1,0,0,0)
-		_DickUp("DickUp", Vector) = (0,0,1,0)
+		_PenetratorForward("PenetratorForward", Vector) = (0,1,0,0)
+		_PenetratorOrigin("PenetratorOrigin", Vector) = (0,0,0,0)
+		_PenetratorRight("PenetratorRight", Vector) = (1,0,0,0)
+		_PenetratorUp("PenetratorUp", Vector) = (0,0,1,0)
 		_MaxLength("MaxLength", Float) = 1
 		_MaxGirth("MaxGirth", Float) = 0.25
 		_Blend("Blend", Range( 0 , 1)) = 1
@@ -75,12 +75,12 @@ Shader "Hidden/DPG/GirthUnwrapRaw"
 				UNITY_VERTEX_OUTPUT_STEREO
 			};
 
-			uniform float3 _DickOrigin;
-			uniform float3 _DickForward;
+			uniform float3 _PenetratorOrigin;
+			uniform float3 _PenetratorForward;
 			uniform float _MaxLength;
 			uniform float _AngleOffset;
-			uniform float3 _DickUp;
-			uniform float3 _DickRight;
+			uniform float3 _PenetratorUp;
+			uniform float3 _PenetratorRight;
 			uniform float _Blend;
 			uniform float _MaxGirth;
 			float3 RotateAroundAxis( float3 center, float3 original, float3 u, float angle )
@@ -129,11 +129,11 @@ Shader "Hidden/DPG/GirthUnwrapRaw"
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 				UNITY_TRANSFER_INSTANCE_ID(v, o);
 
-				float3 temp_output_21_0 = ( v.vertex.xyz - _DickOrigin );
-				float dotResult22 = dot( temp_output_21_0 , _DickForward );
-				float3 rotatedValue65 = RotateAroundAxis( float3( 0,0,0 ), temp_output_21_0, _DickForward, _AngleOffset );
-				float dotResult11 = dot( rotatedValue65 , _DickUp );
-				float dotResult13 = dot( rotatedValue65 , _DickRight );
+				float3 temp_output_21_0 = ( v.vertex.xyz - _PenetratorOrigin );
+				float dotResult22 = dot( temp_output_21_0 , _PenetratorForward );
+				float3 rotatedValue65 = RotateAroundAxis( float3( 0,0,0 ), temp_output_21_0, _PenetratorForward, _AngleOffset );
+				float dotResult11 = dot( rotatedValue65 , _PenetratorUp );
+				float dotResult13 = dot( rotatedValue65 , _PenetratorRight );
 				float temp_output_14_0 = atan2( dotResult11 , dotResult13 );
 				float pos82 = _AngleOffset;
 				float localMyCustomExpression82 = MyCustomExpression82( pos82 );
@@ -171,13 +171,13 @@ Shader "Hidden/DPG/GirthUnwrapRaw"
 				#ifdef ASE_NEEDS_FRAG_WORLD_POSITION
 				float3 WorldPosition = i.worldPos;
 				#endif
-				float3 temp_output_21_0 = ( i.ase_texcoord1.xyz - _DickOrigin );
-				float dotResult22 = dot( temp_output_21_0 , _DickForward );
-				float3 rotatedValue65 = RotateAroundAxis( float3( 0,0,0 ), temp_output_21_0, _DickForward, _AngleOffset );
-				float dotResult11 = dot( rotatedValue65 , _DickUp );
-				float dotResult13 = dot( rotatedValue65 , _DickRight );
+				float3 temp_output_21_0 = ( i.ase_texcoord1.xyz - _PenetratorOrigin );
+				float dotResult22 = dot( temp_output_21_0 , _PenetratorForward );
+				float3 rotatedValue65 = RotateAroundAxis( float3( 0,0,0 ), temp_output_21_0, _PenetratorForward, _AngleOffset );
+				float dotResult11 = dot( rotatedValue65 , _PenetratorUp );
+				float dotResult13 = dot( rotatedValue65 , _PenetratorRight );
 				float temp_output_14_0 = atan2( dotResult11 , dotResult13 );
-				float lerpResult74 = lerp( 0.0 , ( distance( i.ase_texcoord1.xyz , ( _DickOrigin + ( _DickForward * dotResult22 ) ) ) / _MaxGirth ) , ( step( -2.91 , temp_output_14_0 ) * step( temp_output_14_0 , 2.91 ) ));
+				float lerpResult74 = lerp( 0.0 , ( distance( i.ase_texcoord1.xyz , ( _PenetratorOrigin + ( _PenetratorForward * dotResult22 ) ) ) / _MaxGirth ) , ( step( -2.91 , temp_output_14_0 ) * step( temp_output_14_0 , 2.91 ) ));
 				float4 appendResult28 = (float4(lerpResult74 , 0.0 , 0.0 , 1.0));
 				
 				
@@ -192,15 +192,11 @@ Shader "Hidden/DPG/GirthUnwrapRaw"
 	Fallback Off
 }
 /*ASEBEGIN
-Version=19302
-Node;AmplifyShaderEditor.Vector3Node;8;-2577.845,-700.1675;Inherit;False;Property;_DickOrigin;DickOrigin;1;0;Create;True;0;0;0;False;0;False;0,0,0;-6.903836E-07,0,6.770761E-07;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
+Version=19105
 Node;AmplifyShaderEditor.PosVertexDataNode;12;-2595.315,-888.9568;Inherit;False;0;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.RangedFloatNode;63;-1447.726,-1283.6;Inherit;False;Property;_AngleOffset;AngleOffset;7;0;Create;True;0;0;0;False;0;False;0;0;-3.141593;3.141593;0;1;FLOAT;0
-Node;AmplifyShaderEditor.Vector3Node;7;-2605.619,-488.7494;Inherit;False;Property;_DickForward;DickForward;0;0;Create;True;0;0;0;False;0;False;0,1,0;2.083291E-07,1,3.626013E-07;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.SimpleSubtractOpNode;21;-1497.295,-690.9421;Inherit;False;2;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;1;FLOAT3;0
-Node;AmplifyShaderEditor.Vector3Node;80;-2605.568,-112.2128;Inherit;False;Property;_DickUp;DickUp;3;0;Create;True;0;0;0;False;0;False;0,0,1;1,-8.648601E-09,-8.334374E-08;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.RotateAboutAxisNode;65;-1171.311,-712.9716;Inherit;False;False;4;0;FLOAT3;0,0,0;False;1;FLOAT;0;False;2;FLOAT3;0,0,0;False;3;FLOAT3;0,0,0;False;1;FLOAT3;0
-Node;AmplifyShaderEditor.Vector3Node;9;-2618.66,-285.201;Inherit;False;Property;_DickRight;DickRight;2;0;Create;True;0;0;0;False;0;False;1,0,0;1,-8.648601E-09,-8.334374E-08;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.DotProductOpNode;13;-590.1182,-234.5801;Inherit;False;2;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.DotProductOpNode;11;-664,-511.5;Inherit;False;2;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.CustomExpressionNode;82;-785.6527,-1200.987;Inherit;False;#if UNITY_UV_STARTS_AT_TOP$return pos@$#else$return pos-6.28318530718@$#endif;1;Create;1;True;pos;FLOAT;0;In;;Inherit;False;My Custom Expression;True;False;0;;False;1;0;FLOAT;0;False;1;FLOAT;0
@@ -228,6 +224,10 @@ Node;AmplifyShaderEditor.DynamicAppendNode;28;235.3312,-803.8737;Inherit;False;F
 Node;AmplifyShaderEditor.DynamicAppendNode;59;514.9286,-318.5195;Inherit;False;FLOAT4;4;0;FLOAT3;0,0,0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;1;False;1;FLOAT4;0
 Node;AmplifyShaderEditor.RangedFloatNode;47;198.5742,40.46842;Inherit;False;Property;_Blend;Blend;6;0;Create;True;0;0;0;False;0;False;1;1;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;61;747.3164,-442.2791;Float;False;True;-1;2;ASEMaterialInspector;100;12;Hidden/DPG/GirthUnwrapRaw;de9302d9d05e26849a28e8f751f34ede;True;Unlit;0;0;Unlit;4;True;True;2;5;False;_Blend;10;False;;0;1;False;;0;False;;True;5;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;True;True;1;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;255;False;;255;False;;255;False;;7;False;;1;False;;1;False;;1;False;;7;False;;1;False;;1;False;;1;False;;True;True;2;False;;True;7;False;;True;True;0;False;;0;False;;True;1;RenderType=Opaque=RenderType;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;1;Vertex Position,InvertActionOnDeselection;1;0;0;1;True;False;;False;0
+Node;AmplifyShaderEditor.Vector3Node;8;-2577.845,-700.1675;Inherit;False;Property;_PenetratorOrigin;PenetratorOrigin;1;0;Create;True;0;0;0;False;0;False;0,0,0;-6.903836E-07,0,6.770761E-07;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
+Node;AmplifyShaderEditor.Vector3Node;7;-2605.619,-488.7494;Inherit;False;Property;_PenetratorForward;PenetratorForward;0;0;Create;True;0;0;0;False;0;False;0,1,0;2.083291E-07,1,3.626013E-07;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
+Node;AmplifyShaderEditor.Vector3Node;9;-2618.66,-285.201;Inherit;False;Property;_PenetratorRight;PenetratorRight;2;0;Create;True;0;0;0;False;0;False;1,0,0;1,-8.648601E-09,-8.334374E-08;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
+Node;AmplifyShaderEditor.Vector3Node;80;-2605.568,-112.2128;Inherit;False;Property;_PenetratorUp;PenetratorUp;3;0;Create;True;0;0;0;False;0;False;0,0,1;1,-8.648601E-09,-8.334374E-08;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 WireConnection;21;0;12;0
 WireConnection;21;1;8;0
 WireConnection;65;0;7;0
@@ -273,4 +273,4 @@ WireConnection;61;0;28;0
 WireConnection;61;2;59;0
 WireConnection;61;3;47;0
 ASEEND*/
-//CHKSM=F0A7A14321A91565E7613345404823F5FFDC2769
+//CHKSM=2CD67EF591E1CEF68CA1BF63786ED0D2B4EA6C49
