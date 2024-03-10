@@ -500,16 +500,16 @@ namespace PenetrationTech {
                 staticMaterialB.SetFloat("_AngleOffset", -Mathf.PI / 2f);
             }
 
-            staticMaterialA.SetVector("_DickOrigin", rendererLocalPenetratorRoot);
-            staticMaterialA.SetVector("_DickForward", rendererLocalPenetratorForward);
-            staticMaterialA.SetVector("_DickUp", rendererLocalPenetratorUp);
-            staticMaterialA.SetVector("_DickRight", rendererLocalPenetratorRight);
+            staticMaterialA.SetVector("_PenetratorOrigin", rendererLocalPenetratorRoot);
+            staticMaterialA.SetVector("_PenetratorForward", rendererLocalPenetratorForward);
+            staticMaterialA.SetVector("_PenetratorUp", rendererLocalPenetratorUp);
+            staticMaterialA.SetVector("_PenetratorRight", rendererLocalPenetratorRight);
             staticMaterialA.SetFloat("_MaxLength", frame.maxLocalLength);
             staticMaterialA.SetFloat("_MaxGirth", frame.maxLocalGirthRadius);
-            staticMaterialB.SetVector("_DickOrigin", rendererLocalPenetratorRoot);
-            staticMaterialB.SetVector("_DickForward", rendererLocalPenetratorForward);
-            staticMaterialB.SetVector("_DickUp", rendererLocalPenetratorUp);
-            staticMaterialB.SetVector("_DickRight", rendererLocalPenetratorRight);
+            staticMaterialB.SetVector("_PenetratorOrigin", rendererLocalPenetratorRoot);
+            staticMaterialB.SetVector("_PenetratorForward", rendererLocalPenetratorForward);
+            staticMaterialB.SetVector("_PenetratorUp", rendererLocalPenetratorUp);
+            staticMaterialB.SetVector("_PenetratorRight", rendererLocalPenetratorRight);
             staticMaterialB.SetFloat("_MaxLength", frame.maxLocalLength);
             staticMaterialB.SetFloat("_MaxGirth", frame.maxLocalGirthRadius);
 
