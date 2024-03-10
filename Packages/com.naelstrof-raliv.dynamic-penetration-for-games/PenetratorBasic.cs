@@ -12,22 +12,20 @@ public class PenetratorBasicInspector : PenetratorInspector { }
 
 [ExecuteAlways]
 public class PenetratorBasic : Penetrator {
-    [SerializeField]
-    private Transform[] transforms;
+    [SerializeField] private Transform[] transforms;
     [SerializeField] private PenetratorRenderers penetratorRenderers;
     
-    private List<Vector3> points;
+    private List<Vector3> points = new();
 
-    private void Awake() {
+    private void OnEnable() {
         penetratorRenderers.Initialize();
     }
 
-    private void OnDestroy() {
+    private void OnDisable() {
         penetratorRenderers.OnDestroy();
     }
     
     protected override IList<Vector3> GetPoints() {
-        points ??= new List<Vector3>();
         points.Clear();
         foreach (var t in transforms) {
             points.Add(t.position);
