@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -38,6 +39,10 @@ public abstract class Penetrator : MonoBehaviour {
     protected virtual void Update() {
         penetratorData.GetSpline(GetPoints(), out var path, out float distanceAlongSpline);
         penetratorRenderers.Update(path, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
+    }
+
+    protected void OnValidate() {
+        penetratorData.OnValidate();
     }
 
     protected virtual void OnDrawGizmos() {
