@@ -63,7 +63,7 @@ public class PenetratorData {
         dickRootUp = Vector3.up;
     }
 
-    public void SetDickPositionInfo(Vector3 position, Quaternion rotation) {
+    public void SetPenetratorPositionInfo(Vector3 position, Quaternion rotation) {
         dickRootPositionOffset = position;
         dickRootForward = rotation * Vector3.forward;
         dickRootUp = rotation * Vector3.up;

@@ -10,17 +10,17 @@ public class PenetratorRenderers {
     private List<Renderer> renderers;
     
     private static readonly int catmullSplinesID = Shader.PropertyToID("_CatmullSplines");
-    private static readonly int dickForwardID = Shader.PropertyToID("_DickForwardWorld");
-    private static readonly int dickRightID = Shader.PropertyToID("_DickRightWorld");
-    private static readonly int dickUpID = Shader.PropertyToID("_DickUpWorld");
-    private static readonly int dickRootID = Shader.PropertyToID("_DickRootWorld");
+    private static readonly int penetratorForwardID = Shader.PropertyToID("_DickForwardWorld");
+    private static readonly int penetratorRightID = Shader.PropertyToID("_DickRightWorld");
+    private static readonly int penetratorUpID = Shader.PropertyToID("_DickUpWorld");
+    private static readonly int penetratorRootID = Shader.PropertyToID("_DickRootWorld");
     private static readonly int curveBlendID = Shader.PropertyToID("_CurveBlend");
 
     private ComputeBuffer catmullBuffer;
     private NativeArray<CatmullSplineData> data;
     private MaterialPropertyBlock propertyBlock;
-    private static readonly int dickOffsetLengthID = Shader.PropertyToID("_DickOffsetLength");
-    private static readonly int dickStartWorldID = Shader.PropertyToID("_DickStartWorld");
+    private static readonly int penetratorOffsetLengthID = Shader.PropertyToID("_DickOffsetLength");
+    private static readonly int penetratorStartWorldID = Shader.PropertyToID("_DickStartWorld");
 
     private unsafe struct CatmullSplineData {
         private const int subSplineCount = 8;
@@ -88,13 +88,13 @@ public class PenetratorRenderers {
         catmullBuffer.SetData(data, 0, 0, 1);
         foreach(Renderer renderer in renderers) {
             renderer.GetPropertyBlock(propertyBlock);
-            propertyBlock.SetFloat(dickOffsetLengthID, baseDistanceAlongSpline);
-            propertyBlock.SetVector(dickStartWorldID, spline.GetPositionFromDistance(baseDistanceAlongSpline));
+            propertyBlock.SetFloat(penetratorOffsetLengthID, baseDistanceAlongSpline);
+            propertyBlock.SetVector(penetratorStartWorldID, spline.GetPositionFromDistance(baseDistanceAlongSpline));
             propertyBlock.SetFloat(curveBlendID, 1f);
-            propertyBlock.SetVector(dickForwardID, rootBone.TransformDirection(localRootForward));
-            propertyBlock.SetVector(dickRightID, rootBone.TransformDirection(localRootRight));
-            propertyBlock.SetVector(dickUpID, rootBone.TransformDirection(localRootUp));
-            propertyBlock.SetVector(dickRootID, rootBone.position);
+            propertyBlock.SetVector(penetratorForwardID, rootBone.TransformDirection(localRootForward));
+            propertyBlock.SetVector(penetratorRightID, rootBone.TransformDirection(localRootRight));
+            propertyBlock.SetVector(penetratorUpID, rootBone.TransformDirection(localRootUp));
+            propertyBlock.SetVector(penetratorRootID, rootBone.position);
             propertyBlock.SetBuffer(catmullSplinesID, catmullBuffer);
             renderer.SetPropertyBlock(propertyBlock);
         }

@@ -31,11 +31,11 @@ namespace PenetrationTech {
             [SerializeField]
             public Texture2D detailMap;
             [HideInInspector]
-            private Vector3 rendererLocalDickForward;
+            private Vector3 rendererLocalPenetratorForward;
             [HideInInspector]
-            private Vector3 rendererLocalDickRight;
+            private Vector3 rendererLocalPenetratorRight;
             [HideInInspector]
-            private Vector3 rendererLocalDickUp;
+            private Vector3 rendererLocalPenetratorUp;
 
             private NativeArray<byte> nativeArray;
 
@@ -120,10 +120,10 @@ namespace PenetrationTech {
                 pixelData.Dispose();
             }
 
-            public void Readback(Vector3 rendererLocalDickForward, Vector3 rendererLocalDickRight, Vector3 rendererLocalDickUp) {
-                this.rendererLocalDickForward = rendererLocalDickForward;
-                this.rendererLocalDickRight = rendererLocalDickRight;
-                this.rendererLocalDickUp = rendererLocalDickUp;
+            public void Readback(Vector3 rendererLocalPenetratorForward, Vector3 rendererLocalPenetratorRight, Vector3 rendererLocalPenetratorUp) {
+                this.rendererLocalPenetratorForward = rendererLocalPenetratorForward;
+                this.rendererLocalPenetratorRight = rendererLocalPenetratorRight;
+                this.rendererLocalPenetratorUp = rendererLocalPenetratorUp;
                 if (SystemInfo.supportsAsyncGPUReadback && Application.isPlaying) {
                     nativeArray = new NativeArray<byte>(girthMap.width * girthMap.height * sizeof(byte), Allocator.Persistent);
                     AsyncGPUReadback.RequestIntoNativeArray(ref nativeArray, girthMap, 0, TextureFormat.R8, OnCompleteReadBack);
@@ -208,15 +208,15 @@ namespace PenetrationTech {
         private List<GirthFrame> girthDeltaFrames;
         
         private RendererSubMeshMask rendererMask;
-        private Transform dickRoot;
-        private Vector3 rendererLocalDickForward;
-        private Vector3 rendererLocalDickUp;
-        private Vector3 rendererLocalDickRight;
-        private Vector3 rendererLocalDickRoot;
-        private Vector3 rootLocalDickForward;
-        private Vector3 rootLocalDickUp;
-        private Vector3 rootLocalDickRight;
-        private Vector3 rootLocalDickRoot;
+        private Transform penetratorRoot;
+        private Vector3 rendererLocalPenetratorForward;
+        private Vector3 rendererLocalPenetratorUp;
+        private Vector3 rendererLocalPenetratorRight;
+        private Vector3 rendererLocalPenetratorRoot;
+        private Vector3 rootLocalPenetratorForward;
+        private Vector3 rootLocalPenetratorUp;
+        private Vector3 rootLocalPenetratorRight;
+        private Vector3 rootLocalPenetratorRoot;
 
         private static float GetPiecewiseDerivative(AnimationCurve curve, float t) {
             float epsilon = 0.00001f;
@@ -229,21 +229,21 @@ namespace PenetrationTech {
         private Matrix4x4 worldToRenderer => rendererMask.renderer.worldToLocalMatrix;
 
         public static bool IsValid(GirthData data, Vector3 forward, Vector3 right, Vector3 up) {
-            return data != null && data.rendererMask != null && data.girthDeltaFrames != null && data.girthDeltaFrames.Count != 0 && data.rootLocalDickForward == forward && data.rootLocalDickRight == right && data.rootLocalDickUp == up;
+            return data != null && data.rendererMask != null && data.girthDeltaFrames != null && data.girthDeltaFrames.Count != 0 && data.rootLocalPenetratorForward == forward && data.rootLocalPenetratorRight == right && data.rootLocalPenetratorUp == up;
         }
         
-        private float localDickRootForwardness => Vector3.Dot(rootLocalDickRoot, rootLocalDickForward);
+        private float localPenetratorRootForwardness => Vector3.Dot(rootLocalPenetratorRoot, rootLocalPenetratorForward);
 
         public float GetWorldLength() {
-            Vector3 localDickRootForward = rootLocalDickForward * localDickRootForwardness; 
-            Vector3 length = (GetLocalRenderLength() - worldToRenderer.MultiplyVector(localDickRootForward).magnitude) * rendererLocalDickForward;
-            return rendererToWorld.MultiplyVector(length).magnitude * GetDickRootScaleFactor(rootLocalDickForward);
+            Vector3 localPenetratorRootForward = rootLocalPenetratorForward * localPenetratorRootForwardness; 
+            Vector3 length = (GetLocalRenderLength() - worldToRenderer.MultiplyVector(localPenetratorRootForward).magnitude) * rendererLocalPenetratorForward;
+            return rendererToWorld.MultiplyVector(length).magnitude * GetPenetratorScaleFactor(rootLocalPenetratorForward);
         }
         
         private float GetWorldRenderLength() {
             // This handles skewed forwards, and even non-proportional scales of the dick (making it stubbier or longer)
-            Vector3 length = GetLocalRenderLength() * rendererLocalDickForward;
-            return rendererToWorld.MultiplyVector(length).magnitude * GetDickRootScaleFactor(rootLocalDickForward);
+            Vector3 length = GetLocalRenderLength() * rendererLocalPenetratorForward;
+            return rendererToWorld.MultiplyVector(length).magnitude * GetPenetratorScaleFactor(rootLocalPenetratorForward);
         }
 
         private float GetLocalRenderLength() {
@@ -257,26 +257,26 @@ namespace PenetrationTech {
             return length;
         }
 
-        private float GetKnotForce(float worldDistanceAlongDick) {
-            var worldDistanceAlongDickFromMinVertex = worldDistanceAlongDick + localDickRootForwardness;
-            if (worldDistanceAlongDickFromMinVertex < 0f || worldDistanceAlongDickFromMinVertex > GetWorldRenderLength()) {
+        private float GetKnotForce(float worldDistanceAlongPenetrator) {
+            var worldDistanceAlongPenetratorFromMinVertex = worldDistanceAlongPenetrator + localPenetratorRootForwardness;
+            if (worldDistanceAlongPenetratorFromMinVertex < 0f || worldDistanceAlongPenetratorFromMinVertex > GetWorldRenderLength()) {
                 return 0f;
             }
 
-            float localDistanceAlongDickFromMinVertex = worldToRenderer.MultiplyVector(worldDistanceAlongDickFromMinVertex*rendererToWorld.MultiplyVector((rendererLocalDickForward)).normalized).magnitude / GetDickRootScaleFactor(rootLocalDickForward);
-            float baseKnotForce = GetPiecewiseDerivative(baseGirthFrame.localGirthRadiusCurve, localDistanceAlongDickFromMinVertex*(baseGirthFrame.maxLocalLength / GetLocalRenderLength()));
+            float localDistanceAlongPenetratorFromMinVertex = worldToRenderer.MultiplyVector(worldDistanceAlongPenetratorFromMinVertex*rendererToWorld.MultiplyVector((rendererLocalPenetratorForward)).normalized).magnitude / GetPenetratorScaleFactor(rootLocalPenetratorForward);
+            float baseKnotForce = GetPiecewiseDerivative(baseGirthFrame.localGirthRadiusCurve, localDistanceAlongPenetratorFromMinVertex*(baseGirthFrame.maxLocalLength / GetLocalRenderLength()));
             float knotForce = baseKnotForce;
             if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
                 for (int i = 0; i < skinnedMeshRenderer.sharedMesh.blendShapeCount; i++) {
-                    knotForce += (GetPiecewiseDerivative(girthDeltaFrames[i].localGirthRadiusCurve, localDistanceAlongDickFromMinVertex*(girthDeltaFrames[i].maxLocalLength/GetLocalRenderLength()))-baseKnotForce) * (skinnedMeshRenderer.GetBlendShapeWeight(i) / 100f);
+                    knotForce += (GetPiecewiseDerivative(girthDeltaFrames[i].localGirthRadiusCurve, localDistanceAlongPenetratorFromMinVertex*(girthDeltaFrames[i].maxLocalLength/GetLocalRenderLength()))-baseKnotForce) * (skinnedMeshRenderer.GetBlendShapeWeight(i) / 100f);
                 }
             }
             return knotForce;
         }
 
-        private float GetDickRootScaleFactor(Vector3 axis) {
+        private float GetPenetratorScaleFactor(Vector3 axis) {
             if (rendererMask.renderer is SkinnedMeshRenderer) {
-                Matrix4x4 rootMatrix = Matrix4x4.TRS(Vector3.zero, dickRoot.localRotation, dickRoot.localScale);
+                Matrix4x4 rootMatrix = Matrix4x4.TRS(Vector3.zero, penetratorRoot.localRotation, penetratorRoot.localScale);
                 float scale = rootMatrix.MultiplyVector(axis).magnitude;
                 return scale;
             }
@@ -293,36 +293,36 @@ namespace PenetrationTech {
                              (skinnedMeshRenderer.GetBlendShapeWeight(i) / 100f);
                 }
             }
-            Vector3 localGirth = rendererLocalDickUp*girthRadius;
+            Vector3 localGirth = rendererLocalPenetratorUp*girthRadius;
             float scaleFactor = rendererToWorld.MultiplyVector(localGirth).magnitude;
-            return scaleFactor * GetDickRootScaleFactor(rootLocalDickUp);
+            return scaleFactor * GetPenetratorScaleFactor(rootLocalPenetratorUp);
         }
         
         // Dick space is arbitrary, "Spline space" refers to Z forward, Y Up, and X right space. 
         // This is to make it easier to place onto a spline.
-        public Vector3 GetScaledSplineSpaceOffset(float worldDistanceAlongDick) {
-            float localDistanceAlongDick = worldToRenderer.MultiplyVector(worldDistanceAlongDick*rendererToWorld.MultiplyVector((rendererLocalDickForward)).normalized).magnitude / GetDickRootScaleFactor(rootLocalDickForward);
+        public Vector3 GetScaledSplineSpaceOffset(float worldDistanceAlongPenetrator) {
+            float localDistanceAlongPenetrator = worldToRenderer.MultiplyVector(worldDistanceAlongPenetrator*rendererToWorld.MultiplyVector((rendererLocalPenetratorForward)).normalized).magnitude / GetPenetratorScaleFactor(rootLocalPenetratorForward);
             float lengthScaleFactor = baseGirthFrame.maxLocalLength / GetLocalRenderLength();
-            float baseLocalXOffsetSample = baseGirthFrame.localXOffsetCurve.Evaluate(localDistanceAlongDick*lengthScaleFactor);
-            float baseLocalYOffsetSample = baseGirthFrame.localYOffsetCurve.Evaluate(localDistanceAlongDick*lengthScaleFactor);
+            float baseLocalXOffsetSample = baseGirthFrame.localXOffsetCurve.Evaluate(localDistanceAlongPenetrator*lengthScaleFactor);
+            float baseLocalYOffsetSample = baseGirthFrame.localYOffsetCurve.Evaluate(localDistanceAlongPenetrator*lengthScaleFactor);
             float localXOffsetSample = baseLocalXOffsetSample;
             float localYOffsetSample = baseLocalYOffsetSample;
             
             if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
                 for (int i = 0; i < skinnedMeshRenderer.sharedMesh.blendShapeCount; i++) {
                     float scaleFactor = girthDeltaFrames[i].maxLocalLength / GetLocalRenderLength();
-                    localXOffsetSample += (girthDeltaFrames[i].localXOffsetCurve.Evaluate(localDistanceAlongDick*scaleFactor)-baseLocalXOffsetSample) *
+                    localXOffsetSample += (girthDeltaFrames[i].localXOffsetCurve.Evaluate(localDistanceAlongPenetrator*scaleFactor)-baseLocalXOffsetSample) *
                              (skinnedMeshRenderer.GetBlendShapeWeight(i) / 100f);
-                    localYOffsetSample += (girthDeltaFrames[i].localYOffsetCurve.Evaluate(localDistanceAlongDick*scaleFactor)-baseLocalYOffsetSample) *
+                    localYOffsetSample += (girthDeltaFrames[i].localYOffsetCurve.Evaluate(localDistanceAlongPenetrator*scaleFactor)-baseLocalYOffsetSample) *
                              (skinnedMeshRenderer.GetBlendShapeWeight(i) / 100f);
                 }
             }
 
-            Vector3 worldOffset = rendererToWorld.MultiplyVector(rendererLocalDickRight*localXOffsetSample+rendererLocalDickUp*localYOffsetSample)*GetDickRootScaleFactor(rootLocalDickRight);
+            Vector3 worldOffset = rendererToWorld.MultiplyVector(rendererLocalPenetratorRight*localXOffsetSample+rendererLocalPenetratorUp*localYOffsetSample)*GetPenetratorScaleFactor(rootLocalPenetratorRight);
             Matrix4x4 changeOfBasis = Matrix4x4.identity;
-            changeOfBasis.SetRow(0,rendererToWorld.MultiplyVector(rendererLocalDickRight).normalized);
-            changeOfBasis.SetRow(1,rendererToWorld.MultiplyVector(rendererLocalDickUp).normalized);
-            changeOfBasis.SetRow(2,rendererToWorld.MultiplyVector(rendererLocalDickForward).normalized);
+            changeOfBasis.SetRow(0,rendererToWorld.MultiplyVector(rendererLocalPenetratorRight).normalized);
+            changeOfBasis.SetRow(1,rendererToWorld.MultiplyVector(rendererLocalPenetratorUp).normalized);
+            changeOfBasis.SetRow(2,rendererToWorld.MultiplyVector(rendererLocalPenetratorForward).normalized);
             changeOfBasis[3,3] = 1f;
             return changeOfBasis.MultiplyVector(worldOffset);
         }
@@ -358,20 +358,20 @@ namespace PenetrationTech {
             return bestMatch;
         }
 
-        public float GetWorldGirthRadius(float worldDistanceAlongDick) {
-            float localDistanceAlongDick = worldToRenderer.MultiplyVector(worldDistanceAlongDick*rendererToWorld.MultiplyVector((rendererLocalDickForward)).normalized).magnitude / GetDickRootScaleFactor(rootLocalDickForward);
+        public float GetWorldGirthRadius(float worldDistanceAlongPenetrator) {
+            float localDistanceAlongPenetrator = worldToRenderer.MultiplyVector(worldDistanceAlongPenetrator*rendererToWorld.MultiplyVector((rendererLocalPenetratorForward)).normalized).magnitude / GetPenetratorScaleFactor(rootLocalPenetratorForward);
             // TODO: There's no real way to actually get the girth correctly, since we cannot interpret skewed scales. This is probably acceptable, though instead of just using localDickUp, maybe it should be a diagonal between up and right.
             // I currently just choose a single axis, though users shouldn't skew scale on the up/right axis anyway.
-            float baseLocalGirthSample = baseGirthFrame.localGirthRadiusCurve.Evaluate(localDistanceAlongDick*(baseGirthFrame.maxLocalLength / GetLocalRenderLength()));
+            float baseLocalGirthSample = baseGirthFrame.localGirthRadiusCurve.Evaluate(localDistanceAlongPenetrator*(baseGirthFrame.maxLocalLength / GetLocalRenderLength()));
             float localGirthSample = baseLocalGirthSample;
             if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
                 for (int i = 0; i < skinnedMeshRenderer.sharedMesh.blendShapeCount; i++) {
-                    localGirthSample += (girthDeltaFrames[i].localGirthRadiusCurve.Evaluate(localDistanceAlongDick*(girthDeltaFrames[i].maxLocalLength / GetLocalRenderLength()))-baseLocalGirthSample) * (skinnedMeshRenderer.GetBlendShapeWeight(i) / 100f);
+                    localGirthSample += (girthDeltaFrames[i].localGirthRadiusCurve.Evaluate(localDistanceAlongPenetrator*(girthDeltaFrames[i].maxLocalLength / GetLocalRenderLength()))-baseLocalGirthSample) * (skinnedMeshRenderer.GetBlendShapeWeight(i) / 100f);
                 }
             }
 
-            Vector3 localGirth = rendererLocalDickUp*localGirthSample;
-            return rendererToWorld.MultiplyVector(localGirth).magnitude * GetDickRootScaleFactor(rootLocalDickUp);
+            Vector3 localGirth = rendererLocalPenetratorUp*localGirthSample;
+            return rendererToWorld.MultiplyVector(localGirth).magnitude * GetPenetratorScaleFactor(rootLocalPenetratorUp);
         }
         private static void GetBindPoseBoneLocalPositionRotation(Matrix4x4 boneMatrix, out Vector3 position, out Quaternion rotation) {
             // Get global matrix for bone
@@ -451,7 +451,7 @@ namespace PenetrationTech {
 
                 HashSet<int> validBones = new HashSet<int>();
                 for(int i=0;i<bones.Length;i++) {
-                    if (bones[i].IsChildOf(dickRoot)) {
+                    if (bones[i].IsChildOf(penetratorRoot)) {
                         validBones.Add(i);
                     }
                 }
@@ -464,9 +464,9 @@ namespace PenetrationTech {
                         BoneWeight1 weight = weights[wt];
                         if (validBones.Contains(weight.boneIndex) && weight.weight > 0.1f) {
                             Vector3 pos = staticVertices[vt];
-                            float length = Vector3.Dot(rendererLocalDickForward, pos - rendererLocalDickRoot);
+                            float length = Vector3.Dot(rendererLocalPenetratorForward, pos - rendererLocalPenetratorRoot);
                             float girth = Vector3.Distance(pos,
-                                (rendererLocalDickRoot + rendererLocalDickForward * length));
+                                (rendererLocalPenetratorRoot + rendererLocalPenetratorForward * length));
                             frame.maxLocalGirthRadius = Mathf.Max(girth, frame.maxLocalGirthRadius);
                             frame.maxLocalLength = Mathf.Max(length, frame.maxLocalLength);
                         }
@@ -480,9 +480,9 @@ namespace PenetrationTech {
                 // Otherwise we can just use every vert.
                 foreach (Vector3 vertexPosition in staticVertices) {
                     //Vector3 dickSpacePosition = changeOfBasis.MultiplyPoint(vertexPosition);
-                    float length = Vector3.Dot(rendererLocalDickForward, vertexPosition - rendererLocalDickRoot);
+                    float length = Vector3.Dot(rendererLocalPenetratorForward, vertexPosition - rendererLocalPenetratorRoot);
                     float girth = Vector3.Distance(vertexPosition,
-                        (rendererLocalDickRoot + rendererLocalDickForward * length));
+                        (rendererLocalPenetratorRoot + rendererLocalPenetratorForward * length));
                     frame.maxLocalGirthRadius = Mathf.Max(girth, frame.maxLocalGirthRadius);
                     frame.maxLocalLength = Mathf.Max(length, frame.maxLocalLength);
                 }
@@ -500,16 +500,16 @@ namespace PenetrationTech {
                 staticMaterialB.SetFloat("_AngleOffset", -Mathf.PI / 2f);
             }
 
-            staticMaterialA.SetVector("_DickOrigin", rendererLocalDickRoot);
-            staticMaterialA.SetVector("_DickForward", rendererLocalDickForward);
-            staticMaterialA.SetVector("_DickUp", rendererLocalDickUp);
-            staticMaterialA.SetVector("_DickRight", rendererLocalDickRight);
+            staticMaterialA.SetVector("_DickOrigin", rendererLocalPenetratorRoot);
+            staticMaterialA.SetVector("_DickForward", rendererLocalPenetratorForward);
+            staticMaterialA.SetVector("_DickUp", rendererLocalPenetratorUp);
+            staticMaterialA.SetVector("_DickRight", rendererLocalPenetratorRight);
             staticMaterialA.SetFloat("_MaxLength", frame.maxLocalLength);
             staticMaterialA.SetFloat("_MaxGirth", frame.maxLocalGirthRadius);
-            staticMaterialB.SetVector("_DickOrigin", rendererLocalDickRoot);
-            staticMaterialB.SetVector("_DickForward", rendererLocalDickForward);
-            staticMaterialB.SetVector("_DickUp", rendererLocalDickUp);
-            staticMaterialB.SetVector("_DickRight", rendererLocalDickRight);
+            staticMaterialB.SetVector("_DickOrigin", rendererLocalPenetratorRoot);
+            staticMaterialB.SetVector("_DickForward", rendererLocalPenetratorForward);
+            staticMaterialB.SetVector("_DickUp", rendererLocalPenetratorUp);
+            staticMaterialB.SetVector("_DickRight", rendererLocalPenetratorRight);
             staticMaterialB.SetFloat("_MaxLength", frame.maxLocalLength);
             staticMaterialB.SetFloat("_MaxGirth", frame.maxLocalGirthRadius);
 
@@ -529,7 +529,7 @@ namespace PenetrationTech {
             
             frame.girthMap.GenerateMips();
 
-            frame.Readback(rendererLocalDickForward, rendererLocalDickRight, rendererLocalDickUp);
+            frame.Readback(rendererLocalPenetratorForward, rendererLocalPenetratorRight, rendererLocalPenetratorUp);
 
             if (freemesh) {
                 if (Application.isPlaying) {
@@ -541,13 +541,13 @@ namespace PenetrationTech {
             return frame;
         }
 
-        public GirthData(RendererSubMeshMask rendererWithMask, Shader girthUnwrapShader, Transform root, Vector3 rootLocalDickRoot, Vector3 rootDickForward, Vector3 rootDickUp, Vector3 rootDickRight) {
+        public GirthData(RendererSubMeshMask rendererWithMask, Shader girthUnwrapShader, Transform root, Vector3 rootLocalPenetratorRoot, Vector3 rootPenetratorForward, Vector3 rootPenetratorUp, Vector3 rootPenetratorRight) {
             rendererMask = rendererWithMask;
-            dickRoot = root;
-            this.rootLocalDickUp = rootDickUp;
-            this.rootLocalDickForward = rootDickForward;
-            this.rootLocalDickRight = rootDickRight;
-            this.rootLocalDickRoot = rootLocalDickRoot;
+            penetratorRoot = root;
+            this.rootLocalPenetratorUp = rootPenetratorUp;
+            this.rootLocalPenetratorForward = rootPenetratorForward;
+            this.rootLocalPenetratorRight = rootPenetratorRight;
+            this.rootLocalPenetratorRoot = rootLocalPenetratorRoot;
             if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
                 int rootBoneID = -1;
                 for (int i = 0; i < skinnedMeshRenderer.bones.Length; i++) {
@@ -562,15 +562,15 @@ namespace PenetrationTech {
 
                 Mesh skinnedMesh = skinnedMeshRenderer.sharedMesh;
                 GetBindPoseBoneLocalPositionRotation(skinnedMesh.bindposes[rootBoneID], out Vector3 posePosition, out Quaternion poseRotation);
-                rendererLocalDickForward = (poseRotation * rootDickForward).normalized;
-                rendererLocalDickUp = (poseRotation * rootDickUp).normalized;
-                rendererLocalDickRight = (poseRotation * rootDickRight).normalized;
-                rendererLocalDickRoot = posePosition;
+                rendererLocalPenetratorForward = (poseRotation * rootPenetratorForward).normalized;
+                rendererLocalPenetratorUp = (poseRotation * rootPenetratorUp).normalized;
+                rendererLocalPenetratorRight = (poseRotation * rootPenetratorRight).normalized;
+                rendererLocalPenetratorRoot = posePosition;
             } else {
-                rendererLocalDickForward = worldToRenderer.MultiplyVector(root.TransformDirection(rootDickForward)).normalized;
-                rendererLocalDickUp = worldToRenderer.MultiplyVector(root.TransformDirection(rootDickUp)).normalized;
-                rendererLocalDickRight = worldToRenderer.MultiplyVector(root.TransformDirection(rootDickRight)).normalized;
-                rendererLocalDickRoot = worldToRenderer.MultiplyPoint(root.TransformPoint(rootLocalDickRoot));
+                rendererLocalPenetratorForward = worldToRenderer.MultiplyVector(root.TransformDirection(rootPenetratorForward)).normalized;
+                rendererLocalPenetratorUp = worldToRenderer.MultiplyVector(root.TransformDirection(rootPenetratorUp)).normalized;
+                rendererLocalPenetratorRight = worldToRenderer.MultiplyVector(root.TransformDirection(rootPenetratorRight)).normalized;
+                rendererLocalPenetratorRoot = worldToRenderer.MultiplyPoint(root.TransformPoint(rootLocalPenetratorRoot));
             }
 
 
