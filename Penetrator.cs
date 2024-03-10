@@ -63,8 +63,8 @@ public class Penetrator {
         points.Add(startPoint);
         points.AddRange(inputPoints);
 
-        spline = new CatmullSpline();
-        spline.SetWeightsFromPoints(points);
+        
+        spline = new CatmullSpline(points);
         
         baseDistanceAlongSpline = spline.GetDistanceFromSubT(0, 1, 1f);
     }

@@ -59,11 +59,11 @@ public class PenetratorRenderers {
                 weights[i*16+14] = row4.z;
                 weights[i*16+15] = row4.w;
             }
-            UnityEngine.Assertions.Assert.AreEqual(spline.GetDistanceLUT().Count, distanceCount);
+            UnityEngine.Assertions.Assert.AreEqual(spline.GetDistanceLUT().Length, distanceCount);
             for(int i=0;i<distanceCount;i++) {
                 distanceLUT[i] = spline.GetDistanceLUT()[i];
             }
-            UnityEngine.Assertions.Assert.AreEqual(spline.GetBinormalLUT().Count, binormalCount);
+            UnityEngine.Assertions.Assert.AreEqual(spline.GetBinormalLUT().Length, binormalCount);
             for(int i=0;i<binormalCount;i++) {
                 Vector3 binormal = spline.GetBinormalLUT()[i];
                 binormalLUT[i*3] = binormal.x;
