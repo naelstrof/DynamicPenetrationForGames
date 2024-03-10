@@ -25,6 +25,15 @@ public class PenetratorBasic : Penetrator {
             }
             points.Add(t.position);
         }
+        if (linkedPenetrable != null) {
+            var linkedPoints = new List<Vector3>();
+            linkedPoints.AddRange(linkedPenetrable.GetPoints());
+            penetratorData.GetSpline(linkedPenetrable.GetPoints(), out var linkedSpline, out var baseDistanceAlongSpline);
+            var proximity = linkedSpline.GetDistanceFromSubT(1, 2, 1f);
+            var tipProximity = proximity - penetratorData.GetPenetratorWorldLength();
+            return LerpPoints(points, linkedPoints, 1f-Mathf.Clamp01(tipProximity/0.2f));
+        }
         return points;
     }
+    
 }
