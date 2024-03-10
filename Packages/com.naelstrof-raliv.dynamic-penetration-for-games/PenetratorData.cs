@@ -3,7 +3,7 @@ using PenetrationTech;
 using UnityEngine;
 
 [System.Serializable]
-public class Penetrator {
+public class PenetratorData {
     [SerializeField] private Shader girthUnwrapShader;
     [SerializeField] private RendererSubMeshMask mask;
     
@@ -31,11 +31,15 @@ public class Penetrator {
     private static List<Vector3> points = new List<Vector3>();
 
     private bool GetInitialized() => girthData != null;
+
+    public void Release() {
+        girthData?.Release();
+        girthData = null;
+    }
     
     private void Reinitialize() {
         // TODO: There should be a way to update the girthdata
-        girthData.Release();
-        girthData = null;
+        Release();
         Initialize();
     }
     
