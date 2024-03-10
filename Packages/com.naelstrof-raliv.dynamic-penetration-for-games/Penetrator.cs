@@ -15,20 +15,35 @@ public class PenetratorInspector : Editor {
 
 #endif
 
+[ExecuteAlways]
 public abstract class Penetrator : MonoBehaviour {
     [FormerlySerializedAs("penetrator")]
-    [SerializeField] protected PenetratorData penetratorData;
+    [SerializeField] private PenetratorData penetratorData;
+    
+    [SerializeField] private PenetratorRenderers penetratorRenderers;
     
     protected abstract IList<Vector3> GetPoints();
 
     private bool isEditingRoot;
 
-    protected virtual void Start() {
+    protected virtual void OnEnable() {
         penetratorData.Initialize();
+        penetratorRenderers.Initialize();
+    }
+    protected virtual void OnDisable() {
+        penetratorData.Release();
+        penetratorRenderers.OnDestroy();
+    }
+    
+    protected virtual void Update() {
+        penetratorData.GetSpline(GetPoints(), out var path, out float distanceAlongSpline);
+        penetratorRenderers.Update(path, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
     }
 
     protected virtual void OnDrawGizmos() {
-        penetratorData.Initialize();
+        if (GetPoints().Count == 0) {
+            return;
+        }
         penetratorData.GetSpline(GetPoints(), out var path, out var distanceAlongSpline);
         Gizmos.color = Color.red;
         Vector3 lastPoint = path.GetPositionFromT(0f);
@@ -47,7 +62,6 @@ public abstract class Penetrator : MonoBehaviour {
             Gizmos.DrawCube(Vector3.zero, Vector3.one*0.025f);
         }
         Gizmos.matrix = save;
-
     }
     
 #if UNITY_EDITOR
