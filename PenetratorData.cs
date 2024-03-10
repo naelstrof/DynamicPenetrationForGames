@@ -112,7 +112,7 @@ public class PenetratorData {
         points.AddRange(inputPoints);
 
         Vector3 dir = (points[^1] - points[^2]).normalized;
-        points.Add(points[^1] + dir * girthData.GetWorldLength());
+        points.Add(points[^1] + dir * (girthData.GetWorldLength()*1.1f));
         
         spline = new CatmullSpline(points);
         baseDistanceAlongSpline = spline.GetDistanceFromSubT(0, 1, 1f);
