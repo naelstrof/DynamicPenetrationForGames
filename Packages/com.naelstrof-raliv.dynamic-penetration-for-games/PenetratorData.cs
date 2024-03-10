@@ -72,4 +72,8 @@ public class PenetratorData {
         baseDistanceAlongSpline = spline.GetDistanceFromSubT(0, 1, 1f);
     }
 
+    public void OnValidate() {
+        Reinitialize();
+    }
+
 }
