@@ -35,7 +35,8 @@ public abstract class Penetrator : MonoBehaviour {
     [SerializeField] protected PenetratorData penetratorData;
     
     [SerializeField] private PenetratorRenderers penetratorRenderers;
-    
+
+    [SerializeField] protected Penetrable linkedPenetrable;
     protected abstract IList<Vector3> GetPoints();
     
     protected virtual void OnEnable() {
@@ -55,7 +56,26 @@ public abstract class Penetrator : MonoBehaviour {
     protected void OnValidate() {
         penetratorData.OnValidate();
     }
-    
+
+    public void LinkToPenetrable(Penetrable penetrable) {
+        linkedPenetrable = penetrable;
+    }
+
+    public IList<Vector3> LerpPoints(IList<Vector3> a, IList<Vector3> b, float t) {
+        while (a.Count < b.Count) a.Add(a[^1]+(a[^1]-a[^2]));
+        while (b.Count < a.Count) b.Add(b[^1]+(b[^1]-b[^2]));
+        var aSpline = new CatmullSpline(a);
+        var bSpline = new CatmullSpline(b);
+        var lerpPoints = new List<Vector3>();
+        for (var index = 0; index < a.Count; index++) {
+            var sourceT = aSpline.GetDistanceFromTime((float)index / (a.Count - 1));
+            var targetT = bSpline.GetDistanceFromTime((float)index / (b.Count - 1));
+            var lerpT = bSpline.GetPositionFromDistance(Mathf.Lerp(sourceT, targetT, t));
+            lerpPoints.Add(Vector3.Lerp(a[index], lerpT, t));
+        }
+        return lerpPoints;
+    }
+
     protected virtual void OnDrawGizmos() {
         if (GetPoints().Count == 0) {
             return;
