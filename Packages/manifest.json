@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.naelstrof.jigglephysics": "https://github.com/naelstrof/UnityJigglePhysics.git#upm",
     "com.naelstrof.splines": "https://github.com/naelstrof/com.naelstrof.splines.git",
     "com.unity.collab-proxy": "2.3.1",
     "com.unity.feature.development": "1.0.1",

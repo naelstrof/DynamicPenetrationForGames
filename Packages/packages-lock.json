@@ -8,12 +8,19 @@
         "com.naelstrof.splines": "0.0.1"
       }
     },
+    "com.naelstrof.jigglephysics": {
+      "version": "https://github.com/naelstrof/UnityJigglePhysics.git#upm",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "27afeccb03f6dbeea7e9aa665af9e33ce6558860"
+    },
     "com.naelstrof.splines": {
       "version": "https://github.com/naelstrof/com.naelstrof.splines.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "e6b1f420943579207f36895e4bea8c467c5465ca"
+      "hash": "c4444442870f59a7511beb21bfb0e2b566048c00"
     },
     "com.unity.collab-proxy": {
       "version": "2.3.1",
