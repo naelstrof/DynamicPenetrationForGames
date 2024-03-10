@@ -63,7 +63,7 @@ public abstract class Penetrator : MonoBehaviour {
         penetratorData.GetSpline(GetPoints(), out var path, out var distanceAlongSpline);
         Gizmos.color = Color.red;
         Vector3 lastPoint = path.GetPositionFromT(0f);
-        for (int i = 0; i < 64; i++) {
+        for (int i = 0; i <= 64; i++) {
             Vector3 newPoint = path.GetPositionFromT((float)i / 64f);
             Gizmos.DrawLine(lastPoint, newPoint);
             lastPoint = newPoint;
@@ -76,6 +76,12 @@ public abstract class Penetrator : MonoBehaviour {
             Gizmos.color = Color.green;
             Gizmos.matrix = Matrix4x4.TRS(pointA, Quaternion.FromToRotation(Vector3.forward, normalA.normalized), Vector3.one - Vector3.forward * 0.8f);
             Gizmos.DrawCube(Vector3.zero, Vector3.one*0.025f);
+            if (path.GetWeights().IndexOf(weight) == path.GetWeights().Count - 1) {
+                Vector3 pointB = CatmullSpline.GetPosition(weight, 1f);
+                Vector3 normalB = CatmullSpline.GetVelocity(weight, 1f);
+                Gizmos.matrix = Matrix4x4.TRS(pointB, Quaternion.FromToRotation(Vector3.forward, normalB.normalized), Vector3.one - Vector3.forward * 0.8f);
+                Gizmos.DrawCube(Vector3.zero, Vector3.one*0.025f);
+            }
         }
         Gizmos.matrix = save;
     }
