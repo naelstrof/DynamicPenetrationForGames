@@ -5,8 +5,8 @@ using UnityEngine.Serialization;
 using UnityEditor;
 
 [CustomEditor(typeof(Penetrator))]
-public class DickInspector : Editor {
-    void OnSceneGUI() {
+public class PenetratorInspector : Editor {
+    protected void OnSceneGUI() {
         var script = (Penetrator)target;
         Undo.RecordObject(this, "Transforms Updated");
         script.DrawSceneGUI();
@@ -18,21 +18,18 @@ public class DickInspector : Editor {
 public abstract class Penetrator : MonoBehaviour {
     [FormerlySerializedAs("penetrator")]
     [SerializeField] protected PenetratorData penetratorData;
-    [SerializeField] private PenetratorRenderers penetratorRenderers;
     
     protected abstract IList<Vector3> GetPoints();
-    protected abstract Quaternion GetDickRotation();
 
     private bool isEditingRoot;
 
     protected virtual void Start() {
         penetratorData.Initialize();
-        penetratorRenderers.Initialize();
     }
 
     protected virtual void OnDrawGizmos() {
         penetratorData.Initialize();
-        penetratorData.GetSpline(GetDickRotation(), GetPoints(), out var path, out var distanceAlongSpline);
+        penetratorData.GetSpline(GetPoints(), out var path, out var distanceAlongSpline);
         Gizmos.color = Color.red;
         Vector3 lastPoint = path.GetPositionFromT(0f);
         for (int i = 0; i < 64; i++) {
@@ -51,8 +48,6 @@ public abstract class Penetrator : MonoBehaviour {
         }
         Gizmos.matrix = save;
 
-        penetratorRenderers.Initialize();
-        penetratorRenderers.Update(path, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
     }
     
 #if UNITY_EDITOR

@@ -56,14 +56,14 @@ public class PenetratorData {
         girthData = new GirthData(mask, girthUnwrapShader, dickRootTransform, dickRootPositionOffset, dickRootForward, dickRootUp, right);
     }
     
-    public void GetSpline(Quaternion rootRotation, IList<Vector3> inputPoints, out CatmullSpline spline, out float baseDistanceAlongSpline) {
+    public void GetSpline(IList<Vector3> inputPoints, out CatmullSpline spline, out float baseDistanceAlongSpline) {
         if (!GetInitialized()) {
             Initialize();
         }
         points.Clear();
 
         Vector3 startPoint = dickRootTransform.TransformPoint(dickRootPositionOffset);
-        points.Add(startPoint + rootRotation * dickRootForward * girthData.GetWorldLength() * -0.25f);
+        points.Add(startPoint + dickRootTransform.TransformDirection(dickRootForward) * (girthData.GetWorldLength() * -0.25f));
         points.Add(startPoint);
         points.AddRange(inputPoints);
 
