@@ -92,19 +92,19 @@ public abstract class Penetrator : MonoBehaviour {
         Undo.RecordObject(this, "Transforms Updated");
         EditorGUI.BeginChangeCheck();
         Handles.color = Color.white;
-        var globalDickRootPositionRotation = Quaternion.LookRotation(penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootForward()), penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootUp()));
-        var globalDickRootPositionOffset = penetratorData.GetRootTransform().TransformPoint(penetratorData.GetRootPositionOffset());
-        globalDickRootPositionOffset = Handles.PositionHandle(globalDickRootPositionOffset, globalDickRootPositionRotation);
-        globalDickRootPositionRotation = Handles.RotationHandle(globalDickRootPositionRotation, globalDickRootPositionOffset);
+        var globalPenetratorRootPositionRotation = Quaternion.LookRotation(penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootForward()), penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootUp()));
+        var globalPenetratorRootPositionOffset = penetratorData.GetRootTransform().TransformPoint(penetratorData.GetRootPositionOffset());
+        globalPenetratorRootPositionOffset = Handles.PositionHandle(globalPenetratorRootPositionOffset, globalPenetratorRootPositionRotation);
+        globalPenetratorRootPositionRotation = Handles.RotationHandle(globalPenetratorRootPositionRotation, globalPenetratorRootPositionOffset);
         if (EditorGUI.EndChangeCheck()) {
-            penetratorData.SetDickPositionInfo(
-                penetratorData.GetRootTransform().InverseTransformPoint(globalDickRootPositionOffset),
-                Quaternion.Inverse(penetratorData.GetRootTransform().rotation) * globalDickRootPositionRotation
+            penetratorData.SetPenetratorPositionInfo(
+                penetratorData.GetRootTransform().InverseTransformPoint(globalPenetratorRootPositionOffset),
+                Quaternion.Inverse(penetratorData.GetRootTransform().rotation) * globalPenetratorRootPositionRotation
             );
         }
         Handles.DrawWireDisc(
-            globalDickRootPositionOffset+globalDickRootPositionRotation*Vector3.forward * penetratorData.GetPenetratorWorldLength(),
-            globalDickRootPositionRotation*Vector3.forward,
+            globalPenetratorRootPositionOffset+globalPenetratorRootPositionRotation*Vector3.forward * penetratorData.GetPenetratorWorldLength(),
+            globalPenetratorRootPositionRotation*Vector3.forward,
             0.1f
             );
     }
