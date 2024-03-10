@@ -1,6 +1,6 @@
-// Made with Amplify Shader Editor
+// Made with Amplify Shader Editor v1.9.3.2
 // Available at the Unity Asset Store - http://u3d.as/y3X 
-Shader "PenetrationTech/GirthUnwrapRaw"
+Shader "Hidden/DPG/GirthUnwrapRaw"
 {
 	Properties
 	{
@@ -189,11 +189,10 @@ Shader "PenetrationTech/GirthUnwrapRaw"
 	}
 	CustomEditor "ASEMaterialInspector"
 	
-	
+	Fallback Off
 }
 /*ASEBEGIN
-Version=18912
-284;483;1800;930;2291.304;1375.692;1.6;True;False
+Version=19302
 Node;AmplifyShaderEditor.Vector3Node;8;-2577.845,-700.1675;Inherit;False;Property;_DickOrigin;DickOrigin;1;0;Create;True;0;0;0;False;0;False;0,0,0;-6.903836E-07,0,6.770761E-07;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.PosVertexDataNode;12;-2595.315,-888.9568;Inherit;False;0;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.RangedFloatNode;63;-1447.726,-1283.6;Inherit;False;Property;_AngleOffset;AngleOffset;7;0;Create;True;0;0;0;False;0;False;0;0;-3.141593;3.141593;0;1;FLOAT;0
@@ -228,7 +227,7 @@ Node;AmplifyShaderEditor.LerpOp;74;40.33679,-905.3147;Inherit;False;3;0;FLOAT;0;
 Node;AmplifyShaderEditor.DynamicAppendNode;28;235.3312,-803.8737;Inherit;False;FLOAT4;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;1;False;1;FLOAT4;0
 Node;AmplifyShaderEditor.DynamicAppendNode;59;514.9286,-318.5195;Inherit;False;FLOAT4;4;0;FLOAT3;0,0,0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;1;False;1;FLOAT4;0
 Node;AmplifyShaderEditor.RangedFloatNode;47;198.5742,40.46842;Inherit;False;Property;_Blend;Blend;6;0;Create;True;0;0;0;False;0;False;1;1;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;61;747.3164,-442.2791;Float;False;True;-1;2;ASEMaterialInspector;100;17;PenetrationTech/GirthUnwrapRaw;de9302d9d05e26849a28e8f751f34ede;True;Unlit;0;0;Unlit;4;True;True;2;5;False;47;10;False;-1;0;1;False;-1;0;False;-1;True;5;False;-1;0;False;-1;False;False;False;False;False;False;False;False;False;True;0;False;-1;True;True;1;False;-1;False;True;True;True;True;True;0;False;-1;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;True;True;2;False;-1;True;7;False;-1;True;True;0;False;-1;0;False;-1;True;1;RenderType=Opaque=RenderType;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;1;Vertex Position,InvertActionOnDeselection;1;0;1;True;False;;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;61;747.3164,-442.2791;Float;False;True;-1;2;ASEMaterialInspector;100;12;Hidden/DPG/GirthUnwrapRaw;de9302d9d05e26849a28e8f751f34ede;True;Unlit;0;0;Unlit;4;True;True;2;5;False;_Blend;10;False;;0;1;False;;0;False;;True;5;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;True;True;1;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;255;False;;255;False;;255;False;;7;False;;1;False;;1;False;;1;False;;7;False;;1;False;;1;False;;1;False;;True;True;2;False;;True;7;False;;True;True;0;False;;0;False;;True;1;RenderType=Opaque=RenderType;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;1;Vertex Position,InvertActionOnDeselection;1;0;0;1;True;False;;False;0
 WireConnection;21;0;12;0
 WireConnection;21;1;8;0
 WireConnection;65;0;7;0
@@ -274,4 +273,4 @@ WireConnection;61;0;28;0
 WireConnection;61;2;59;0
 WireConnection;61;3;47;0
 ASEEND*/
-//CHKSM=62FC94B61093A12361A2F1DBE10F8DF78150B7C4
+//CHKSM=F0A7A14321A91565E7613345404823F5FFDC2769
