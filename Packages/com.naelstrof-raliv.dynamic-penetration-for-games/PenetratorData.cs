@@ -4,7 +4,6 @@ using UnityEngine;
 
 [System.Serializable]
 public class PenetratorData {
-    [SerializeField] private Shader girthUnwrapShader;
     [SerializeField] private RendererSubMeshMask mask;
     
     [SerializeField] private Transform dickRootTransform;
@@ -53,7 +52,7 @@ public class PenetratorData {
         }
         Vector3 right = Vector3.right;
         Vector3.OrthoNormalize(ref dickRootForward, ref up, ref right);
-        girthData = new GirthData(mask, girthUnwrapShader, dickRootTransform, dickRootPositionOffset, dickRootForward, dickRootUp, right);
+        girthData = new GirthData(mask, Shader.Find("Hidden/DPG/GirthUnwrapRaw"), dickRootTransform, dickRootPositionOffset, dickRootForward, dickRootUp, right);
     }
     
     public void GetSpline(IList<Vector3> inputPoints, out CatmullSpline spline, out float baseDistanceAlongSpline) {
