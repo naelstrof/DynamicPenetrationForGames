@@ -15,7 +15,7 @@ public class PenetratorRenderers {
     private static readonly int dickUpID = Shader.PropertyToID("_DickUpWorld");
     private static readonly int dickRootID = Shader.PropertyToID("_DickRootWorld");
     private static readonly int curveBlendID = Shader.PropertyToID("_CurveBlend");
-    
+
     private ComputeBuffer catmullBuffer;
     private NativeArray<CatmullSplineData> data;
     private MaterialPropertyBlock propertyBlock;

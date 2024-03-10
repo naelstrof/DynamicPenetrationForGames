@@ -3,10 +3,29 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+
+[CustomEditor(typeof(PenetratorBasic))]
+public class PenetratorBasicInspector : PenetratorInspector { }
+#endif
+
+[ExecuteAlways]
 public class PenetratorBasic : Penetrator {
     [SerializeField]
     private Transform[] transforms;
+    [SerializeField] private PenetratorRenderers penetratorRenderers;
+    
     private List<Vector3> points;
+
+    private void Awake() {
+        penetratorRenderers.Initialize();
+    }
+
+    private void OnDestroy() {
+        penetratorRenderers.OnDestroy();
+    }
+    
     protected override IList<Vector3> GetPoints() {
         points ??= new List<Vector3>();
         points.Clear();
@@ -16,12 +35,13 @@ public class PenetratorBasic : Penetrator {
         return points;
     }
 
-    protected override Quaternion GetDickRotation() {
-        return Quaternion.FromToRotation(Vector3.forward, penetratorData.GetRootForward());
+    protected void Update() {
+        penetratorData.GetSpline(GetPoints(), out var path, out float distanceAlongSpline);
+        penetratorRenderers.Initialize();
+        penetratorRenderers.Update(path, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
     }
 
     protected override void OnDrawGizmos() {
-        points ??= new List<Vector3>();
         if (transforms == null || transforms.Length == 0) {
             return;
         }
