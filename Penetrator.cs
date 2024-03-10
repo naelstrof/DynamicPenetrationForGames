@@ -32,7 +32,7 @@ public class PenetratorInspector : Editor {
 [ExecuteAlways]
 public abstract class Penetrator : MonoBehaviour {
     [FormerlySerializedAs("penetrator")]
-    [SerializeField] private PenetratorData penetratorData;
+    [SerializeField] protected PenetratorData penetratorData;
     
     [SerializeField] private PenetratorRenderers penetratorRenderers;
     
@@ -55,35 +55,13 @@ public abstract class Penetrator : MonoBehaviour {
     protected void OnValidate() {
         penetratorData.OnValidate();
     }
-
+    
     protected virtual void OnDrawGizmos() {
         if (GetPoints().Count == 0) {
             return;
         }
         penetratorData.GetSpline(GetPoints(), out var path, out var distanceAlongSpline);
-        Gizmos.color = Color.red;
-        Vector3 lastPoint = path.GetPositionFromT(0f);
-        for (int i = 0; i <= 64; i++) {
-            Vector3 newPoint = path.GetPositionFromT((float)i / 64f);
-            Gizmos.DrawLine(lastPoint, newPoint);
-            lastPoint = newPoint;
-        }
-
-        var save = Gizmos.matrix;
-        foreach(var weight in path.GetWeights()) {
-            Vector3 pointA = CatmullSpline.GetPosition(weight, 0f);
-            Vector3 normalA = CatmullSpline.GetVelocity(weight, 0f);
-            Gizmos.color = Color.green;
-            Gizmos.matrix = Matrix4x4.TRS(pointA, Quaternion.FromToRotation(Vector3.forward, normalA.normalized), Vector3.one - Vector3.forward * 0.8f);
-            Gizmos.DrawCube(Vector3.zero, Vector3.one*0.025f);
-            if (path.GetWeights().IndexOf(weight) == path.GetWeights().Count - 1) {
-                Vector3 pointB = CatmullSpline.GetPosition(weight, 1f);
-                Vector3 normalB = CatmullSpline.GetVelocity(weight, 1f);
-                Gizmos.matrix = Matrix4x4.TRS(pointB, Quaternion.FromToRotation(Vector3.forward, normalB.normalized), Vector3.one - Vector3.forward * 0.8f);
-                Gizmos.DrawCube(Vector3.zero, Vector3.one*0.025f);
-            }
-        }
-        Gizmos.matrix = save;
+        CatmullSpline.GizmosDrawSpline(path, Color.red, Color.green);
     }
     
 #if UNITY_EDITOR
