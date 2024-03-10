@@ -7,11 +7,24 @@ using UnityEditor;
 
 [CustomEditor(typeof(Penetrator))]
 public class PenetratorInspector : Editor {
+    
+    private bool isEditingRoot;
+    
+    public override void OnInspectorGUI() {
+        var script = target as Penetrator;
+        if (GUILayout.Button("Edit position and orientation")) {
+            isEditingRoot = true;
+            SceneView.RepaintAll();
+        }
+        base.OnInspectorGUI();
+    }
+
     protected void OnSceneGUI() {
         var script = (Penetrator)target;
         Undo.RecordObject(this, "Transforms Updated");
-        script.DrawSceneGUI();
+        script.DrawSceneGUI(isEditingRoot);
     }
+
 }
 
 #endif
@@ -24,9 +37,7 @@ public abstract class Penetrator : MonoBehaviour {
     [SerializeField] private PenetratorRenderers penetratorRenderers;
     
     protected abstract IList<Vector3> GetPoints();
-
-    private bool isEditingRoot;
-
+    
     protected virtual void OnEnable() {
         penetratorData.Initialize();
         penetratorRenderers.Initialize();
@@ -70,7 +81,8 @@ public abstract class Penetrator : MonoBehaviour {
     }
     
 #if UNITY_EDITOR
-    public void DrawSceneGUI() {
+    public void DrawSceneGUI(bool isEditingRoot) {
+        if (!isEditingRoot) return;
         Undo.RecordObject(this, "Transforms Updated");
         EditorGUI.BeginChangeCheck();
         Handles.color = Color.white;

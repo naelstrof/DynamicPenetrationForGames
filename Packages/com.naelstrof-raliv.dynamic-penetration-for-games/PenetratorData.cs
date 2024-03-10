@@ -1,6 +1,44 @@
 using System.Collections.Generic;
 using PenetrationTech;
+using UnityEditor;
 using UnityEngine;
+
+[CustomPropertyDrawer(typeof(PenetratorData))]
+public class PenetratorDataPropertyDrawer : PropertyDrawer {
+    private static bool foldout;
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
+        // Using BeginProperty / EndProperty on the parent property means that
+        // prefab override logic works on the entire property.
+        EditorGUI.BeginProperty(position, label, property);
+        var rect = new Rect(position.x, position.y, position.width, 20);
+        foldout = EditorGUI.BeginFoldoutHeaderGroup(rect, foldout, "Penetrator Data");
+        if (foldout) {
+            rect.y += 20;
+            rect.x += 10;
+            rect.width -= 10;
+            EditorGUIUtility.labelWidth = rect.width*0.4f;
+            //EditorGUI.PropertyField(minRect, property.FindPropertyRelative("mask"));
+            EditorGUI.PropertyField(rect, property.FindPropertyRelative("mask"), GUIContent.none);
+            rect.y += 20;
+            var subRect = EditorGUI.PrefixLabel(rect, new GUIContent("Root Transform"));
+            EditorGUI.PropertyField(subRect, property.FindPropertyRelative("dickRootTransform"), GUIContent.none);
+            rect.y += 20;
+            if (GUI.Button(rect, "Reset position and orientation")) {
+                property.FindPropertyRelative("dickRootPositionOffset").vector3Value = Vector3.zero;
+                property.FindPropertyRelative("dickRootForward").vector3Value = Vector3.forward;
+                property.FindPropertyRelative("dickRootUp").vector3Value = Vector3.up;
+            }
+        }
+        EditorGUI.EndFoldoutHeaderGroup();
+        EditorGUI.EndProperty();
+        
+    }
+
+    public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {
+        return foldout?80:20;
+    }
+    
+}
 
 [System.Serializable]
 public class PenetratorData {
@@ -18,6 +56,12 @@ public class PenetratorData {
     public Vector3 GetRootRight() => Vector3.Cross(dickRootUp, dickRootForward);
     // TODO: Girth Data World Length does not take root position into account
     public float GetPenetratorWorldLength() => girthData.GetWorldLength();
+
+    public void ResetRoot() {
+        dickRootPositionOffset = Vector3.zero;
+        dickRootForward = Vector3.forward;
+        dickRootUp = Vector3.up;
+    }
 
     public void SetDickPositionInfo(Vector3 position, Quaternion rotation) {
         dickRootPositionOffset = position;
