@@ -92,14 +92,15 @@ public class PenetratorJiggleDeform : Penetrator {
 
         Vector3 scaleMemory = penetratorData.GetRootTransform().localScale;
         simulatedPoints[0].localScale = penetratorData.GetRootTransform().localScale = Vector3.one;
+        Vector2 segmentCurvature = curvature / Mathf.Max(simulatedPointCount - 1, 1f);
         for (int i = 0; i < simulatedPointCount; i++) {
             if (i == 0) {
-                simulatedPoints[i].transform.rotation = Quaternion.LookRotation(
+                simulatedPoints[i].transform.rotation = Quaternion.AngleAxis(segmentCurvature.x, penetratorData.GetRootUp()) * Quaternion.AngleAxis(segmentCurvature.y, penetratorData.GetRootRight()) *
+                    Quaternion.LookRotation(
                     penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootForward()),
                     penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootUp()));
                 simulatedPoints[i].transform.position = penetratorData.GetRootTransform().TransformPoint(penetratorData.GetRootPositionOffset());
             } else {
-                Vector2 segmentCurvature = curvature / Mathf.Max(simulatedPointCount - 2, 1f);
                 simulatedPoints[i].transform.localRotation = Quaternion.Euler(segmentCurvature.y, segmentCurvature.x, 0f);
                 float localLength = penetratorData.GetRootTransform().InverseTransformVector(penetratorData.GetPenetratorWorldLength() * penetratorData.GetRootForward()).magnitude;
                 float moveAmount = 1f/(simulatedPointCount-1) * localLength;
