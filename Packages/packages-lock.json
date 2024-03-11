@@ -13,7 +13,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "27afeccb03f6dbeea7e9aa665af9e33ce6558860"
+      "hash": "93c747605e56502c5a492ece57df8b29671fbd74"
     },
     "com.naelstrof.splines": {
       "version": "https://github.com/naelstrof/com.naelstrof.splines.git",

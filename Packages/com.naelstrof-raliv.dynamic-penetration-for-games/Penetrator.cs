@@ -53,7 +53,7 @@ public abstract class Penetrator : MonoBehaviour {
         penetratorRenderers.Update(path, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
     }
 
-    protected void OnValidate() {
+    protected virtual void OnValidate() {
         penetratorData.OnValidate();
     }
 

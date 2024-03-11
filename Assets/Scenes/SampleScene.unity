@@ -552,11 +552,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.01
+      value: 0.015
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -1.074
+      value: -0.826
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalRotation.w
@@ -642,8 +642,11 @@ MonoBehaviour:
   penetratorRenderers:
     renderers:
     - {fileID: 1786496131}
-  simulatedPointCount: 3
+  linkedPenetrable: {fileID: 2110675131}
+  simulatedPointCount: 5
   jiggleSettings: {fileID: 11400000, guid: 4ca2d81757477b54e920f4ae97317be4, type: 2}
+  leftRightCurvature: 0
+  upDownCurvature: -5
 --- !u!1001 &2110675128
 PrefabInstance:
   m_ObjectHideFlags: 0
