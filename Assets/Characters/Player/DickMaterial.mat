@@ -27,7 +27,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 60fccf0152c5d3d4b913581e9e4ccfe0, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _TRUNCATESPHERIZE_ON
   m_InvalidKeywords:
   - _DISABLE_SSR_TRANSPARENT
   - _METALLICGLOSSMAP
@@ -265,6 +266,8 @@ Material:
     - _PPDPrimitiveLength: 1
     - _PPDPrimitiveWidth: 1
     - _Parallax: 0.02
+    - _PenetratorOffsetLength: 0
+    - _PenetratorWorldLength: 1
     - _RayTracing: 0
     - _ReceivesSSR: 1
     - _ReceivesSSRTransparent: 0
@@ -306,6 +309,8 @@ Material:
     - _TransparentSortPriority: 0
     - _TransparentWritingMotionVec: 0
     - _TransparentZWrite: 0
+    - _TruncateLength: 1
+    - _TruncateSpherize: 1
     - _UVBase: 0
     - _UVDetail: 0
     - _UVEmissive: 0
@@ -334,6 +339,11 @@ Material:
     - _EmissiveColorLDR: {r: 0, g: 0, b: 0, a: 1}
     - _InvPrimScale: {r: 1, g: 1, b: 0, a: 0}
     - _IridescenceThicknessRemap: {r: 0, g: 1, b: 0, a: 0}
+    - _PenetratorForwardWorld: {r: 0, g: 0, b: 0, a: 0}
+    - _PenetratorRightWorld: {r: 0, g: 0, b: 0, a: 0}
+    - _PenetratorRootWorld: {r: 0, g: 0, b: 0, a: 0}
+    - _PenetratorStartWorld: {r: 0, g: 0, b: 0, a: 0}
+    - _PenetratorUpWorld: {r: 0, g: 0, b: 0, a: 0}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
     - _ThicknessRemap: {r: 0, g: 1, b: 0, a: 0}
     - _TransmittanceColor: {r: 1, g: 1, b: 1, a: 1}
