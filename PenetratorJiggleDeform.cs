@@ -15,8 +15,8 @@ public class PenetratorJiggleDeformInspector : PenetratorInspector { }
 public class PenetratorJiggleDeform : Penetrator {
     [SerializeField, Range(1,5)] private int simulatedPointCount = 3;
     [SerializeField] private JiggleSettings jiggleSettings;
-    [SerializeField, Range(-20f, 20f)] private float leftRightCurvature = 0f;
-    [SerializeField, Range(-20f, 20f)] private float upDownCurvature = 0f;
+    [SerializeField, Range(-90f, 90f)] private float leftRightCurvature = 0f;
+    [SerializeField, Range(-90f, 90f)] private float upDownCurvature = 0f;
     
     private List<Transform> simulatedPoints;
     private List<Vector3> points = new();
@@ -31,19 +31,18 @@ public class PenetratorJiggleDeform : Penetrator {
             simulatedPointObj.transform.SetParent(i == 0 ? penetratorData.GetRootTransform().parent : simulatedPoints[^1]);
             simulatedPoints.Add(simulatedPointObj.transform);
         }
+        SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
         builder = gameObject.AddComponent<JiggleRigBuilder>();
         rig = new JiggleRigBuilder.JiggleRig(simulatedPoints[0], jiggleSettings, new Transform[] { }, new Collider[] { });
         builder.jiggleRigs = new List<JiggleRigBuilder.JiggleRig> { rig };
-        SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
     }
 
-    protected override void Update() {
+    protected void Update() {
         if (simulatedPoints == null || simulatedPoints.Count == 0) {
-            base.Update();
             return;
         }
         simulatedPoints[0].localScale = penetratorData.GetRootTransform().localScale;
-        base.Update();
+        SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
     }
 
     protected override void OnDisable() {
@@ -87,22 +86,27 @@ public class PenetratorJiggleDeform : Penetrator {
     public void SetCurvature(Vector2 curvature) {
         if (!Application.isPlaying) return;
         if (simulatedPoints == null || simulatedPoints.Count <= 1) return;
-        if (rig == null) return;
         
         leftRightCurvature = curvature.x;
         upDownCurvature = curvature.y;
 
         Vector3 scaleMemory = penetratorData.GetRootTransform().localScale;
         simulatedPoints[0].localScale = penetratorData.GetRootTransform().localScale = Vector3.one;
-        Vector3 accumulatingForward = penetratorData.GetRootForward();
         for (int i = 0; i < simulatedPointCount; i++) {
-            float progress = (float)i / (simulatedPointCount - 1);
-            float moveAmount = progress * penetratorData.GetPenetratorWorldLength();
-            simulatedPoints[i].transform.position = penetratorData.GetRootTransform().TransformPoint(penetratorData.GetRootPositionOffset() + accumulatingForward.normalized * moveAmount);
-            accumulatingForward = Quaternion.AngleAxis(curvature.x, penetratorData.GetRootUp()) * Quaternion.AngleAxis(curvature.y, penetratorData.GetRootRight()) * accumulatingForward.normalized;
+            if (i == 0) {
+                simulatedPoints[i].transform.rotation = Quaternion.LookRotation(
+                    penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootForward()),
+                    penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootUp()));
+                simulatedPoints[i].transform.position = penetratorData.GetRootTransform().TransformPoint(penetratorData.GetRootPositionOffset());
+            } else {
+                Vector2 segmentCurvature = curvature / Mathf.Max(simulatedPointCount - 2, 1f);
+                simulatedPoints[i].transform.localRotation = Quaternion.Euler(segmentCurvature.y, segmentCurvature.x, 0f);
+                float localLength = penetratorData.GetRootTransform().InverseTransformVector(penetratorData.GetPenetratorWorldLength() * penetratorData.GetRootForward()).magnitude;
+                float moveAmount = 1f/(simulatedPointCount-1) * localLength;
+                simulatedPoints[i].transform.localPosition = Vector3.forward * moveAmount;
+            }
         }
         simulatedPoints[0].localScale = penetratorData.GetRootTransform().localScale = scaleMemory;
-        rig.MatchAnimationInstantly();
     }
 
     protected override void OnValidate() {
@@ -110,6 +114,5 @@ public class PenetratorJiggleDeform : Penetrator {
         if (!Application.isPlaying) return;
         if (simulatedPoints == null || simulatedPoints.Count <= 1) return;
         if (rig == null) return;
-        SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
     }
 }
