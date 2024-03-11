@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -42,15 +43,25 @@ public abstract class Penetrator : MonoBehaviour {
     protected virtual void OnEnable() {
         penetratorData.Initialize();
         penetratorRenderers.Initialize();
+        RenderPipelineManager.beginFrameRendering += OnBeginRenderFrame;
+        Camera.onPreRender += OnBeginRenderCamera;
     }
+
+    private void OnBeginRenderCamera(Camera cam) {
+        penetratorData.GetSpline(GetPoints(), out var path, out float distanceAlongSpline);
+        penetratorRenderers.Update(path, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
+    }
+
+    private void OnBeginRenderFrame(ScriptableRenderContext arg1, Camera[] arg2) {
+        penetratorData.GetSpline(GetPoints(), out var path, out float distanceAlongSpline);
+        penetratorRenderers.Update(path, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
+    }
+
     protected virtual void OnDisable() {
         penetratorData.Release();
         penetratorRenderers.OnDestroy();
-    }
-    
-    protected virtual void Update() {
-        penetratorData.GetSpline(GetPoints(), out var path, out float distanceAlongSpline);
-        penetratorRenderers.Update(path, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
+        RenderPipelineManager.beginFrameRendering -= OnBeginRenderFrame;
+        Camera.onPreRender -= OnBeginRenderCamera;
     }
 
     protected virtual void OnValidate() {
