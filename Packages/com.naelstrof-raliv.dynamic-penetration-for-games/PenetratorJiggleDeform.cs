@@ -96,9 +96,7 @@ public class PenetratorJiggleDeform : Penetrator {
         for (int i = 0; i < simulatedPointCount; i++) {
             if (i == 0) {
                 simulatedPoints[i].transform.rotation = Quaternion.AngleAxis(segmentCurvature.x, penetratorData.GetRootUp()) * Quaternion.AngleAxis(segmentCurvature.y, penetratorData.GetRootRight()) *
-                    Quaternion.LookRotation(
-                    penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootForward()),
-                    penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootUp()));
+                    Quaternion.LookRotation( penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootForward()), penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootUp()));
                 simulatedPoints[i].transform.position = penetratorData.GetRootTransform().TransformPoint(penetratorData.GetRootPositionOffset());
             } else {
                 simulatedPoints[i].transform.localRotation = Quaternion.Euler(segmentCurvature.y, segmentCurvature.x, 0f);
