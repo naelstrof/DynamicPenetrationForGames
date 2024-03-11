@@ -57,6 +57,7 @@ public class PenetratorData {
     public Vector3 GetRootRight() => Vector3.Cross(penetratorRootUp, penetratorRootForward);
     // TODO: Girth Data World Length does not take root position into account
     public float GetPenetratorWorldLength() => girthData.GetWorldLength();
+    public float GetWorldGirthRadius(float alongLength) => girthData.GetWorldGirthRadius(alongLength);
 
     public void ResetRoot() {
         penetratorRootPositionOffset = Vector3.zero;

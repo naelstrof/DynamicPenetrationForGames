@@ -736,8 +736,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   transforms:
-  - {fileID: 1391545968}
+  - {fileID: 2110675132}
   - {fileID: 882251532}
+  entranceTransform: {fileID: 2110675132}
+--- !u!4 &2110675132 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 9044806412961212599, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
+  m_PrefabInstance: {fileID: 2110675128}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -77,6 +77,7 @@ public class PenetratorJiggleDeform : Penetrator {
                     simulatedPoints[i].position = linkedSpline.GetPositionFromDistance(totalDistance);
                 }
                 rig.SampleAndReset();
+                linkedPenetrable.SetPenetrated(penetratorData, proximity, linkedSpline, 2);
             }
             return LerpPoints(points, linkedPoints, insertionAmount);
         }

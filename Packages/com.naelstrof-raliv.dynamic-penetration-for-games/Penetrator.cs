@@ -95,6 +95,7 @@ public abstract class Penetrator : MonoBehaviour {
         CatmullSpline.GizmosDrawSpline(path, Color.red, Color.green);
     }
     
+    
 #if UNITY_EDITOR
     public void DrawSceneGUI(bool isEditingRoot) {
         if (!isEditingRoot) return;
