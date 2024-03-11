@@ -11,4 +11,7 @@ public abstract class Penetrable : MonoBehaviour {
         var spline = new CatmullSpline(GetPoints());
         CatmullSpline.GizmosDrawSpline(spline, Color.red, Color.green);
     }
+    
+    public virtual void SetPenetrated(PenetratorData penetrator, float distanceFromPenetrator, CatmullSpline alongSpline, int penetrableStartIndex) {
+    }
 }

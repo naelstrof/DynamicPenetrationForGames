@@ -31,6 +31,7 @@ public class PenetratorBasic : Penetrator {
             penetratorData.GetSpline(linkedPenetrable.GetPoints(), out var linkedSpline, out var baseDistanceAlongSpline);
             var proximity = linkedSpline.GetDistanceFromSubT(1, 2, 1f);
             var tipProximity = proximity - penetratorData.GetPenetratorWorldLength();
+            linkedPenetrable.SetPenetrated(penetratorData, proximity, linkedSpline, 2);
             return LerpPoints(points, linkedPoints, 1f-Mathf.Clamp01(tipProximity/0.2f));
         }
         return points;
