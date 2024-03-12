@@ -19,7 +19,7 @@ public abstract class Penetrable : MonoBehaviour {
         public float truncationLength;
     }
     
-    public virtual PenetrationData SetPenetrated(PenetratorData penetrator, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
+    public virtual PenetrationData SetPenetrated(Penetrator penetrator, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
         return new PenetrationData();
     }
 }

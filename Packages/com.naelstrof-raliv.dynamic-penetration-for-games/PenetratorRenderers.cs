@@ -21,8 +21,11 @@ public class PenetratorRenderers {
     private MaterialPropertyBlock propertyBlock;
     private static readonly int penetratorOffsetLengthID = Shader.PropertyToID("_PenetratorOffsetLength");
     private static readonly int penetratorStartWorldID = Shader.PropertyToID("_PenetratorStartWorld");
+    private static readonly int squashStretchCorrectionID = Shader.PropertyToID("_SquashStretchCorrection");
+    private static readonly int distanceToHoleID = Shader.PropertyToID("_DistanceToHole");
+    private static readonly int penetratorWorldLengthID = Shader.PropertyToID("_PenetratorWorldLength");
 
-    private unsafe struct CatmullSplineData {
+    public unsafe struct CatmullSplineData {
         private const int subSplineCount = 8;
         private const int binormalCount = CatmullSpline.BINORMAL_LUT_COUNT;
         private const int distanceCount = 32;
@@ -83,7 +86,7 @@ public class PenetratorRenderers {
         propertyBlock = new MaterialPropertyBlock();
     }
 
-    public void Update(CatmullSpline spline, float baseDistanceAlongSpline, Transform rootBone, Vector3 localRootForward, Vector3 localRootRight, Vector3 localRootUp) {
+    public void Update(CatmullSpline spline, float penetratorLength, float squashAndStretch, float distanceToHole, float baseDistanceAlongSpline, Transform rootBone, Vector3 localRootForward, Vector3 localRootRight, Vector3 localRootUp) {
         data[0] = new CatmullSplineData(spline);
         catmullBuffer.SetData(data, 0, 0, 1);
         foreach(Renderer renderer in renderers) {
@@ -96,6 +99,9 @@ public class PenetratorRenderers {
             propertyBlock.SetVector(penetratorUpID, rootBone.TransformDirection(localRootUp));
             propertyBlock.SetVector(penetratorRootID, rootBone.position);
             propertyBlock.SetBuffer(catmullSplinesID, catmullBuffer);
+            propertyBlock.SetFloat(squashStretchCorrectionID, squashAndStretch);
+            propertyBlock.SetFloat(penetratorWorldLengthID, penetratorLength);
+            propertyBlock.SetFloat(distanceToHoleID, distanceToHole);
             renderer.SetPropertyBlock(propertyBlock);
         }
     }

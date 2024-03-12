@@ -33,7 +33,8 @@ public class PenetratorInspector : Editor {
 [ExecuteAlways]
 public abstract class Penetrator : MonoBehaviour {
     [FormerlySerializedAs("penetrator")]
-    [SerializeField] protected PenetratorData penetratorData;
+    [SerializeField] private PenetratorData penetratorData;
+    [SerializeField, Range(0.1f, 2f)] protected float squashAndStretch = 1f;
     
     [SerializeField] protected PenetratorRenderers penetratorRenderers;
 
@@ -44,9 +45,23 @@ public abstract class Penetrator : MonoBehaviour {
         penetratorRenderers.Initialize();
     }
 
+    public void GetSpline(IList<Vector3> inputPoints, out CatmullSpline spline, out float baseDistanceAlongSpline) => penetratorData.GetSpline(inputPoints, out spline, out baseDistanceAlongSpline);
+    public Transform GetRootTransform() => penetratorData.GetRootTransform();
+    public Vector3 GetRootPositionOffset() => penetratorData.GetRootPositionOffset();
+    public Vector3 GetRootForward() => penetratorData.GetRootForward();
+    public Vector3 GetRootUp() => penetratorData.GetRootUp();
+    public Vector3 GetRootRight() => penetratorData.GetRootRight();
+    public virtual float GetWorldLength() {
+        return penetratorData.GetPenetratorWorldLength() * squashAndStretch;
+    }
+    
+    public virtual float GetWorldGirthRadius(float distanceAlongPenetrator) {
+        return penetratorData.GetWorldGirthRadius(distanceAlongPenetrator/squashAndStretch);
+    }
+
     protected virtual void LateUpdate() {
         penetratorData.GetSpline(GetPoints(), out var path, out float distanceAlongSpline);
-        penetratorRenderers.Update(path, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
+        penetratorRenderers.Update(path, penetratorData.GetPenetratorWorldLength(), squashAndStretch,0f, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
     }
 
     protected virtual void OnDisable() {
