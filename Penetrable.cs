@@ -11,7 +11,15 @@ public abstract class Penetrable : MonoBehaviour {
         var spline = new CatmullSpline(GetPoints());
         CatmullSpline.GizmosDrawSpline(spline, Color.red, Color.green);
     }
+
+    public struct PenetrationData {
+        public float knotForce;
+        public bool tipIsInside;
+        public float stimulation;
+        public float truncationLength;
+    }
     
-    public virtual void SetPenetrated(PenetratorData penetrator, float distanceFromPenetrator, CatmullSpline alongSpline, int penetrableStartIndex) {
+    public virtual PenetrationData SetPenetrated(PenetratorData penetrator, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
+        return new PenetrationData();
     }
 }

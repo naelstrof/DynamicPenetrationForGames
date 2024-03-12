@@ -35,24 +35,16 @@ public abstract class Penetrator : MonoBehaviour {
     [FormerlySerializedAs("penetrator")]
     [SerializeField] protected PenetratorData penetratorData;
     
-    [SerializeField] private PenetratorRenderers penetratorRenderers;
+    [SerializeField] protected PenetratorRenderers penetratorRenderers;
 
-    [SerializeField] protected Penetrable linkedPenetrable;
     protected abstract IList<Vector3> GetPoints();
     
     protected virtual void OnEnable() {
         penetratorData.Initialize();
         penetratorRenderers.Initialize();
-        RenderPipelineManager.beginFrameRendering += OnBeginRenderFrame;
-        Camera.onPreRender += OnBeginRenderCamera;
     }
 
-    private void OnBeginRenderCamera(Camera cam) {
-        penetratorData.GetSpline(GetPoints(), out var path, out float distanceAlongSpline);
-        penetratorRenderers.Update(path, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
-    }
-
-    private void OnBeginRenderFrame(ScriptableRenderContext arg1, Camera[] arg2) {
+    protected virtual void LateUpdate() {
         penetratorData.GetSpline(GetPoints(), out var path, out float distanceAlongSpline);
         penetratorRenderers.Update(path, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
     }
@@ -60,19 +52,13 @@ public abstract class Penetrator : MonoBehaviour {
     protected virtual void OnDisable() {
         penetratorData.Release();
         penetratorRenderers.OnDestroy();
-        RenderPipelineManager.beginFrameRendering -= OnBeginRenderFrame;
-        Camera.onPreRender -= OnBeginRenderCamera;
     }
 
     protected virtual void OnValidate() {
         penetratorData.OnValidate();
     }
 
-    public void LinkToPenetrable(Penetrable penetrable) {
-        linkedPenetrable = penetrable;
-    }
-
-    public IList<Vector3> LerpPoints(IList<Vector3> a, IList<Vector3> b, float t) {
+    public static IList<Vector3> LerpPoints(IList<Vector3> a, IList<Vector3> b, float t) {
         while (a.Count < b.Count) a.Add(a[^1]+(a[^1]-a[^2]));
         while (b.Count < a.Count) b.Add(b[^1]+(b[^1]-b[^2]));
         var aSpline = new CatmullSpline(a);
