@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,7 +8,13 @@ public class PenetrableBasic : Penetrable {
     [SerializeField] private Transform entranceTransform;
     
     private List<Vector3> points = new();
-    
+
+    private Quaternion startLocalRotation;
+
+    private void Awake() {
+        startLocalRotation = entranceTransform.localRotation;
+    }
+
     public override IList<Vector3> GetPoints() {
         points.Clear();
         if (transforms == null) return points;
@@ -20,10 +27,15 @@ public class PenetrableBasic : Penetrable {
         return points;
     }
 
-    public override void SetPenetrated(PenetratorData penetrator, float distanceFromPenetrator, CatmullSpline alongSpline, int penetrableStartIndex) {
-        base.SetPenetrated(penetrator, distanceFromPenetrator, alongSpline, penetrableStartIndex);
+    public override PenetrationData SetPenetrated(PenetratorData penetrator, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
+        base.SetPenetrated(penetrator, penetrationDepth, alongSpline, penetrableStartIndex);
         float entranceSample = alongSpline.GetDistanceFromSubT(0, penetrableStartIndex, 1f);
-        entranceTransform.up = -alongSpline.GetVelocityFromDistance(entranceSample).normalized;
-        entranceTransform.localScale = Vector3.one + Vector3.one*penetrator.GetWorldGirthRadius(penetrator.GetPenetratorWorldLength() - distanceFromPenetrator);
+        if (penetrationDepth > 0) {
+            entranceTransform.up = -alongSpline.GetVelocityFromDistance(entranceSample).normalized;
+        } else {
+            entranceTransform.localRotation = startLocalRotation;
+        }
+        entranceTransform.localScale = Vector3.one + Vector3.one*(penetrator.GetWorldGirthRadius(-penetrationDepth + penetrator.GetPenetratorWorldLength() )*10f);
+        return new PenetrationData();
     }
 }

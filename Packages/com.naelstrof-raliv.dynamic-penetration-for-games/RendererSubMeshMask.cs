@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
-using UnityEditor.UIElements;
 #endif
 
 namespace PenetrationTech {
@@ -34,6 +33,10 @@ namespace PenetrationTech {
                 GenericMenu menu = new GenericMenu();
                 for(int i=0;i<mesh.subMeshCount;i++) {
                     string name = $"Sub-mesh {i}";
+                    if (renderer.sharedMaterials.Length > i && renderer.sharedMaterials[i] != null) {
+                        name = $"Sub-mesh {i} [{renderer.sharedMaterials[i].name}]";
+                    }
+
                     int alloc = i;
                     menu.AddItem(new GUIContent(name), RendererSubMeshMask.GetMask(maskProp.intValue,i), ()=> {
                         maskProp.intValue = RendererSubMeshMask.ToggleMask(maskProp.intValue, alloc);

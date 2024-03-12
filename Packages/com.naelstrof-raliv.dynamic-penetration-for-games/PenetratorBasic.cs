@@ -13,6 +13,7 @@ public class PenetratorBasicInspector : PenetratorInspector { }
 [ExecuteAlways]
 public class PenetratorBasic : Penetrator {
     [SerializeField] private Transform[] transforms;
+    [SerializeField] protected Penetrable linkedPenetrable;
     
     private List<Vector3> points = new();
     
