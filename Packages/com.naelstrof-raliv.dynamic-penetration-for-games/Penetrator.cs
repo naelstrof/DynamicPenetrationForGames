@@ -38,6 +38,10 @@ public abstract class Penetrator : MonoBehaviour {
     
     [SerializeField] protected PenetratorRenderers penetratorRenderers;
 
+    protected Penetrable.PenetrationData data = new Penetrable.PenetrationData() {
+        truncationLength = 999f, // TODO: Make this a real constructor!
+    };
+
     protected abstract IList<Vector3> GetPoints();
     
     protected virtual void OnEnable() {
@@ -59,9 +63,26 @@ public abstract class Penetrator : MonoBehaviour {
         return penetratorData.GetWorldGirthRadius(distanceAlongPenetrator/squashAndStretch);
     }
 
+    public virtual void SetPenetrationData(Penetrable.PenetrationData data) {
+        this.data = data;
+    }
     protected virtual void LateUpdate() {
         penetratorData.GetSpline(GetPoints(), out var path, out float distanceAlongSpline);
-        penetratorRenderers.Update(path, penetratorData.GetPenetratorWorldLength(), squashAndStretch,0f, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
+        penetratorRenderers.Update(
+            path,
+            penetratorData.GetPenetratorWorldLength(),
+            squashAndStretch,
+            0f,
+            distanceAlongSpline,
+            penetratorData.GetRootTransform(),
+            penetratorData.GetRootForward(),
+            penetratorData.GetRootRight(),
+            penetratorData.GetRootUp(),
+            data.truncationLength,
+            data.clippingRange.startDistance,
+            data.clippingRange.endDistance,
+            data.truncationGirth
+        );
     }
 
     protected virtual void OnDisable() {

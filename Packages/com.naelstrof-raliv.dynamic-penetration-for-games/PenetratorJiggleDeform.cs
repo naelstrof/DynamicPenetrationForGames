@@ -44,7 +44,21 @@ public class PenetratorJiggleDeform : Penetrator {
     protected override void LateUpdate() {
         if (simulatedPoints == null || simulatedPoints.Count == 0) {
             GetSpline(new Vector3[] {}, out var fakeSpline, out float fakeDistanceAlongSpline);
-            penetratorRenderers.Update(fakeSpline, GetWorldLength(), squashAndStretch, GetWorldLength()*1.1f, fakeDistanceAlongSpline, GetRootTransform(), GetRootForward(), GetRootRight(), GetRootUp());
+            penetratorRenderers.Update(
+                fakeSpline,
+                GetWorldLength(),
+                squashAndStretch,
+                GetWorldLength() * 1.1f,
+                fakeDistanceAlongSpline,
+                GetRootTransform(),
+                GetRootForward(),
+                GetRootRight(),
+                GetRootUp(),
+                data.truncationLength,
+                data.clippingRange.startDistance,
+                data.clippingRange.endDistance,
+                data.truncationGirth
+            );
             return;
         }
         if (Application.isPlaying) {
@@ -72,17 +86,35 @@ public class PenetratorJiggleDeform : Penetrator {
                     simulatedPoints[i].position = finalizedSpline.GetPositionFromDistance(totalDistance);
                 }
                 rig.SampleAndReset();
-                linkedPenetrable.SetPenetrated(this, penetrationDepth, finalizedSpline, penetrableStartIndex);
+                var newData = linkedPenetrable.SetPenetrated(this, penetrationDepth, finalizedSpline, penetrableStartIndex);
+                SetPenetrationData(newData);
             } else if (lastInsertionAmount >= 1f) {
-                linkedPenetrable.SetPenetrated(this, -1f, finalizedSpline, penetrableStartIndex);
+                linkedPenetrable.SetUnpenetrated(this);
+                SetPenetrationData(new Penetrable.PenetrationData() {
+                    truncationLength = 999f // TODO: THIS SHOULD BE A CONSTRUCTOR
+                });
             }
         }
 
         float penetrableDistance = insertionAmount < 1f ? GetWorldLength() + 0.1f : finalizedSpline.GetDistanceFromSubT(1, penetrableStartIndex, 1f);
-        penetratorRenderers.Update(finalizedSpline, GetWorldLength(), squashAndStretch, penetrableDistance, distanceAlongSpline, GetRootTransform(), GetRootForward(), GetRootRight(), GetRootUp());
+        penetratorRenderers.Update(
+            finalizedSpline,
+            GetWorldLength(),
+            squashAndStretch,
+            penetrableDistance,
+            distanceAlongSpline,
+            GetRootTransform(),
+            GetRootForward(),
+            GetRootRight(),
+            GetRootUp(),
+            data.truncationLength,
+            data.clippingRange.startDistance,
+            data.clippingRange.endDistance,
+            data.truncationGirth
+        );
         lastInsertionAmount = insertionAmount;
     }
-
+    
     protected virtual void GetPenetrableSplineInfo(out float penetrationDepth, out int penetrableStartIndex, out float insertionAmount) {
         GetSpline(linkedPenetrable.GetPoints(), out var linkedSpline, out var baseDistanceAlongSpline);
         var proximity = linkedSpline.GetDistanceFromSubT(1, 2, 1f);
@@ -90,6 +122,13 @@ public class PenetratorJiggleDeform : Penetrator {
         penetrationDepth = -tipProximity;
         penetrableStartIndex = 2;
         insertionAmount = 1f - Mathf.Clamp01(tipProximity / 0.2f);
+    }
+
+    public void SetLinkedPenetrable(Penetrable penetrable) {
+        if (penetrable == null) {
+            penetrable.SetUnpenetrated(this);
+        }
+        linkedPenetrable = penetrable;
     }
 
     protected override void OnDisable() {

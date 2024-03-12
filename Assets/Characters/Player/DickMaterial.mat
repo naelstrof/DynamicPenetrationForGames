@@ -34,7 +34,7 @@ Material:
   - _METALLICGLOSSMAP
   - _NORMALMAP
   - _NORMALMAP_TANGENT_SPACE
-  m_LightmapFlags: 4
+  m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -233,7 +233,9 @@ Material:
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
     - _EnableGeometricSpecularAA: 0
+    - _EndClip: 0.03
     - _EnergyConservingSpecularColor: 1
+    - _GirthRadius: 0.1
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -284,6 +286,7 @@ Material:
     - _SpecularOcclusionMode: 1
     - _SquashStretchCorrection: 1
     - _SrcBlend: 1
+    - _StartClip: 0.03
     - _StencilRef: 0
     - _StencilRefDepth: 8
     - _StencilRefDistortionVec: 4

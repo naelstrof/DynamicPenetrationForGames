@@ -24,6 +24,10 @@ public class PenetratorRenderers {
     private static readonly int squashStretchCorrectionID = Shader.PropertyToID("_SquashStretchCorrection");
     private static readonly int distanceToHoleID = Shader.PropertyToID("_DistanceToHole");
     private static readonly int penetratorWorldLengthID = Shader.PropertyToID("_PenetratorWorldLength");
+    private static readonly int truncateLengthID = Shader.PropertyToID("_TruncateLength");
+    private static readonly int startClipID = Shader.PropertyToID("_StartClip");
+    private static readonly int endClipID = Shader.PropertyToID("_EndClip");
+    private static readonly int girthRadiusID = Shader.PropertyToID("_GirthRadius");
 
     public unsafe struct CatmullSplineData {
         private const int subSplineCount = 8;
@@ -86,7 +90,8 @@ public class PenetratorRenderers {
         propertyBlock = new MaterialPropertyBlock();
     }
 
-    public void Update(CatmullSpline spline, float penetratorLength, float squashAndStretch, float distanceToHole, float baseDistanceAlongSpline, Transform rootBone, Vector3 localRootForward, Vector3 localRootRight, Vector3 localRootUp) {
+    public void Update(CatmullSpline spline, float penetratorLength, float squashAndStretch, float distanceToHole, float baseDistanceAlongSpline,
+        Transform rootBone, Vector3 localRootForward, Vector3 localRootRight, Vector3 localRootUp, float truncateLength, float clippingStart, float clippingEnd, float truncateGirthRadius) {
         data[0] = new CatmullSplineData(spline);
         catmullBuffer.SetData(data, 0, 0, 1);
         foreach(Renderer renderer in renderers) {
@@ -102,6 +107,10 @@ public class PenetratorRenderers {
             propertyBlock.SetFloat(squashStretchCorrectionID, squashAndStretch);
             propertyBlock.SetFloat(penetratorWorldLengthID, penetratorLength);
             propertyBlock.SetFloat(distanceToHoleID, distanceToHole);
+            propertyBlock.SetFloat(truncateLengthID, truncateLength);
+            propertyBlock.SetFloat(girthRadiusID, truncateGirthRadius);
+            propertyBlock.SetFloat(startClipID, clippingStart);
+            propertyBlock.SetFloat(endClipID, clippingEnd);
             renderer.SetPropertyBlock(propertyBlock);
         }
     }
