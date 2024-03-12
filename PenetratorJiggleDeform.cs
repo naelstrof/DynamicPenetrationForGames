@@ -31,7 +31,7 @@ public class PenetratorJiggleDeform : Penetrator {
         simulatedPoints = new List<Transform>();
         for (int i = 0; i < simulatedPointCount; i++) {
             var simulatedPointObj = new GameObject($"PenetratorJiggle{i}");
-            simulatedPointObj.transform.SetParent(i == 0 ? penetratorData.GetRootTransform().parent : simulatedPoints[^1]);
+            simulatedPointObj.transform.SetParent(i == 0 ? GetRootTransform().parent : simulatedPoints[^1]);
             simulatedPoints.Add(simulatedPointObj.transform);
         }
         SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
@@ -43,8 +43,8 @@ public class PenetratorJiggleDeform : Penetrator {
 
     protected override void LateUpdate() {
         if (simulatedPoints == null || simulatedPoints.Count == 0) {
-            penetratorData.GetSpline(new Vector3[] {}, out var fakeSpline, out float fakeDistanceAlongSpline);
-            penetratorRenderers.Update(fakeSpline, fakeDistanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
+            GetSpline(new Vector3[] {}, out var fakeSpline, out float fakeDistanceAlongSpline);
+            penetratorRenderers.Update(fakeSpline, GetWorldLength(), squashAndStretch, GetWorldLength()*1.1f, fakeDistanceAlongSpline, GetRootTransform(), GetRootForward(), GetRootRight(), GetRootUp());
             return;
         }
         if (Application.isPlaying) {
@@ -61,31 +61,32 @@ public class PenetratorJiggleDeform : Penetrator {
             jigglePoints = LerpPoints(jigglePoints, linkedPenetrable.GetPoints(), insertionAmount);
         }
         
-        penetratorData.GetSpline(jigglePoints, out var finalizedSpline, out float distanceAlongSpline);
+        GetSpline(jigglePoints, out var finalizedSpline, out float distanceAlongSpline);
         
-        simulatedPoints[0].localScale = penetratorData.GetRootTransform().localScale;
+        simulatedPoints[0].localScale = GetRootTransform().localScale;
         if (linkedPenetrable != null) {
             if (insertionAmount >= 1f) {
                 for (int i = 0; i < simulatedPointCount; i++) {
                     float progress = (float)i / (simulatedPointCount - 1);
-                    float totalDistance = progress * penetratorData.GetPenetratorWorldLength();
+                    float totalDistance = progress * GetWorldLength();
                     simulatedPoints[i].position = finalizedSpline.GetPositionFromDistance(totalDistance);
                 }
                 rig.SampleAndReset();
-                linkedPenetrable.SetPenetrated(penetratorData, penetrationDepth, finalizedSpline, penetrableStartIndex);
+                linkedPenetrable.SetPenetrated(this, penetrationDepth, finalizedSpline, penetrableStartIndex);
             } else if (lastInsertionAmount >= 1f) {
-                linkedPenetrable.SetPenetrated(penetratorData, -1f, finalizedSpline, penetrableStartIndex);
+                linkedPenetrable.SetPenetrated(this, -1f, finalizedSpline, penetrableStartIndex);
             }
         }
-        
-        penetratorRenderers.Update(finalizedSpline, distanceAlongSpline, penetratorData.GetRootTransform(), penetratorData.GetRootForward(), penetratorData.GetRootRight(), penetratorData.GetRootUp());
+
+        float penetrableDistance = insertionAmount < 1f ? GetWorldLength() + 0.1f : finalizedSpline.GetDistanceFromSubT(1, penetrableStartIndex, 1f);
+        penetratorRenderers.Update(finalizedSpline, GetWorldLength(), squashAndStretch, penetrableDistance, distanceAlongSpline, GetRootTransform(), GetRootForward(), GetRootRight(), GetRootUp());
         lastInsertionAmount = insertionAmount;
     }
 
     protected virtual void GetPenetrableSplineInfo(out float penetrationDepth, out int penetrableStartIndex, out float insertionAmount) {
-        penetratorData.GetSpline(linkedPenetrable.GetPoints(), out var linkedSpline, out var baseDistanceAlongSpline);
+        GetSpline(linkedPenetrable.GetPoints(), out var linkedSpline, out var baseDistanceAlongSpline);
         var proximity = linkedSpline.GetDistanceFromSubT(1, 2, 1f);
-        var tipProximity = proximity - penetratorData.GetPenetratorWorldLength();
+        var tipProximity = proximity - GetWorldLength();
         penetrationDepth = -tipProximity;
         penetrableStartIndex = 2;
         insertionAmount = 1f - Mathf.Clamp01(tipProximity / 0.2f);
@@ -119,22 +120,22 @@ public class PenetratorJiggleDeform : Penetrator {
         leftRightCurvature = curvature.x;
         upDownCurvature = curvature.y;
 
-        Vector3 scaleMemory = penetratorData.GetRootTransform().localScale;
-        simulatedPoints[0].localScale = penetratorData.GetRootTransform().localScale = Vector3.one;
+        Vector3 scaleMemory = GetRootTransform().localScale;
+        simulatedPoints[0].localScale = GetRootTransform().localScale = Vector3.one;
         Vector2 segmentCurvature = curvature / Mathf.Max(simulatedPointCount - 1, 1f);
         for (int i = 0; i < simulatedPointCount; i++) {
             if (i == 0) {
-                simulatedPoints[i].transform.rotation = Quaternion.AngleAxis(segmentCurvature.x, penetratorData.GetRootUp()) * Quaternion.AngleAxis(segmentCurvature.y, penetratorData.GetRootRight()) *
-                    Quaternion.LookRotation( penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootForward()), penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootUp()));
-                simulatedPoints[i].transform.position = penetratorData.GetRootTransform().TransformPoint(penetratorData.GetRootPositionOffset());
+                simulatedPoints[i].transform.rotation = Quaternion.AngleAxis(segmentCurvature.x, GetRootUp()) * Quaternion.AngleAxis(segmentCurvature.y, GetRootRight()) *
+                    Quaternion.LookRotation( GetRootTransform().TransformDirection(GetRootForward()), GetRootTransform().TransformDirection(GetRootUp()));
+                simulatedPoints[i].transform.position = GetRootTransform().TransformPoint(GetRootPositionOffset());
             } else {
                 simulatedPoints[i].transform.localRotation = Quaternion.Euler(segmentCurvature.y, segmentCurvature.x, 0f);
-                float localLength = penetratorData.GetRootTransform().InverseTransformVector(penetratorData.GetPenetratorWorldLength() * penetratorData.GetRootForward()).magnitude;
+                float localLength = GetRootTransform().InverseTransformVector(GetWorldLength() * GetRootForward()).magnitude;
                 float moveAmount = 1f/(simulatedPointCount-1) * localLength;
                 simulatedPoints[i].transform.localPosition = Vector3.forward * moveAmount;
             }
         }
-        simulatedPoints[0].localScale = penetratorData.GetRootTransform().localScale = scaleMemory;
+        simulatedPoints[0].localScale = GetRootTransform().localScale = scaleMemory;
     }
 
     protected override void OnValidate() {

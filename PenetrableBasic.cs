@@ -27,7 +27,7 @@ public class PenetrableBasic : Penetrable {
         return points;
     }
 
-    public override PenetrationData SetPenetrated(PenetratorData penetrator, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
+    public override PenetrationData SetPenetrated(Penetrator penetrator, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
         base.SetPenetrated(penetrator, penetrationDepth, alongSpline, penetrableStartIndex);
         float entranceSample = alongSpline.GetDistanceFromSubT(0, penetrableStartIndex, 1f);
         if (penetrationDepth > 0) {
@@ -35,7 +35,7 @@ public class PenetrableBasic : Penetrable {
         } else {
             entranceTransform.localRotation = startLocalRotation;
         }
-        entranceTransform.localScale = Vector3.one + Vector3.one*(penetrator.GetWorldGirthRadius(-penetrationDepth + penetrator.GetPenetratorWorldLength() )*10f);
+        entranceTransform.localScale = Vector3.one + Vector3.one*(penetrator.GetWorldGirthRadius(-penetrationDepth + penetrator.GetWorldLength() )*10f);
         return new PenetrationData();
     }
 }

@@ -72,7 +72,7 @@ public class PenetratorData {
         Reinitialize();
     }
     
-    [SerializeField] private GirthData girthData;
+    private GirthData girthData;
     
     private static List<Vector3> points = new List<Vector3>();
 
@@ -103,9 +103,7 @@ public class PenetratorData {
     }
     
     public void GetSpline(IList<Vector3> inputPoints, out CatmullSpline spline, out float baseDistanceAlongSpline) {
-        if (!GetInitialized()) {
-            Initialize();
-        }
+        Initialize();
         points.Clear();
 
         Vector3 startPoint = penetratorRootTransform.TransformPoint(penetratorRootPositionOffset);
@@ -121,7 +119,9 @@ public class PenetratorData {
     }
 
     public void OnValidate() {
-        Reinitialize();
+        if (!Application.isPlaying) {
+            Reinitialize();
+        }
     }
 
 }
