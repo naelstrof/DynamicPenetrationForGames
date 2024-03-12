@@ -16,10 +16,15 @@ public abstract class Penetrable : MonoBehaviour {
         public float knotForce;
         public bool tipIsInside;
         public float stimulation;
+        public float truncationGirth;
         public float truncationLength;
+        public PenetrableBasic.ClippingRangeWorld clippingRange;
     }
     
     public virtual PenetrationData SetPenetrated(Penetrator penetrator, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
         return new PenetrationData();
+    }
+
+    public virtual void SetUnpenetrated(Penetrator penetrator) {
     }
 }
