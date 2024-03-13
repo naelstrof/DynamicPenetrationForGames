@@ -44,6 +44,9 @@ public class PenetratorJiggleDeform : Penetrator {
     protected override void LateUpdate() {
         if (simulatedPoints == null || simulatedPoints.Count == 0) {
             GetSpline(new Vector3[] {GetBasePointOne(), GetBasePointTwo()}, out var fakeSpline, out float fakeDistanceAlongSpline);
+            SetPenetrationData(new Penetrable.PenetrationData() {
+                truncationLength = 999f, // TODO: THIS SHOULD BE A CONSTRUCTOR
+            });
             penetratorRenderers.Update(
                 fakeSpline,
                 GetWorldLength(),
@@ -96,7 +99,7 @@ public class PenetratorJiggleDeform : Penetrator {
             } else if (lastInsertionAmount >= 1f) {
                 linkedPenetrable.SetUnpenetrated(this);
                 SetPenetrationData(new Penetrable.PenetrationData() {
-                    truncationLength = 999f // TODO: THIS SHOULD BE A CONSTRUCTOR
+                    truncationLength = 999f, // TODO: THIS SHOULD BE A CONSTRUCTOR
                 });
             }
         }
@@ -127,7 +130,7 @@ public class PenetratorJiggleDeform : Penetrator {
         };
         penetrablePoints.AddRange(linkedPenetrable.GetPoints());
         GetSpline(penetrablePoints, out var linkedSpline, out var baseDistanceAlongSpline);
-        var proximity = linkedSpline.GetDistanceFromSubT(1, 2, 1f);
+        var proximity = linkedSpline.GetLengthFromSubsection(1, 1);
         var tipProximity = proximity - GetWorldLength();
         penetrationDepth = -tipProximity;
         penetrableStartIndex = 2;
