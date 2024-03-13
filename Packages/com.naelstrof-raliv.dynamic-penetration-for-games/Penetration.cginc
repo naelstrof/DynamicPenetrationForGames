@@ -46,7 +46,7 @@ float GetTFromSubT(int curveIndex, int start, int end, float subT) {
 float TimeToDistance(int curveIndex, float t) {
     t = saturate(t);
     int index = clamp(floor(t*(DISTANCE_COUNT-1)),0,DISTANCE_COUNT-2);
-    float offseted = t-((float)index/(float)DISTANCE_COUNT);
+    float offseted = t-((float)index/(float)(DISTANCE_COUNT-1));
     float lerpT = offseted * (float)(DISTANCE_COUNT-1);
     return lerp(_CatmullSplines[curveIndex].distanceLUT[index], _CatmullSplines[curveIndex].distanceLUT[index+1], lerpT);
 }
@@ -57,8 +57,8 @@ float DistanceToTime(int curveIndex, float distance) {
                 // Remap
                 float from1 = _CatmullSplines[curveIndex].distanceLUT[i];
                 float to1 = _CatmullSplines[curveIndex].distanceLUT[i+1];
-                float from2 = (float)i/(float)(DISTANCE_COUNT);
-                float to2 = (float)(i+1)/(float)(DISTANCE_COUNT);
+                float from2 = (float)i/(float)(DISTANCE_COUNT-1);
+                float to2 = (float)(i+1)/(float)(DISTANCE_COUNT-1);
                 return (distance - from1) / (to1 - from1) * (to2 - from2) + from2;
             }
         }

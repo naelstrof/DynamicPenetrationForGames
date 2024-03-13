@@ -44,14 +44,14 @@ public class PenetrableBasic : Penetrable {
     }
 
     private float PenetrableNormalizedDistanceSpaceToWorldDistance(float penetrableNormalizedDistance, CatmullSpline spline, int penetrableStartIndex) {
-        float penetrableArcLength = spline.GetDistanceFromSubT(penetrableStartIndex, penetrableStartIndex + GetPoints().Count - 1, 1f);
+        float penetrableArcLength = spline.GetLengthFromSubsection(GetPoints().Count-1, penetrableStartIndex);
         float penetrableDistance = penetrableNormalizedDistance * penetrableArcLength;
         return penetrableDistance;
     }
 
     public override PenetrationData SetPenetrated(Penetrator penetrator, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
         base.SetPenetrated(penetrator, penetrationDepth, alongSpline, penetrableStartIndex);
-        float entranceSample = alongSpline.GetDistanceFromSubT(0, penetrableStartIndex, 1f);
+        float entranceSample = alongSpline.GetLengthFromSubsection(penetrableStartIndex);
         entranceTransform.up = -alongSpline.GetVelocityFromDistance(entranceSample).normalized;
         float distanceFromBaseOfPenetrator = -penetrationDepth + penetrator.GetWorldLength();
         
