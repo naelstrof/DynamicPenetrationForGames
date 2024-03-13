@@ -106,9 +106,6 @@ public class PenetratorData {
         Initialize();
         points.Clear();
 
-        Vector3 startPoint = penetratorRootTransform.TransformPoint(penetratorRootPositionOffset);
-        points.Add(startPoint + penetratorRootTransform.TransformDirection(penetratorRootForward) * (girthData.GetWorldLength() * -0.25f));
-        points.Add(startPoint);
         points.AddRange(inputPoints);
 
         Vector3 dir = (points[^1] - points[^2]).normalized;
@@ -116,6 +113,16 @@ public class PenetratorData {
         
         spline = new CatmullSpline(points);
         baseDistanceAlongSpline = spline.GetDistanceFromSubT(0, 1, 1f);
+    }
+    
+    public Vector3 GetBasePointOne() {
+        Vector3 startPoint = penetratorRootTransform.TransformPoint(penetratorRootPositionOffset);
+        return startPoint + penetratorRootTransform.TransformDirection(penetratorRootForward) * (girthData.GetWorldLength() * -0.25f);
+    }
+
+    public Vector3 GetBasePointTwo() {
+        Vector3 startPoint = penetratorRootTransform.TransformPoint(penetratorRootPositionOffset);
+        return startPoint;
     }
 
     public void OnValidate() {

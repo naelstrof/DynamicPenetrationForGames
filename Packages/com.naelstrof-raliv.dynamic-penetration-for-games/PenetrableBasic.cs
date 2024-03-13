@@ -7,15 +7,15 @@ using UnityEngine.Serialization;
 public class PenetrableBasic : Penetrable {
     [SerializeField] private Transform[] transforms;
     [SerializeField] private Transform entranceTransform;
-    [SerializeField,Range(0f,1f)] private float truncateT;
+    [SerializeField,Range(0f,1f)] private float truncateNormalizedDistance;
     [SerializeField] private ClippingRange clippingRange;
 
     [Serializable]
     public struct ClippingRange {
         [Range(0f,1f)]
-        public float startT;
+        public float startNormalizedDistance;
         [Range(0f,1f)]
-        public float endT;
+        public float endNormalizedDistance;
     }
     
     public struct ClippingRangeWorld {
@@ -43,28 +43,29 @@ public class PenetrableBasic : Penetrable {
         return points;
     }
 
-    private float PenetrableTSpaceToWorldDistance(float t, CatmullSpline spline, int penetrableStartIndex) {
-        return spline.GetDistanceFromSubT(penetrableStartIndex, penetrableStartIndex+GetPoints().Count-1, t);
+    private float PenetrableNormalizedDistanceSpaceToWorldDistance(float penetrableNormalizedDistance, CatmullSpline spline, int penetrableStartIndex) {
+        float penetrableArcLength = spline.GetDistanceFromSubT(penetrableStartIndex, penetrableStartIndex + GetPoints().Count - 1, 1f);
+        float penetrableDistance = penetrableNormalizedDistance * penetrableArcLength;
+        return penetrableDistance;
     }
 
     public override PenetrationData SetPenetrated(Penetrator penetrator, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
         base.SetPenetrated(penetrator, penetrationDepth, alongSpline, penetrableStartIndex);
         float entranceSample = alongSpline.GetDistanceFromSubT(0, penetrableStartIndex, 1f);
         entranceTransform.up = -alongSpline.GetVelocityFromDistance(entranceSample).normalized;
-        //float distanceFromBaseOfPenetrator = -penetrationDepth + penetrator.GetWorldLength();
-        float distanceFromBaseOfPenetrator = alongSpline.GetDistanceFromSubT(1, penetrableStartIndex, 1f);
+        float distanceFromBaseOfPenetrator = -penetrationDepth + penetrator.GetWorldLength();
         
         entranceTransform.localScale = Vector3.one + Vector3.one*(penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator)*10f);
         PenetrationData data = new PenetrationData() {
             clippingRange = new ClippingRangeWorld() {
-                startDistance = distanceFromBaseOfPenetrator + PenetrableTSpaceToWorldDistance(clippingRange.startT, alongSpline, penetrableStartIndex),
-                endDistance = distanceFromBaseOfPenetrator + PenetrableTSpaceToWorldDistance(clippingRange.endT, alongSpline, penetrableStartIndex),
+                startDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.startNormalizedDistance, alongSpline, penetrableStartIndex),
+                endDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.endNormalizedDistance, alongSpline, penetrableStartIndex),
             },
             knotForce = 0f,
             stimulation = 0f,
             tipIsInside = true,
-            truncationGirth = penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator + PenetrableTSpaceToWorldDistance(truncateT, alongSpline, penetrableStartIndex)),
-            truncationLength = distanceFromBaseOfPenetrator + PenetrableTSpaceToWorldDistance(truncateT, alongSpline, penetrableStartIndex),
+            truncationGirth = penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, alongSpline, penetrableStartIndex)),
+            truncationLength = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, alongSpline, penetrableStartIndex),
         }; // TODO: MAKE THIS USE A CONSTRUCTOR
         return data;
     }
@@ -74,17 +75,20 @@ public class PenetrableBasic : Penetrable {
         entranceTransform.localScale = Vector3.one;
     }
 
-    private void OnDrawGizmosSelected() {
+    protected override void OnDrawGizmosSelected() {
+        base.OnDrawGizmosSelected();
         if (transforms == null || transforms.Length <= 1) {
             return;
         }
         CatmullSpline spline = new CatmullSpline(GetPoints());
         var lastColor = Gizmos.color;
+        float arcLength = spline.arcLength;
+        
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(spline.GetPositionFromT(clippingRange.startT), 0.025f);
-        Gizmos.DrawWireSphere(spline.GetPositionFromT(clippingRange.endT), 0.025f);
+        Gizmos.DrawWireSphere(spline.GetPositionFromDistance(clippingRange.startNormalizedDistance*arcLength), 0.025f);
+        Gizmos.DrawWireSphere(spline.GetPositionFromDistance(clippingRange.endNormalizedDistance*arcLength), 0.025f);
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(spline.GetPositionFromT(truncateT), 0.025f);
+        Gizmos.DrawWireSphere(spline.GetPositionFromDistance(truncateNormalizedDistance*arcLength), 0.025f);
         Gizmos.color = lastColor;
     }
 }

@@ -50,6 +50,8 @@ public abstract class Penetrator : MonoBehaviour {
     }
 
     public void GetSpline(IList<Vector3> inputPoints, out CatmullSpline spline, out float baseDistanceAlongSpline) => penetratorData.GetSpline(inputPoints, out spline, out baseDistanceAlongSpline);
+    public Vector3 GetBasePointOne() => penetratorData.GetBasePointOne();
+    public Vector3 GetBasePointTwo() => penetratorData.GetBasePointTwo();
     public Transform GetRootTransform() => penetratorData.GetRootTransform();
     public Vector3 GetRootPositionOffset() => penetratorData.GetRootPositionOffset();
     public Vector3 GetRootForward() => penetratorData.GetRootForward();
@@ -95,6 +97,13 @@ public abstract class Penetrator : MonoBehaviour {
     }
 
     public static IList<Vector3> LerpPoints(IList<Vector3> a, IList<Vector3> b, float t) {
+        if (t == 0) {
+            return a;
+        }
+
+        if (Math.Abs(t - 1f) < Mathf.Epsilon) {
+            return b;
+        }
         while (a.Count < b.Count) a.Add(a[^1]+(a[^1]-a[^2]));
         while (b.Count < a.Count) b.Add(b[^1]+(b[^1]-b[^2]));
         var aSpline = new CatmullSpline(a);
@@ -109,7 +118,7 @@ public abstract class Penetrator : MonoBehaviour {
         return lerpPoints;
     }
 
-    protected virtual void OnDrawGizmos() {
+    protected virtual void OnDrawGizmosSelected() {
         if (GetPoints().Count == 0) {
             return;
         }

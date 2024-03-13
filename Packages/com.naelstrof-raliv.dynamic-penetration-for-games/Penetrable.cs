@@ -4,7 +4,7 @@ using UnityEngine;
 
 public abstract class Penetrable : MonoBehaviour {
     public abstract IList<Vector3> GetPoints();
-    protected virtual void OnDrawGizmos() {
+    protected virtual void OnDrawGizmosSelected() {
         if (GetPoints().Count <= 1) {
             return;
         }
