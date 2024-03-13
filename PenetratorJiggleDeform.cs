@@ -43,7 +43,7 @@ public class PenetratorJiggleDeform : Penetrator {
 
     protected override void LateUpdate() {
         if (simulatedPoints == null || simulatedPoints.Count == 0) {
-            GetSpline(new Vector3[] {}, out var fakeSpline, out float fakeDistanceAlongSpline);
+            GetSpline(new Vector3[] {GetBasePointOne(), GetBasePointTwo()}, out var fakeSpline, out float fakeDistanceAlongSpline);
             penetratorRenderers.Update(
                 fakeSpline,
                 GetWorldLength(),
@@ -72,7 +72,12 @@ public class PenetratorJiggleDeform : Penetrator {
         
         if (linkedPenetrable != null) {
             GetPenetrableSplineInfo(out penetrationDepth, out penetrableStartIndex, out insertionAmount);
-            jigglePoints = LerpPoints(jigglePoints, linkedPenetrable.GetPoints(), insertionAmount);
+            List<Vector3> penetrablePoints = new List<Vector3> {
+                GetBasePointOne(),
+                GetBasePointTwo()
+            };
+            penetrablePoints.AddRange(linkedPenetrable.GetPoints());
+            jigglePoints = LerpPoints(jigglePoints, penetrablePoints, insertionAmount);
         }
         
         GetSpline(jigglePoints, out var finalizedSpline, out float distanceAlongSpline);
@@ -116,7 +121,12 @@ public class PenetratorJiggleDeform : Penetrator {
     }
     
     protected virtual void GetPenetrableSplineInfo(out float penetrationDepth, out int penetrableStartIndex, out float insertionAmount) {
-        GetSpline(linkedPenetrable.GetPoints(), out var linkedSpline, out var baseDistanceAlongSpline);
+        List<Vector3> penetrablePoints = new List<Vector3> {
+            GetBasePointOne(),
+            GetBasePointTwo()
+        };
+        penetrablePoints.AddRange(linkedPenetrable.GetPoints());
+        GetSpline(penetrablePoints, out var linkedSpline, out var baseDistanceAlongSpline);
         var proximity = linkedSpline.GetDistanceFromSubT(1, 2, 1f);
         var tipProximity = proximity - GetWorldLength();
         penetrationDepth = -tipProximity;
@@ -146,6 +156,8 @@ public class PenetratorJiggleDeform : Penetrator {
     protected override IList<Vector3> GetPoints() {
         points.Clear();
         if (simulatedPoints == null || simulatedPoints.Count <= 1) return points;
+        points.Add(GetBasePointOne());
+        points.Add(GetBasePointTwo());
         for (int i=1;i<simulatedPoints.Count;i++) {
             points.Add(simulatedPoints[i].position);
         }
