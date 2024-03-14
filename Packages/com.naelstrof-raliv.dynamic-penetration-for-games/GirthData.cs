@@ -235,8 +235,9 @@ namespace PenetrationTech {
         private float localPenetratorRootForwardness => Vector3.Dot(rootLocalPenetratorRoot, rootLocalPenetratorForward);
 
         public float GetWorldLength() {
-            Vector3 localPenetratorRootForward = rootLocalPenetratorForward * localPenetratorRootForwardness; 
-            Vector3 length = (GetLocalRenderLength() - worldToRenderer.MultiplyVector(localPenetratorRootForward).magnitude) * rendererLocalPenetratorForward;
+            Vector3 localPenetratorRootForward = penetratorRoot.TransformVector(rootLocalPenetratorForward * localPenetratorRootForwardness);
+            Vector3 renderLength = GetLocalRenderLength() * rendererLocalPenetratorForward - worldToRenderer.MultiplyVector(localPenetratorRootForward);
+            Vector3 length = renderLength.magnitude * rendererLocalPenetratorForward;
             return rendererToWorld.MultiplyVector(length).magnitude * GetPenetratorScaleFactor(rootLocalPenetratorForward);
         }
         

@@ -47,17 +47,20 @@ public class PenetratorData {
     
     [SerializeField] private Transform penetratorRootTransform;
     [SerializeField] private Vector3 penetratorRootPositionOffset;
-    [SerializeField] private Vector3 penetratorRootForward;
-    [SerializeField] private Vector3 penetratorRootUp;
+    [SerializeField] private Vector3 penetratorRootForward = Vector3.up;
+    [SerializeField] private Vector3 penetratorRootUp = -Vector3.back;
 
     public Transform GetRootTransform() => penetratorRootTransform;
     public Vector3 GetRootPositionOffset() => penetratorRootPositionOffset;
     public Vector3 GetRootForward() => penetratorRootForward;
     public Vector3 GetRootUp() => penetratorRootUp;
+    public Texture2D GetDetailMap() => girthData.GetDetailMap();
+    public RenderTexture GetGirthMap() => girthData.GetGirthMap();
     public Vector3 GetRootRight() => Vector3.Cross(penetratorRootUp, penetratorRootForward);
     // TODO: Girth Data World Length does not take root position into account
     public float GetPenetratorWorldLength() => girthData.GetWorldLength();
     public float GetWorldGirthRadius(float alongLength) => girthData.GetWorldGirthRadius(alongLength);
+    public float GetGirthScaleFactor() => girthData.GetGirthScaleFactor();
 
     public void ResetRoot() {
         penetratorRootPositionOffset = Vector3.zero;
@@ -77,6 +80,10 @@ public class PenetratorData {
     private static List<Vector3> points = new List<Vector3>();
 
     private bool GetInitialized() => girthData != null;
+
+    public bool IsValid() {
+        return mask.renderer != null && penetratorRootTransform != null && Vector3.Dot(penetratorRootForward, penetratorRootUp) <= Mathf.Epsilon;
+    }
 
     public void Release() {
         girthData?.Release();
@@ -99,6 +106,9 @@ public class PenetratorData {
         }
         Vector3 right = Vector3.right;
         Vector3.OrthoNormalize(ref penetratorRootForward, ref up, ref right);
+        if (penetratorRootTransform == null || mask.renderer == null) {
+            return;
+        }
         girthData = new GirthData(mask, Shader.Find("Hidden/DPG/GirthUnwrapRaw"), penetratorRootTransform, penetratorRootPositionOffset, penetratorRootForward, penetratorRootUp, right);
     }
     
@@ -112,7 +122,7 @@ public class PenetratorData {
         points.Add(points[^1] + dir * (girthData.GetWorldLength()*1.1f));
         
         spline = new CatmullSpline(points);
-        baseDistanceAlongSpline = spline.GetDistanceFromSubT(0, 1, 1f);
+        baseDistanceAlongSpline = spline.GetLengthFromSubsection(1);
     }
     
     public Vector3 GetBasePointOne() {

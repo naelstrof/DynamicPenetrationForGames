@@ -25,11 +25,7 @@ public class PenetrableBasic : Penetrable {
 
     private List<Vector3> points = new();
 
-    private Quaternion startLocalRotation;
-
-    private void Awake() {
-        startLocalRotation = entranceTransform.localRotation;
-    }
+    private Quaternion? startLocalRotation;
 
     public override IList<Vector3> GetPoints() {
         points.Clear();
@@ -51,11 +47,12 @@ public class PenetrableBasic : Penetrable {
 
     public override PenetrationData SetPenetrated(Penetrator penetrator, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
         base.SetPenetrated(penetrator, penetrationDepth, alongSpline, penetrableStartIndex);
+        startLocalRotation ??= entranceTransform.localRotation;
         float entranceSample = alongSpline.GetLengthFromSubsection(penetrableStartIndex);
         entranceTransform.up = -alongSpline.GetVelocityFromDistance(entranceSample).normalized;
         float distanceFromBaseOfPenetrator = -penetrationDepth + penetrator.GetWorldLength();
         
-        entranceTransform.localScale = Vector3.one + Vector3.one*(penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator)*10f);
+        //entranceTransform.localScale = Vector3.one + Vector3.one*(penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator)*10f);
         PenetrationData data = new PenetrationData() {
             clippingRange = new ClippingRangeWorld() {
                 startDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.startNormalizedDistance, alongSpline, penetrableStartIndex),
@@ -71,7 +68,13 @@ public class PenetrableBasic : Penetrable {
     }
 
     public override void SetUnpenetrated(Penetrator penetrator) {
-        entranceTransform.localRotation = startLocalRotation;
+        base.SetUnpenetrated(penetrator);
+        if (entranceTransform == null) {
+            return;
+        }
+        if (startLocalRotation.HasValue) {
+            entranceTransform.localRotation = startLocalRotation.Value;
+        }
         entranceTransform.localScale = Vector3.one;
     }
 
@@ -90,5 +93,9 @@ public class PenetrableBasic : Penetrable {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(spline.GetPositionFromDistance(truncateNormalizedDistance*arcLength), 0.025f);
         Gizmos.color = lastColor;
+    }
+
+    private void OnValidate() {
+        startLocalRotation = null;
     }
 }
