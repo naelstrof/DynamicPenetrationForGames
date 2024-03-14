@@ -271,11 +271,11 @@ void GetDetailFromPenetrator(inout float3 worldPosition, float holeT, float comp
     float dist = TimeToDistance(curveIndex, holeT)+data.worldDistance;
     float2 girthSampleUV = float2(dist/data.worldPenetratorLength, (-holeAngle+data.angle)/6.28318530718);
 
-    float girthSample = (tex2Dlod(girthMap,float4(frac(girthSampleUV.xy),0,diffDistance*smoothness*smoothness)).r-0.5)*data.girthScaleFactor;
-
-    if (girthSampleUV.x >= 1 || girthSampleUV.x <= 0) {
-        girthSample = 0;
-    }
+    
+    float texSample = tex2Dlod(girthMap,float4(frac(girthSampleUV.xy),0,diffDistance*smoothness*smoothness)).r;
+    texSample *= 1-pow(2,-10*saturate(1-girthSampleUV.x));
+    float girthSample = (texSample-0.5)*data.girthScaleFactor;
+    
     worldPosition += diffNorm*(girthSample);
 }
 
