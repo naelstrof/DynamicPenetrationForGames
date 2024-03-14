@@ -205,7 +205,6 @@ struct PenetratorData {
     float angle;
     float3 initialRight;
     float3 initialUp;
-    int holeSubCurveCount;
 };
 
 #if (defined(UNITY_COMPILER_CG) && (defined(SHADER_API_D3D11) || defined(SHADER_API_METAL) || defined(SHADER_API_VULKAN)) || !defined(UNITY_COMPILER_CG) && !defined(SHADER_API_D3D11_9X))
@@ -239,11 +238,9 @@ void GetDeformationFromPenetrator(inout float3 worldPosition, float holeT, float
     float dist = TimeToDistance(curveIndex, holeT)+data.worldDistance;
     float2 girthSampleUV = float2(dist/data.worldPenetratorLength, (-holeAngle+data.angle)/6.28318530718);
 
-    float girthSample = tex2Dlod(girthMap,float4(frac(girthSampleUV.xy),0,diffDistance*smoothness*smoothness)).r*data.girthScaleFactor;
-
-    if (girthSampleUV.x >= 1 || girthSampleUV.x <= 0) {
-        girthSample = 0;
-    }
+    float texSample = tex2Dlod(girthMap,float4(frac(girthSampleUV.xy),0,diffDistance*smoothness*smoothness)).r;
+    texSample *= 1-pow(2,-10*saturate(1-girthSampleUV.x));
+    float girthSample = texSample*data.girthScaleFactor;
 
     float compressionFactor = saturate((diffDistance-girthSample)/compressibleDistance);
     

@@ -49,6 +49,14 @@ public abstract class Penetrator : MonoBehaviour {
         penetratorRenderers.Initialize();
     }
 
+    protected bool IsValid() {
+#if UNITY_EDITOR
+        return penetratorData.IsValid() && penetratorRenderers.IsValid();
+#else
+        return true;
+#endif
+    }
+
     public void GetSpline(IList<Vector3> inputPoints, out CatmullSpline spline, out float baseDistanceAlongSpline) => penetratorData.GetSpline(inputPoints, out spline, out baseDistanceAlongSpline);
     public Vector3 GetBasePointOne() => penetratorData.GetBasePointOne();
     public Vector3 GetBasePointTwo() => penetratorData.GetBasePointTwo();
@@ -57,6 +65,18 @@ public abstract class Penetrator : MonoBehaviour {
     public Vector3 GetRootForward() => penetratorData.GetRootForward();
     public Vector3 GetRootUp() => penetratorData.GetRootUp();
     public Vector3 GetRootRight() => penetratorData.GetRootRight();
+    public Texture2D GetDetailMap() => penetratorData.GetDetailMap();
+    public RenderTexture GetGirthMap() => penetratorData.GetGirthMap();
+    public float GetGirthScaleFactor() => penetratorData.GetGirthScaleFactor();
+    public float GetPenetratorAngleOffset(CatmullSpline path) {
+        Vector3 initialRight = path.GetBinormalFromT(0f);
+        Vector3 initialForward = path.GetVelocityFromT(0f).normalized;
+        Vector3 initialUp = Vector3.Cross(initialForward, initialRight).normalized;
+        Vector3 worldDickUp = GetRootTransform().TransformDirection(GetRootUp()).normalized;
+        Vector2 worldDickUpFlat = new Vector2(Vector3.Dot(worldDickUp,initialRight), Vector3.Dot(worldDickUp,initialUp));
+        float angle = Mathf.Atan2(worldDickUpFlat.y, worldDickUpFlat.x)-Mathf.PI/2f;
+        return angle;
+    }
     public virtual float GetWorldLength() {
         return penetratorData.GetPenetratorWorldLength() * squashAndStretch;
     }
@@ -69,6 +89,9 @@ public abstract class Penetrator : MonoBehaviour {
         this.data = data;
     }
     protected virtual void LateUpdate() {
+        if (!IsValid()) {
+            return;
+        }
         penetratorData.GetSpline(GetPoints(), out var path, out float distanceAlongSpline);
         penetratorRenderers.Update(
             path,
@@ -119,7 +142,7 @@ public abstract class Penetrator : MonoBehaviour {
     }
 
     protected virtual void OnDrawGizmosSelected() {
-        if (GetPoints().Count == 0) {
+        if (GetPoints().Count == 0 || !IsValid()) {
             return;
         }
         penetratorData.GetSpline(GetPoints(), out var path, out var distanceAlongSpline);
