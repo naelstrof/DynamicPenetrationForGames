@@ -27,10 +27,10 @@ public class PenetratorJiggleDeform : Penetrator {
     private float lastInsertionAmount = 0f;
     protected override void OnEnable() {
         base.OnEnable();
+        if (!Application.isPlaying) return;
         if (jiggleSettings is JiggleSettingsBlend) {
             jiggleSettings = Instantiate(jiggleSettings);
         }
-        if (!Application.isPlaying) return;
         simulatedPoints = new List<Transform>();
         for (int i = 0; i < simulatedPointCount; i++) {
             var simulatedPointObj = new GameObject($"PenetratorJiggle{i}");
