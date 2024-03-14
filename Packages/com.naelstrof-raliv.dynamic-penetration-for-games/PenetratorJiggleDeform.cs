@@ -25,6 +25,7 @@ public class PenetratorJiggleDeform : Penetrator {
     private JiggleRigBuilder builder;
     private JiggleRigBuilder.JiggleRig rig;
     private float lastInsertionAmount = 0f;
+    private List<Collider> setupColliders = new();
     protected override void OnEnable() {
         base.OnEnable();
         if (!Application.isPlaying) return;
@@ -39,7 +40,7 @@ public class PenetratorJiggleDeform : Penetrator {
         }
         SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
         builder = gameObject.AddComponent<JiggleRigBuilder>();
-        rig = new JiggleRigBuilder.JiggleRig(simulatedPoints[0], jiggleSettings, new Transform[] { }, new Collider[] { });
+        rig = new JiggleRigBuilder.JiggleRig(simulatedPoints[0], jiggleSettings, new Transform[] { }, setupColliders);
         builder.jiggleRigs = new List<JiggleRigBuilder.JiggleRig> { rig };
         builder.enabled = false;
     }
@@ -72,7 +73,7 @@ public class PenetratorJiggleDeform : Penetrator {
         GetSpline(jigglePoints, out var finalizedSpline, out float distanceAlongSpline);
 
         if (GetSimulationAvailable()) {
-            simulatedPoints[0].localScale = GetRootTransform().localScale;
+            simulatedPoints[0].localScale = Vector3.one * GetWorldLength();
         }
 
         if (linkedPenetrable != null) {
@@ -121,6 +122,15 @@ public class PenetratorJiggleDeform : Penetrator {
         if (jiggleSettings is not JiggleSettingsBlend jiggleSettingsBlend) return;
         jiggleSettingsBlend.normalizedBlend = blend;
     }
+
+    public void AddJiggleSettingsCollider(Collider collider) {
+        if (rig == null) {
+            if (!setupColliders.Contains(collider)) setupColliders.Add(collider);
+            return;
+        }
+        if (!rig.colliders.Contains(collider)) rig.colliders.Add(collider);
+    }
+    
     
     protected virtual void GetPenetrableSplineInfo(out float penetrationDepth, out int penetrableStartIndex, out float insertionAmount) {
         List<Vector3> penetrablePoints = new List<Vector3> {
@@ -173,21 +183,19 @@ public class PenetratorJiggleDeform : Penetrator {
         leftRightCurvature = curvature.x;
         upDownCurvature = curvature.y;
 
-        Vector3 scaleMemory = GetRootTransform().localScale;
-        simulatedPoints[0].localScale = GetRootTransform().localScale = Vector3.one;
         Vector2 segmentCurvature = curvature / Mathf.Max(simulatedPointCount - 1, 1f);
         for (int i = 0; i < simulatedPointCount; i++) {
             if (i == 0) {
+                simulatedPoints[i].localScale = Vector3.one;
                 simulatedPoints[i].transform.rotation = Quaternion.LookRotation( GetRootTransform().TransformDirection(GetRootForward()), GetRootTransform().TransformDirection(GetRootUp())) * Quaternion.Euler(segmentCurvature.y, segmentCurvature.x, 0f);
                 simulatedPoints[i].transform.position = GetRootTransform().TransformPoint(GetRootPositionOffset());
             } else {
                 simulatedPoints[i].transform.localRotation = Quaternion.Euler(segmentCurvature.y, segmentCurvature.x, 0f);
-                float localLength = GetRootTransform().InverseTransformVector(GetWorldLength() * GetRootForward()).magnitude;
-                float moveAmount = 1f/(simulatedPointCount-1) * localLength;
+                float moveAmount = 1f/(simulatedPointCount-1);
                 simulatedPoints[i].transform.localPosition = Vector3.forward * moveAmount;
             }
         }
-        simulatedPoints[0].localScale = GetRootTransform().localScale = scaleMemory;
+        simulatedPoints[0].localScale = Vector3.one * GetWorldLength();
     }
 
     protected override void OnValidate() {
