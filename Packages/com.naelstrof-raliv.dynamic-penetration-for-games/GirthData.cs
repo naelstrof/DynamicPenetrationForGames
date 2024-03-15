@@ -258,7 +258,7 @@ namespace PenetrationTech {
             return length;
         }
 
-        private float GetKnotForce(float worldDistanceAlongPenetrator) {
+        public float GetKnotForce(float worldDistanceAlongPenetrator) {
             var worldDistanceAlongPenetratorFromMinVertex = worldDistanceAlongPenetrator + localPenetratorRootForwardness;
             if (worldDistanceAlongPenetratorFromMinVertex < 0f || worldDistanceAlongPenetratorFromMinVertex > GetWorldRenderLength()) {
                 return 0f;

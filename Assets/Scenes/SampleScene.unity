@@ -861,6 +861,8 @@ MonoBehaviour:
   jiggleSettings: {fileID: 11400000, guid: 4ca2d81757477b54e920f4ae97317be4, type: 2}
   leftRightCurvature: 0
   upDownCurvature: -5
+  penetrationFriction: 0.5
+  penetratorLengthElasticity: 0.765
   linkedPenetrable: {fileID: 2110675131}
 --- !u!1 &1938375034
 GameObject:

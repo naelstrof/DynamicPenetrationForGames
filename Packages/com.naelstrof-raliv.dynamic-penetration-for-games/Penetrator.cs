@@ -68,6 +68,7 @@ public abstract class Penetrator : MonoBehaviour {
     public Texture2D GetDetailMap() => penetratorData.GetDetailMap();
     public RenderTexture GetGirthMap() => penetratorData.GetGirthMap();
     public float GetGirthScaleFactor() => penetratorData.GetGirthScaleFactor();
+    public float GetKnotForce(float alongLength) => penetratorData.GetKnotForce(alongLength);
     public float GetPenetratorAngleOffset(CatmullSpline path) {
         Vector3 initialRight = path.GetBinormalFromT(0f);
         Vector3 initialForward = path.GetVelocityFromT(0f).normalized;

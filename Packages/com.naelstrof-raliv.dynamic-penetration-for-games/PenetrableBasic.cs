@@ -52,15 +52,19 @@ public class PenetrableBasic : Penetrable {
         float entranceSample = alongSpline.GetLengthFromSubsection(penetrableStartIndex);
         entranceTransform.up = -alongSpline.GetVelocityFromDistance(entranceSample).normalized;
         float distanceFromBaseOfPenetrator = -penetrationDepth + penetrator.GetWorldLength();
-        Debug.DrawLine(entranceTransform.position, entranceTransform.position-entranceTransform.up * penetrationDepth, penetrationDepth > 0f ? Color.blue : Color.red);
+
+        float holeStartDepth = PenetrableNormalizedDistanceSpaceToWorldDistance(holeStartNormalizedDistance, alongSpline, penetrableStartIndex);
+
+        float knotForce = penetrator.GetKnotForce(distanceFromBaseOfPenetrator + holeStartDepth);
         
         //entranceTransform.localScale = Vector3.one + Vector3.one*(penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator)*10f);
         PenetrationData data = new PenetrationData() {
+            knotForce = knotForce,
             clippingRange = new ClippingRangeWorld() {
                 startDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.startNormalizedDistance, alongSpline, penetrableStartIndex),
                 endDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.endNormalizedDistance, alongSpline, penetrableStartIndex),
             },
-            holeStartDepth = PenetrableNormalizedDistanceSpaceToWorldDistance(holeStartNormalizedDistance, alongSpline, penetrableStartIndex),
+            holeStartDepth = holeStartDepth,
             truncationGirth = penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, alongSpline, penetrableStartIndex)),
             truncationLength = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, alongSpline, penetrableStartIndex),
         }; // TODO: MAKE THIS USE A CONSTRUCTOR

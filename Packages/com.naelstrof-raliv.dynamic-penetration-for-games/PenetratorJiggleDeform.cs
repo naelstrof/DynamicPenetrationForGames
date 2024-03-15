@@ -19,6 +19,7 @@ public class PenetratorJiggleDeform : Penetrator {
     [SerializeField, Range(-90f, 90f)] private float upDownCurvature = 0f;
     [SerializeField, Range(0f,1f)] private float penetrationFriction = 0.5f;
     [SerializeField, Range(0f,0.95f)] private float penetratorLengthElasticity = 0.1f;
+    [SerializeField, Range(0f,2f)] private float knotForce = 1f;
     
     [SerializeField] protected Penetrable linkedPenetrable;
     
@@ -73,6 +74,7 @@ public class PenetratorJiggleDeform : Penetrator {
 
         float elasticityCalc = penetratorLengthElasticity >= 1f ? 6000f : 10f / ((1f-penetratorLengthElasticity)*(1f-penetratorLengthElasticity));
         desiredLengthVelocity += (GetUnperturbedWorldLength() - GetWorldLength()) * Time.deltaTime * elasticityCalc;
+        desiredLengthVelocity += data.knotForce * Time.deltaTime * knotForce * 10f;
         desiredLength += desiredLengthVelocity * Time.deltaTime;
         float desiredSquashAndStretch = desiredLength / GetUnperturbedWorldLength();
         
@@ -111,7 +113,7 @@ public class PenetratorJiggleDeform : Penetrator {
         }
 
         GetFinalizedSpline(out var finalizedSpline, out var distanceAlongSpline, out var penetrationDepth, out var insertionAmount, out var penetrableStartIndex);
-
+        
         if (linkedPenetrable != null) {
             if (insertionAmount >= 1f) {
                 if (GetSimulationAvailable()) {
