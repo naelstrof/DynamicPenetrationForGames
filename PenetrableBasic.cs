@@ -8,6 +8,7 @@ public class PenetrableBasic : Penetrable {
     [SerializeField] private Transform[] transforms;
     [SerializeField] private Transform entranceTransform;
     [SerializeField,Range(0f,1f)] private float truncateNormalizedDistance;
+    [SerializeField,Range(0f,1f)] private float holeStartNormalizedDistance;
     [SerializeField] private ClippingRange clippingRange;
 
     [Serializable]
@@ -51,6 +52,7 @@ public class PenetrableBasic : Penetrable {
         float entranceSample = alongSpline.GetLengthFromSubsection(penetrableStartIndex);
         entranceTransform.up = -alongSpline.GetVelocityFromDistance(entranceSample).normalized;
         float distanceFromBaseOfPenetrator = -penetrationDepth + penetrator.GetWorldLength();
+        Debug.DrawLine(entranceTransform.position, entranceTransform.position-entranceTransform.up * penetrationDepth, penetrationDepth > 0f ? Color.blue : Color.red);
         
         //entranceTransform.localScale = Vector3.one + Vector3.one*(penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator)*10f);
         PenetrationData data = new PenetrationData() {
@@ -58,9 +60,7 @@ public class PenetrableBasic : Penetrable {
                 startDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.startNormalizedDistance, alongSpline, penetrableStartIndex),
                 endDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.endNormalizedDistance, alongSpline, penetrableStartIndex),
             },
-            knotForce = 0f,
-            stimulation = 0f,
-            tipIsInside = true,
+            holeStartDepth = PenetrableNormalizedDistanceSpaceToWorldDistance(holeStartNormalizedDistance, alongSpline, penetrableStartIndex),
             truncationGirth = penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, alongSpline, penetrableStartIndex)),
             truncationLength = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, alongSpline, penetrableStartIndex),
         }; // TODO: MAKE THIS USE A CONSTRUCTOR
@@ -92,6 +92,9 @@ public class PenetrableBasic : Penetrable {
         Gizmos.DrawWireSphere(spline.GetPositionFromDistance(clippingRange.endNormalizedDistance*arcLength), 0.025f);
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(spline.GetPositionFromDistance(truncateNormalizedDistance*arcLength), 0.025f);
+        Gizmos.color = lastColor;
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(spline.GetPositionFromDistance(holeStartNormalizedDistance*arcLength), 0.025f);
         Gizmos.color = lastColor;
     }
 

@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using PenetrationTech;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.Serialization;
+#if UNITY_EDITOR
+using UnityEditor;
 
 [CustomPropertyDrawer(typeof(PenetratorData))]
 public class PenetratorDataPropertyDrawer : PropertyDrawer {
@@ -40,6 +40,7 @@ public class PenetratorDataPropertyDrawer : PropertyDrawer {
     }
     
 }
+#endif
 
 [System.Serializable]
 public class PenetratorData {

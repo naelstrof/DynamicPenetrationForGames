@@ -18,9 +18,7 @@ public abstract class Penetrable : MonoBehaviour {
     public event UnpenetrateAction unpenetrated;
 
     public struct PenetrationData {
-        public float knotForce;
-        public bool tipIsInside;
-        public float stimulation;
+        public float holeStartDepth;
         public float truncationGirth;
         public float truncationLength;
         public PenetrableBasic.ClippingRangeWorld clippingRange;
