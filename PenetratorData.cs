@@ -62,6 +62,8 @@ public class PenetratorData {
     public float GetPenetratorWorldLength() => girthData.GetWorldLength();
     public float GetWorldGirthRadius(float alongLength) => girthData.GetWorldGirthRadius(alongLength);
     public float GetGirthScaleFactor() => girthData.GetGirthScaleFactor();
+    public float GetKnotForce(float alongLength) => girthData.GetKnotForce(alongLength);
+    
 
     public void ResetRoot() {
         penetratorRootPositionOffset = Vector3.zero;
@@ -120,7 +122,7 @@ public class PenetratorData {
         points.AddRange(inputPoints);
 
         Vector3 dir = (points[^1] - points[^2]).normalized;
-        points.Add(points[^1] + dir * (girthData.GetWorldLength()*1.1f));
+        points.Add(points[^1] + dir * (girthData.GetWorldLength()*1.25f));
         
         spline = new CatmullSpline(points);
         baseDistanceAlongSpline = spline.GetLengthFromSubsection(1);
