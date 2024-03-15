@@ -863,6 +863,7 @@ MonoBehaviour:
   upDownCurvature: -5
   penetrationFriction: 0.5
   penetratorLengthElasticity: 0.765
+  knotForce: 1
   linkedPenetrable: {fileID: 2110675131}
 --- !u!1 &1938375034
 GameObject:
