@@ -71,12 +71,13 @@ public class PenetrableProceduralEditor : Editor {
                     Vector3 worldPosition = skinnedMeshRenderer.localToWorldMatrix.MultiplyPoint(vertices[i]);
                     CatmullSpline penPath = new CatmullSpline(p.GetPoints());
                     float nearestT = penPath.GetClosestTimeFromPosition(worldPosition, 256);
+                    float normalizedDistance = penPath.GetDistanceFromTime(nearestT) / penPath.arcLength;
                     // Debug.DrawLine(worldPosition, penPath.GetPositionFromT(nearestT), Color.red, 10f);
                     switch(o) {
-                        case 0: uvs[i] = new Vector4(nearestT,uvs[i].y,uvs[i].z,uvs[i].w);break;
-                        case 1: uvs[i] = new Vector4(uvs[i].x,nearestT,uvs[i].z,uvs[i].w);break;
-                        case 2: uvs[i] = new Vector4(uvs[i].x,uvs[i].y,nearestT,uvs[i].w);break;
-                        case 3: uvs[i] = new Vector4(uvs[i].x,uvs[i].y,uvs[i].z,nearestT);break;
+                        case 0: uvs[i] = new Vector4(normalizedDistance,uvs[i].y,uvs[i].z,uvs[i].w);break;
+                        case 1: uvs[i] = new Vector4(uvs[i].x,normalizedDistance,uvs[i].z,uvs[i].w);break;
+                        case 2: uvs[i] = new Vector4(uvs[i].x,uvs[i].y,normalizedDistance,uvs[i].w);break;
+                        case 3: uvs[i] = new Vector4(uvs[i].x,uvs[i].y,uvs[i].z,normalizedDistance);break;
                         default: throw new UnityException("We only support up to 4 penetrables per procedural deformation...");
                     }
                 }
@@ -239,11 +240,12 @@ public class PenetrableProcedural : MonoBehaviour {
         Initialize();
         SetKeyword(true);
         
-        float worldSpaceDistanceToPenisRoot = alongSpline.GetLengthFromSubsection(1, 1);
         int index = penetrables.IndexOf(penetrable);
 
+        float squashStretch = penetrator.GetWorldLength()/penetrator.GetUnperturbedWorldLength();
+
         var penetrableSpline = new CatmullSpline(penetrable.GetPoints());
-        data[index] = new PenetratorData(penetrableSpline, alongSpline, penetrator, worldSpaceDistanceToPenisRoot);
+        data[index] = new PenetratorData(penetrableSpline, alongSpline, penetrator, penetrator.GetWorldLength()-penetrationDepth/squashStretch);
         splineData[index] = new CatmullSplineData(penetrableSpline);
         penetratorBuffer.SetData(data);
         splineBuffer.SetData(splineData);

@@ -671,6 +671,7 @@ MonoBehaviour:
   - {fileID: 934645904}
   entranceTransform: {fileID: 331355921}
   truncateNormalizedDistance: 0
+  holeStartNormalizedDistance: 0
   clippingRange:
     startNormalizedDistance: 0
     endNormalizedDistance: 0
@@ -689,27 +690,27 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.7830337
+      value: 1.0599145
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.7830337
+      value: 1.0599145
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.7830337
+      value: 1.0599145
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.068
+      value: -0.003
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.037
+      value: -0.001
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.053
+      value: -3.226
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1008,9 +1009,10 @@ MonoBehaviour:
   - {fileID: 882251532}
   entranceTransform: {fileID: 2110675132}
   truncateNormalizedDistance: 1
+  holeStartNormalizedDistance: 0.082
   clippingRange:
-    startNormalizedDistance: 0.181
-    endNormalizedDistance: 0.843
+    startNormalizedDistance: 1
+    endNormalizedDistance: 1
 --- !u!4 &2110675132 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9044806412961212599, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}

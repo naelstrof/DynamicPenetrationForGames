@@ -213,17 +213,16 @@ StructuredBuffer<PenetratorData> _PenetratorData;
 PenetratorData _PenetratorData[4];
 #endif
 
-void GetDeformationFromPenetrator(inout float3 worldPosition, float holeT, float compressibleDistance, sampler2D girthMap, PenetratorData data, int curveIndex, float smoothness) {
+void GetDeformationFromPenetrator(inout float3 worldPosition, float holeNormalizedDistance, float compressibleDistance, sampler2D girthMap, PenetratorData data, int curveIndex, float smoothness) {
     // Just skip everything if blend is 0, we might not even have curves to sample.
     if (data.blend == 0) {
         return;
     }
     // Since our t sample value is based on a piece-wise curve, we need to figure out which curve weights we're meant to sample.
     int curveSegmentIndex = 0;
-    // TODO: This could possibly be a bug! though it seems to work fine at all scales
-    // Trigger earlier than baked, only slightly. Otherwise things trigger "perceptively" too late. (in reality they're perfect, but it just doesn't look right).
-    float anticipation = 0.012;
-    float subT = GetCurveSegment(curveIndex, holeT-anticipation, curveSegmentIndex);
+    
+    float holeT = DistanceToTime(curveIndex, holeNormalizedDistance*TimeToDistance(curveIndex, 1));
+    float subT = GetCurveSegment(curveIndex, holeT, curveSegmentIndex);
 
     float3 catPosition = SampleCurveSegmentPosition(curveIndex,curveSegmentIndex, subT);
 
@@ -247,17 +246,16 @@ void GetDeformationFromPenetrator(inout float3 worldPosition, float holeT, float
     worldPosition += diffNorm*(girthSample)*(1-compressionFactor);
 }
 
-void GetDetailFromPenetrator(inout float3 worldPosition, float holeT, float compressibleDistance, sampler2D girthMap, PenetratorData data, int curveIndex, float smoothness) {
+void GetDetailFromPenetrator(inout float3 worldPosition, float holeNormalizedDistance, float compressibleDistance, sampler2D girthMap, PenetratorData data, int curveIndex, float smoothness) {
     // Just skip everything if blend is 0, we might not even have curves to sample.
     if (data.blend == 0) {
         return;
     }
     // Since our t sample value is based on a piece-wise curve, we need to figure out which curve weights we're meant to sample.
     int curveSegmentIndex = 0;
-    // TODO: This could possibly be a bug! though it seems to work fine at all scales
-    // Trigger earlier than baked, only slightly. Otherwise things trigger "perceptively" too late. (in reality they're perfect, but it just doesn't look right).
-    float anticipation = 0.012;
-    float subT = GetCurveSegment(curveIndex, holeT-anticipation, curveSegmentIndex);
+    
+    float holeT = DistanceToTime(curveIndex, holeNormalizedDistance*TimeToDistance(curveIndex, 1));
+    float subT = GetCurveSegment(curveIndex, holeT, curveSegmentIndex);
 
     float3 catPosition = SampleCurveSegmentPosition(curveIndex,curveSegmentIndex, subT);
 

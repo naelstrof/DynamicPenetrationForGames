@@ -81,6 +81,10 @@ public abstract class Penetrator : MonoBehaviour {
         return penetratorData.GetPenetratorWorldLength() * squashAndStretch;
     }
     
+    public float GetUnperturbedWorldLength() {
+        return penetratorData.GetPenetratorWorldLength();
+    }
+    
     public virtual float GetWorldGirthRadius(float distanceAlongPenetrator) {
         return penetratorData.GetWorldGirthRadius(distanceAlongPenetrator/squashAndStretch);
     }
