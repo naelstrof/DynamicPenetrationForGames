@@ -51,7 +51,8 @@ public class PenetrableBasic : Penetrable {
         startLocalRotation ??= entranceTransform.localRotation;
         float entranceSample = alongSpline.GetLengthFromSubsection(penetrableStartIndex);
         entranceTransform.up = -alongSpline.GetVelocityFromDistance(entranceSample).normalized;
-        float distanceFromBaseOfPenetrator = -penetrationDepth + penetrator.GetWorldLength();
+        
+        float distanceFromBaseOfPenetrator = -penetrationDepth + penetrator.GetUnperturbedWorldLength(); // We use unperturbed here instead of the real world length because everything past the holeStartDepth is unperturbed.
 
         float holeStartDepth = PenetrableNormalizedDistanceSpaceToWorldDistance(holeStartNormalizedDistance, alongSpline, penetrableStartIndex);
 
