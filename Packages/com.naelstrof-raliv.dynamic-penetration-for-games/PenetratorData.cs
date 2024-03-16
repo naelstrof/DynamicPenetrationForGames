@@ -78,6 +78,7 @@ public class PenetratorData {
         Reinitialize();
     }
     
+    //[SerializeField]
     private GirthData girthData;
     
     private static List<Vector3> points = new List<Vector3>();
