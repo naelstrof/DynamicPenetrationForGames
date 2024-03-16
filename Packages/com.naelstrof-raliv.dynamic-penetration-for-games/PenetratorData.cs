@@ -116,7 +116,7 @@ public class PenetratorData {
         girthData = new GirthData(mask, Shader.Find("Hidden/DPG/GirthUnwrapRaw"), penetratorRootTransform, penetratorRootPositionOffset, penetratorRootForward, penetratorRootUp, right);
     }
     
-    public void GetSpline(IList<Vector3> inputPoints, out CatmullSpline spline, out float baseDistanceAlongSpline) {
+    public void GetSpline(IList<Vector3> inputPoints, ref CatmullSpline spline, out float baseDistanceAlongSpline) {
         Initialize();
         points.Clear();
 
@@ -124,8 +124,8 @@ public class PenetratorData {
 
         Vector3 dir = (points[^1] - points[^2]).normalized;
         points.Add(points[^1] + dir * (girthData.GetWorldLength()*1.25f));
-        
-        spline = new CatmullSpline(points);
+
+        spline.SetWeightsFromPoints(points);
         baseDistanceAlongSpline = spline.GetLengthFromSubsection(1);
     }
     

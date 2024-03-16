@@ -675,6 +675,7 @@ MonoBehaviour:
   clippingRange:
     startNormalizedDistance: 0
     endNormalizedDistance: 0
+  penetrableFriction: 0.5
 --- !u!4 &1402581000 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
@@ -861,7 +862,7 @@ MonoBehaviour:
   jiggleSettings: {fileID: 11400000, guid: 4ca2d81757477b54e920f4ae97317be4, type: 2}
   leftRightCurvature: 0
   upDownCurvature: -5
-  penetrationFriction: 0.5
+  penetratorLengthFriction: 0.5
   penetratorLengthElasticity: 0.765
   knotForce: 1
   linkedPenetrable: {fileID: 2110675131}
@@ -1016,6 +1017,7 @@ MonoBehaviour:
   clippingRange:
     startNormalizedDistance: 1
     endNormalizedDistance: 1
+  penetrableFriction: 0.5
 --- !u!4 &2110675132 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9044806412961212599, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}

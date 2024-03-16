@@ -37,6 +37,7 @@ public abstract class Penetrator : MonoBehaviour {
     [SerializeField, Range(0.1f, 2f)] protected float squashAndStretch = 1f;
     
     [SerializeField] protected PenetratorRenderers penetratorRenderers;
+    protected CatmullSpline cachedSpline;
 
     protected Penetrable.PenetrationData data = new Penetrable.PenetrationData() {
         truncationLength = 999f, // TODO: Make this a real constructor!
@@ -45,6 +46,7 @@ public abstract class Penetrator : MonoBehaviour {
     protected abstract IList<Vector3> GetPoints();
     
     protected virtual void OnEnable() {
+        cachedSpline = new CatmullSpline(new[] { Vector3.zero, Vector3.one });
         penetratorData.Initialize();
         penetratorRenderers.Initialize();
     }
@@ -57,7 +59,7 @@ public abstract class Penetrator : MonoBehaviour {
 #endif
     }
 
-    public void GetSpline(IList<Vector3> inputPoints, out CatmullSpline spline, out float baseDistanceAlongSpline) => penetratorData.GetSpline(inputPoints, out spline, out baseDistanceAlongSpline);
+    public void GetSpline(IList<Vector3> inputPoints, ref CatmullSpline spline, out float baseDistanceAlongSpline) => penetratorData.GetSpline(inputPoints, ref spline, out baseDistanceAlongSpline);
     public Vector3 GetBasePointOne() => penetratorData.GetBasePointOne();
     public Vector3 GetBasePointTwo() => penetratorData.GetBasePointTwo();
     public Transform GetRootTransform() => penetratorData.GetRootTransform();
@@ -97,9 +99,9 @@ public abstract class Penetrator : MonoBehaviour {
         if (!IsValid()) {
             return;
         }
-        penetratorData.GetSpline(GetPoints(), out var path, out float distanceAlongSpline);
+        penetratorData.GetSpline(GetPoints(), ref cachedSpline, out float distanceAlongSpline);
         penetratorRenderers.Update(
-            path,
+            cachedSpline,
             penetratorData.GetPenetratorWorldLength(),
             squashAndStretch,
             0f,
@@ -124,7 +126,11 @@ public abstract class Penetrator : MonoBehaviour {
         penetratorData.OnValidate();
     }
 
-    public static IList<Vector3> LerpPoints(IList<Vector3> a, IList<Vector3> b, float t) {
+    private static CatmullSpline lerpSplineA = new (new []{Vector3.zero, Vector3.one});
+    private static CatmullSpline lerpSplineB = new (new []{Vector3.zero, Vector3.one});
+    // FIXME: The user who calls this probably should be responsible for the output memory.
+    private static List<Vector3> lerpPoints = new ();
+    protected static IList<Vector3> LerpPoints(IList<Vector3> a, IList<Vector3> b, float t) {
         if (t == 0) {
             return a;
         }
@@ -134,13 +140,13 @@ public abstract class Penetrator : MonoBehaviour {
         }
         while (a.Count < b.Count) a.Add(a[^1]+(a[^1]-a[^2]));
         while (b.Count < a.Count) b.Add(b[^1]+(b[^1]-b[^2]));
-        var aSpline = new CatmullSpline(a);
-        var bSpline = new CatmullSpline(b);
-        var lerpPoints = new List<Vector3>();
+        lerpSplineA.SetWeightsFromPoints(a);
+        lerpSplineB.SetWeightsFromPoints(b);
+        lerpPoints.Clear();
         for (var index = 0; index < a.Count; index++) {
-            var sourceT = aSpline.GetDistanceFromTime((float)index / (a.Count - 1));
-            var targetT = bSpline.GetDistanceFromTime((float)index / (b.Count - 1));
-            var lerpT = bSpline.GetPositionFromDistance(Mathf.Lerp(sourceT, targetT, t));
+            var sourceT = lerpSplineA.GetDistanceFromTime((float)index / (a.Count - 1));
+            var targetT = lerpSplineB.GetDistanceFromTime((float)index / (b.Count - 1));
+            var lerpT = lerpSplineB.GetPositionFromDistance(Mathf.Lerp(sourceT, targetT, t));
             lerpPoints.Add(Vector3.Lerp(a[index], lerpT, t));
         }
         return lerpPoints;
@@ -150,8 +156,8 @@ public abstract class Penetrator : MonoBehaviour {
         if (GetPoints().Count == 0 || !IsValid()) {
             return;
         }
-        penetratorData.GetSpline(GetPoints(), out var path, out var distanceAlongSpline);
-        CatmullSpline.GizmosDrawSpline(path, Color.red, Color.green);
+        penetratorData.GetSpline(GetPoints(), ref cachedSpline, out var distanceAlongSpline);
+        CatmullSpline.GizmosDrawSpline(cachedSpline, Color.red, Color.green);
     }
     
     
