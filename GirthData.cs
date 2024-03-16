@@ -168,6 +168,10 @@ namespace PenetrationTech {
                 localXOffsetCurve.AddKey(maxLocalLength, 0f);
                 localYOffsetCurve.AddKey(maxLocalLength, 0f);
             }
+
+            private float GetEasing(float x) {
+                return x >= 1f ? 1f : 1f - Mathf.Pow(2, -10f * x);
+            }
             private void PopulateGirthCurve(NativeArray<byte> bytes, int width, int height) {
                 for (int x=0;x<width;x++) {
                     float averageRadius = 0f;
@@ -182,7 +186,14 @@ namespace PenetrationTech {
                         averageRadius += Vector2.Distance(position, offset);
                     }
                     averageRadius/=height;
-                    localGirthRadiusCurve.AddKey((float)x/(float)width*maxLocalLength,averageRadius);
+                    // 10% of the dick is tapered at the end, to make it continuous
+                    int taperEndCount = Mathf.Max(width / 10, 3);
+                    if (x > width - taperEndCount) {
+                        float multiplier = (float)(width - x) / (taperEndCount-1);
+                        localGirthRadiusCurve.AddKey((float)x / (float)width * maxLocalLength, averageRadius*multiplier*multiplier);
+                    } else {
+                        localGirthRadiusCurve.AddKey((float)x / (float)width * maxLocalLength, averageRadius);
+                    }
                 }
                 localGirthRadiusCurve.AddKey(maxLocalLength,0f);
             }

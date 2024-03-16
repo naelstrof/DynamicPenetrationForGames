@@ -19,6 +19,7 @@ public abstract class Penetrable : MonoBehaviour {
 
     public struct PenetrationData {
         public float knotForce;
+        public float penetrableFriction;
         public float holeStartDepth;
         public float truncationGirth;
         public float truncationLength;

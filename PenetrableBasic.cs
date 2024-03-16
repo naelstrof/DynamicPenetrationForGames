@@ -10,6 +10,7 @@ public class PenetrableBasic : Penetrable {
     [SerializeField,Range(0f,1f)] private float truncateNormalizedDistance;
     [SerializeField,Range(0f,1f)] private float holeStartNormalizedDistance;
     [SerializeField] private ClippingRange clippingRange;
+    [SerializeField,Range(0f,1f)] private float penetrableFriction = 0.5f;
 
     [Serializable]
     public struct ClippingRange {
@@ -52,7 +53,7 @@ public class PenetrableBasic : Penetrable {
         float entranceSample = alongSpline.GetLengthFromSubsection(penetrableStartIndex);
         entranceTransform.up = -alongSpline.GetVelocityFromDistance(entranceSample).normalized;
         
-        float distanceFromBaseOfPenetrator = -penetrationDepth + penetrator.GetUnperturbedWorldLength(); // We use unperturbed here instead of the real world length because everything past the holeStartDepth is unperturbed.
+        float distanceFromBaseOfPenetrator = -penetrationDepth + penetrator.GetUnperturbedWorldLength(); // FIXME: We use unperturbed here instead of the real world length. Penetrables probably shouldn't be aware of squash/stretch. Pre-calc on penetrator?
 
         float holeStartDepth = PenetrableNormalizedDistanceSpaceToWorldDistance(holeStartNormalizedDistance, alongSpline, penetrableStartIndex);
 
@@ -61,6 +62,7 @@ public class PenetrableBasic : Penetrable {
         //entranceTransform.localScale = Vector3.one + Vector3.one*(penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator)*10f);
         PenetrationData data = new PenetrationData() {
             knotForce = knotForce,
+            penetrableFriction = penetrableFriction,
             clippingRange = new ClippingRangeWorld() {
                 startDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.startNormalizedDistance, alongSpline, penetrableStartIndex),
                 endDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.endNormalizedDistance, alongSpline, penetrableStartIndex),

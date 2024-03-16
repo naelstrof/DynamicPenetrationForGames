@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using JigglePhysics;
 using UnityEngine;
+using UnityEngine.Serialization;
 #if UNITY_EDITOR
 using UnityEditor;
 
@@ -17,7 +18,7 @@ public class PenetratorJiggleDeform : Penetrator {
     [SerializeField] private JiggleSettingsBase jiggleSettings;
     [SerializeField, Range(-90f, 90f)] private float leftRightCurvature = 0f;
     [SerializeField, Range(-90f, 90f)] private float upDownCurvature = 0f;
-    [SerializeField, Range(0f,1f)] private float penetrationFriction = 0.5f;
+    [SerializeField, Range(0f,1f)] private float penetratorLengthFriction = 0.5f;
     [SerializeField, Range(0f,0.95f)] private float penetratorLengthElasticity = 0.1f;
     [SerializeField, Range(0f,2f)] private float knotForce = 1f;
     
@@ -62,19 +63,24 @@ public class PenetratorJiggleDeform : Penetrator {
         
         GetFinalizedSpline(out var finalizedSpline, out var distanceAlongSpline, out var penetrationDepth, out var insertionLerp, out var penetrableStartIndex);
         
+        desiredLengthVelocity *= 1f-(penetratorLengthFriction*penetratorLengthFriction);
+        
         if (insertionLerp >= 1f && Time.deltaTime > 0f) {
             float newPenetrablePosition = finalizedSpline.GetLengthFromSubsection(penetrableStartIndex);
             float penetrableVelocity = (newPenetrablePosition - (lastPenetrablePosition ?? newPenetrablePosition))/Time.deltaTime;
             lastPenetrablePosition = newPenetrablePosition;
-            desiredLengthVelocity = Mathf.Lerp(desiredLengthVelocity, penetrableVelocity, penetrationFriction*penetrationFriction);
+
+            desiredLengthVelocity = Mathf.Lerp(desiredLengthVelocity, penetrableVelocity, data.penetrableFriction*data.penetrableFriction);
+            desiredLengthVelocity +=  data.knotForce * Time.deltaTime * knotForce * 30f;
         } else {
             lastPenetrablePosition = null;
-            desiredLengthVelocity *= 1f-(penetrationFriction*penetrationFriction);
         }
 
         float elasticityCalc = penetratorLengthElasticity >= 1f ? 6000f : 10f / ((1f-penetratorLengthElasticity)*(1f-penetratorLengthElasticity));
-        desiredLengthVelocity += (GetUnperturbedWorldLength() - GetWorldLength()) * Time.deltaTime * elasticityCalc;
-        desiredLengthVelocity += data.knotForce * Time.deltaTime * knotForce * 10f;
+        float elasticForce = (GetUnperturbedWorldLength() - GetWorldLength()) * Time.deltaTime * elasticityCalc;
+
+        desiredLengthVelocity += elasticForce;
+
         desiredLength += desiredLengthVelocity * Time.deltaTime;
         float desiredSquashAndStretch = desiredLength / GetUnperturbedWorldLength();
         
