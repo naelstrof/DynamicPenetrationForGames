@@ -29,11 +29,11 @@ public class PenetratorBasic : Penetrator {
         if (linkedPenetrable != null) {
             var linkedPoints = new List<Vector3>();
             linkedPoints.AddRange(linkedPenetrable.GetPoints());
-            GetSpline(linkedPenetrable.GetPoints(), out var linkedSpline, out var baseDistanceAlongSpline);
+            GetSpline(linkedPenetrable.GetPoints(), ref cachedSpline, out var baseDistanceAlongSpline);
             
-            var proximity = linkedSpline.GetLengthFromSubsection(1, 1);
+            var proximity = cachedSpline.GetLengthFromSubsection(1, 1);
             var tipProximity = proximity - GetWorldLength();
-            linkedPenetrable.SetPenetrated(this, proximity, linkedSpline, 2);
+            linkedPenetrable.SetPenetrated(this, proximity, cachedSpline, 2);
             return LerpPoints(points, linkedPoints, 1f-Mathf.Clamp01(tipProximity/0.2f));
         }
         return points;
