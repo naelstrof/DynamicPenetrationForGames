@@ -47,6 +47,31 @@ public class PenetratorRenderers {
 
     private bool hasTruncateKeyword = false;
 
+    public void GetRenderers(IList<Renderer> output) {
+        output.Clear();
+        foreach (var renderer in renderers) {
+            output.Add(renderer);
+        }
+    }
+
+    public void AddRenderer(Renderer renderer) {
+        if (renderers.Contains(renderer)) {
+            return;
+        }
+        renderers.Add(renderer);
+        foreach (var material in Application.isPlaying ? renderer.materials : renderer.sharedMaterials) {
+            if (hasTruncateKeyword) {
+                material.EnableKeyword("_TRUNCATESPHERIZE_ON");
+            } else {
+                material.DisableKeyword("_TRUNCATESPHERIZE_ON");
+            }
+        }
+    }
+    
+    public void RemoveRenderer(Renderer renderer) {
+        renderers.Remove(renderer);
+    }
+
     private void UpdateTruncateKeyword(bool newHasTruncate) {
         if (hasTruncateKeyword == newHasTruncate) {
             return;
