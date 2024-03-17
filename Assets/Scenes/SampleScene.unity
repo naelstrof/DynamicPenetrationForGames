@@ -670,10 +670,13 @@ MonoBehaviour:
   - {fileID: 331355921}
   - {fileID: 934645904}
   entranceTransform: {fileID: 331355921}
+  shouldTruncate: 1
   truncateNormalizedDistance: 0
   holeStartNormalizedDistance: 0
+  shouldClip: 1
   clippingRange:
     startNormalizedDistance: 0
+    allowAllTheWayThrough: 0
     endNormalizedDistance: 0
   penetrableFriction: 0.5
 --- !u!4 &1402581000 stripped
@@ -818,6 +821,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1786496132}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1786496136}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1786496137}
   m_SourcePrefab: {fileID: 100100000, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
 --- !u!1 &1786496129 stripped
 GameObject:
@@ -866,6 +875,35 @@ MonoBehaviour:
   penetratorLengthElasticity: 0.765
   knotForce: 1
   linkedPenetrable: {fileID: 2110675131}
+--- !u!114 &1786496136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1786496129}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bca58cbf166ce84a94e251a8841e33c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  penetrator: {fileID: 1786496132}
+  clip: {fileID: 8300000, guid: 148add37ba310464cb746417d479e796, type: 3}
+--- !u!114 &1786496137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1786496129}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00fc97737ba820a418b1f23dfd19e4cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  penetrator: {fileID: 1786496132}
+  clip: {fileID: 8300000, guid: 948ec457eaaaaba4b8fef3efadaae1eb, type: 3}
+  normalizedDistance: 0.884
 --- !u!1 &1938375034
 GameObject:
   m_ObjectHideFlags: 0
@@ -1012,10 +1050,13 @@ MonoBehaviour:
   - {fileID: 2110675132}
   - {fileID: 882251532}
   entranceTransform: {fileID: 2110675132}
+  shouldTruncate: 1
   truncateNormalizedDistance: 1
   holeStartNormalizedDistance: 0.082
+  shouldClip: 1
   clippingRange:
-    startNormalizedDistance: 1
+    startNormalizedDistance: 0.137
+    allowAllTheWayThrough: 0
     endNormalizedDistance: 1
   penetrableFriction: 0.5
 --- !u!4 &2110675132 stripped
