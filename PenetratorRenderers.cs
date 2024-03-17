@@ -1,6 +1,22 @@
-using System.Collections;
+/* Copyright 2024 Naelstrof & Raliv
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the “Software”), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ * Software.
+ * 
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+ * OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+namespace DPG {
+
 using System.Collections.Generic;
-using PenetrationTech;
 using Unity.Collections;
 using UnityEngine;
 
@@ -29,6 +45,25 @@ public class PenetratorRenderers {
     private static readonly int endClipID = Shader.PropertyToID("_EndClip");
     private static readonly int girthRadiusID = Shader.PropertyToID("_GirthRadius");
 
+    private bool hasTruncateKeyword = false;
+
+    private void UpdateTruncateKeyword(bool newHasTruncate) {
+        if (hasTruncateKeyword == newHasTruncate) {
+            return;
+        }
+
+        foreach (var renderer in renderers) {
+            foreach (var material in Application.isPlaying ? renderer.materials : renderer.sharedMaterials) {
+                if (newHasTruncate) {
+                    material.EnableKeyword("_TRUNCATESPHERIZE_ON");
+                } else {
+                    material.DisableKeyword("_TRUNCATESPHERIZE_ON");
+                }
+            }
+        }
+
+        hasTruncateKeyword = newHasTruncate;
+    }
 
     public bool IsValid() {
         foreach (var renderer in renderers) {
@@ -46,10 +81,11 @@ public class PenetratorRenderers {
     }
 
     public void Update(CatmullSpline spline, float penetratorLength, float squashAndStretch, float distanceToHole, float baseDistanceAlongSpline,
-        Transform rootBone, Vector3 localRootForward, Vector3 localRootRight, Vector3 localRootUp, float truncateLength, float clippingStart, float clippingEnd, float truncateGirthRadius) {
+        Transform rootBone, Vector3 localRootForward, Vector3 localRootRight, Vector3 localRootUp, Penetrable.ClippingRangeWorld? clippingRange, Penetrable.Truncation? truncation) {
         Initialize();
         data[0] = new CatmullSplineData(spline);
         catmullBuffer.SetData(data, 0, 0, 1);
+        UpdateTruncateKeyword(truncation.HasValue);
         foreach(Renderer renderer in renderers) {
             renderer.GetPropertyBlock(propertyBlock);
             propertyBlock.SetFloat(penetratorOffsetLengthID, baseDistanceAlongSpline);
@@ -63,10 +99,10 @@ public class PenetratorRenderers {
             propertyBlock.SetFloat(squashStretchCorrectionID, squashAndStretch);
             propertyBlock.SetFloat(penetratorWorldLengthID, penetratorLength);
             propertyBlock.SetFloat(distanceToHoleID, distanceToHole);
-            propertyBlock.SetFloat(truncateLengthID, truncateLength);
-            propertyBlock.SetFloat(girthRadiusID, truncateGirthRadius);
-            propertyBlock.SetFloat(startClipID, clippingStart);
-            propertyBlock.SetFloat(endClipID, clippingEnd);
+            propertyBlock.SetFloat(truncateLengthID, truncation?.length ?? 1000f);
+            propertyBlock.SetFloat(girthRadiusID, truncation?.girth ?? 1f);
+            propertyBlock.SetFloat(startClipID, clippingRange?.startDistance ?? 0f);
+            propertyBlock.SetFloat(endClipID, clippingRange?.endDistance ?? 0f);
             renderer.SetPropertyBlock(propertyBlock);
         }
     }
@@ -77,4 +113,6 @@ public class PenetratorRenderers {
         propertyBlock = null;
     }
     
+}
+
 }

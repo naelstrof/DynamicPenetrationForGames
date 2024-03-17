@@ -1,5 +1,20 @@
-using System;
-using System.Collections;
+/* Copyright 2024 Naelstrof & Raliv
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the “Software”), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ * Software.
+ * 
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+ * OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+namespace DPG {
+
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -32,11 +47,13 @@ public class PenetratorBasic : Penetrator {
             GetSpline(linkedPenetrable.GetPoints(), ref cachedSpline, out var baseDistanceAlongSpline);
             
             var proximity = cachedSpline.GetLengthFromSubsection(1, 1);
-            var tipProximity = proximity - GetWorldLength();
-            linkedPenetrable.SetPenetrated(this, proximity, cachedSpline, 2);
-            return LerpPoints(points, linkedPoints, 1f-Mathf.Clamp01(tipProximity/0.2f));
+            var tipProximity = proximity - GetSquashStretchedWorldLength();
+            linkedPenetrable.SetPenetrated(this, new PenetrationArgs(penetratorData, proximity, cachedSpline, 2));
+            LerpPoints(points, points, linkedPoints, 1f-Mathf.Clamp01(tipProximity/0.2f));
         }
         return points;
     }
     
+}
+
 }

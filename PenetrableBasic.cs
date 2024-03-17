@@ -1,14 +1,32 @@
+/* Copyright 2024 Naelstrof & Raliv
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the “Software”), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ * Software.
+ * 
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+ * OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+namespace DPG {
+
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class PenetrableBasic : Penetrable {
     [SerializeField] private Transform[] transforms;
     [SerializeField] private Transform entranceTransform;
+    
+    [SerializeField] private bool shouldTruncate = true;
     [SerializeField,Range(0f,1f)] private float truncateNormalizedDistance;
     [SerializeField,Range(0f,1f)] private float holeStartNormalizedDistance;
+    [SerializeField] private bool shouldClip = true;
     [SerializeField] private ClippingRange clippingRange;
     [SerializeField,Range(0f,1f)] private float penetrableFriction = 0.5f;
 
@@ -16,13 +34,9 @@ public class PenetrableBasic : Penetrable {
     public struct ClippingRange {
         [Range(0f,1f)]
         public float startNormalizedDistance;
+        public bool allowAllTheWayThrough;
         [Range(0f,1f)]
         public float endNormalizedDistance;
-    }
-    
-    public struct ClippingRangeWorld {
-        public float startDistance;
-        public float endDistance;
     }
 
     private List<Vector3> points = new();
@@ -41,37 +55,37 @@ public class PenetrableBasic : Penetrable {
         return points;
     }
 
-    private float PenetrableNormalizedDistanceSpaceToWorldDistance(float penetrableNormalizedDistance, CatmullSpline spline, int penetrableStartIndex) {
-        float penetrableArcLength = spline.GetLengthFromSubsection(GetPoints().Count-1, penetrableStartIndex);
+    private float PenetrableNormalizedDistanceSpaceToWorldDistance(float penetrableNormalizedDistance, Penetrator.PenetrationArgs penetrationArgs) {
+        float penetrableArcLength = penetrationArgs.alongSpline.GetLengthFromSubsection(GetPoints().Count-1, penetrationArgs.penetrableStartIndex);
         float penetrableDistance = penetrableNormalizedDistance * penetrableArcLength;
         return penetrableDistance;
     }
 
-    public override PenetrationData SetPenetrated(Penetrator penetrator, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
-        base.SetPenetrated(penetrator, penetrationDepth, alongSpline, penetrableStartIndex);
+    public override PenetrationResult SetPenetrated(Penetrator penetrator, Penetrator.PenetrationArgs penetrationArgs ) {
+        base.SetPenetrated(penetrator, penetrationArgs);
         startLocalRotation ??= entranceTransform.localRotation;
-        float entranceSample = alongSpline.GetLengthFromSubsection(penetrableStartIndex);
-        entranceTransform.up = -alongSpline.GetVelocityFromDistance(entranceSample).normalized;
+        float entranceSample = penetrationArgs.alongSpline.GetLengthFromSubsection(penetrationArgs.penetrableStartIndex);
+        entranceTransform.up = -penetrationArgs.alongSpline.GetVelocityFromDistance(entranceSample).normalized;
         
-        float distanceFromBaseOfPenetrator = -penetrationDepth + penetrator.GetUnperturbedWorldLength(); // FIXME: We use unperturbed here instead of the real world length. Penetrables probably shouldn't be aware of squash/stretch. Pre-calc on penetrator?
+        float distanceFromBaseOfPenetrator = -penetrationArgs.penetrationDepth + penetrationArgs.penetratorData.GetWorldLength();
 
-        float holeStartDepth = PenetrableNormalizedDistanceSpaceToWorldDistance(holeStartNormalizedDistance, alongSpline, penetrableStartIndex);
+        float holeStartDepth = PenetrableNormalizedDistanceSpaceToWorldDistance(holeStartNormalizedDistance, penetrationArgs);
 
         float knotForce = penetrator.GetKnotForce(distanceFromBaseOfPenetrator + holeStartDepth);
         
-        //entranceTransform.localScale = Vector3.one + Vector3.one*(penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator)*10f);
-        PenetrationData data = new PenetrationData() {
+        return new PenetrationResult {
             knotForce = knotForce,
             penetrableFriction = penetrableFriction,
-            clippingRange = new ClippingRangeWorld() {
-                startDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.startNormalizedDistance, alongSpline, penetrableStartIndex),
-                endDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.endNormalizedDistance, alongSpline, penetrableStartIndex),
+            clippingRange = !shouldClip ? null : new ClippingRangeWorld {
+                startDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.startNormalizedDistance, penetrationArgs),
+                endDistance = clippingRange.allowAllTheWayThrough ? distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.endNormalizedDistance, penetrationArgs) : null,
             },
             holeStartDepth = holeStartDepth,
-            truncationGirth = penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, alongSpline, penetrableStartIndex)),
-            truncationLength = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, alongSpline, penetrableStartIndex),
-        }; // TODO: MAKE THIS USE A CONSTRUCTOR
-        return data;
+            truncation = !shouldTruncate ? null : new Truncation {
+                girth = penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, penetrationArgs)),
+                length = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, penetrationArgs),
+            },
+        }; // TODO: MAKE THIS USE A CONSTRUCTOR ???
     }
 
     public override void SetUnpenetrated(Penetrator penetrator) {
@@ -93,10 +107,15 @@ public class PenetrableBasic : Penetrable {
         CatmullSpline spline = new CatmullSpline(GetPoints());
         var lastColor = Gizmos.color;
         float arcLength = spline.arcLength;
-        
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(spline.GetPositionFromDistance(clippingRange.startNormalizedDistance*arcLength), 0.025f);
-        Gizmos.DrawWireSphere(spline.GetPositionFromDistance(clippingRange.endNormalizedDistance*arcLength), 0.025f);
+
+        if (shouldClip) {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireSphere(spline.GetPositionFromDistance(clippingRange.startNormalizedDistance * arcLength), 0.025f);
+            if (!clippingRange.allowAllTheWayThrough) {
+                Gizmos.DrawWireSphere(spline.GetPositionFromDistance(clippingRange.endNormalizedDistance * arcLength), 0.025f);
+            }
+        }
+
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(spline.GetPositionFromDistance(truncateNormalizedDistance*arcLength), 0.025f);
         Gizmos.color = lastColor;
@@ -108,4 +127,6 @@ public class PenetrableBasic : Penetrable {
     private void OnValidate() {
         startLocalRotation = null;
     }
+}
+
 }

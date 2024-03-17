@@ -1,7 +1,7 @@
 {
     "name": "com.naelstrof-raliv.dynamic-penetration-for-games",
     "displayName": "Dynamic Penetration for Games",
-    "version": "0.0.3",
+    "version": "1.0.0",
     "dependencies": {
         "com.naelstrof.splines": "2.0.0",
         "com.naelstrof.jigglephysics": "7.0.3"
