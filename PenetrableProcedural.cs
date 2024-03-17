@@ -169,6 +169,40 @@ public class PenetrableProcedural : MonoBehaviour {
         }
     }
 
+    public void AddTargetRenderer(Renderer renderer) {
+        if (targetRenderers.Contains(renderer)) {
+            return;
+        }
+        targetRenderers.Add(renderer);
+        foreach (Material sharedMat in Application.isPlaying ? renderer.materials : renderer.sharedMaterials) {
+            if (setKeyword ?? false) {
+                sharedMat.EnableKeyword("_PENETRATION_DEFORMATION_ON");
+            } else {
+                sharedMat.DisableKeyword("_PENETRATION_DEFORMATION_ON");
+            }
+            if (detailOnly) {
+                sharedMat.EnableKeyword("_PENETRATION_DEFORMATION_DETAIL_ON");
+            } else {
+                sharedMat.DisableKeyword("_PENETRATION_DEFORMATION_DETAIL_ON");
+            }
+        }
+    }
+
+    public void GetTargetRenderers(IList<Renderer> renderers) {
+        renderers.Clear();
+        foreach (var renderer in targetRenderers) {
+            renderers.Add(renderer);
+        }
+    }
+
+    public void RemoveTargetRenderer(Renderer renderer) {
+        targetRenderers.Remove(renderer);
+        foreach (Material sharedMat in Application.isPlaying ? renderer.materials : renderer.sharedMaterials) {
+            sharedMat.DisableKeyword("_PENETRATION_DEFORMATION_ON");
+            sharedMat.DisableKeyword("_PENETRATION_DEFORMATION_DETAIL_ON");
+        }
+    }
+
     private void OnEnable() {
         Initialize();
     }

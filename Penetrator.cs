@@ -78,6 +78,10 @@ public abstract class Penetrator : MonoBehaviour {
     protected Penetrable.PenetrationResult penetrationResult = new Penetrable.PenetrationResult();
 
     protected abstract IList<Vector3> GetPoints();
+
+    public virtual void GetOutputRenderers(IList<Renderer> output) => penetratorRenderers.GetRenderers(output);
+    public virtual void AddOutputRenderer(Renderer renderer) => penetratorRenderers.AddRenderer(renderer);
+    public virtual void RemoveOutputRenderer(Renderer renderer) => penetratorRenderers.RemoveRenderer(renderer);
     
     protected virtual void OnEnable() {
         cachedSpline = new CatmullSpline(new[] { Vector3.zero, Vector3.one });
