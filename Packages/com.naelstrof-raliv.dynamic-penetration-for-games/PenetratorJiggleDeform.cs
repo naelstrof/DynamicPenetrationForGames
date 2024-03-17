@@ -119,7 +119,7 @@ public class PenetratorJiggleDeform : Penetrator {
             insertionLerp = 0f;
         }
 
-        GetSpline(jigglePoints, ref finalizedSpline, out distanceAlongSpline);
+        penetratorData.GetSpline(jigglePoints, ref finalizedSpline, out distanceAlongSpline);
     }
 
     protected override void LateUpdate() {
@@ -198,7 +198,7 @@ public class PenetratorJiggleDeform : Penetrator {
         cachedPenetrablePoints.Add(GetBasePointOne());
         cachedPenetrablePoints.Add(GetBasePointTwo());
         cachedPenetrablePoints.AddRange(linkedPenetrable.GetPoints());
-        GetSpline(cachedPenetrablePoints, ref cachedSpline, out var baseDistanceAlongSpline);
+        penetratorData.GetSpline(cachedPenetrablePoints, ref cachedSpline, out var baseDistanceAlongSpline);
         var proximity = cachedSpline.GetLengthFromSubsection(1, 1);
         var tipProximity = proximity - GetSquashStretchedWorldLength();
 

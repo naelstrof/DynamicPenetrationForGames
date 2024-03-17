@@ -27,6 +27,7 @@ public class PenetratorAudioTrigger : MonoBehaviour {
         if ((lastPenetrationDepth ?? penetrationArgs.penetrationDepth) > triggerDepth && penetrationArgs.penetrationDepth < triggerDepth) {
             AudioSource.PlayClipAtPoint(clip, penetrator1.GetRootTransform().position);
         }
+
         lastPenetrationDepth = penetrationArgs.penetrationDepth;
     }
 
