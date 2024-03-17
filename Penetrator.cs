@@ -93,7 +93,6 @@ public abstract class Penetrator : MonoBehaviour {
 #endif
     }
 
-    protected void GetSpline(IList<Vector3> inputPoints, ref CatmullSpline spline, out float baseDistanceAlongSpline) => penetratorData.GetSpline(inputPoints, ref spline, out baseDistanceAlongSpline);
     protected Vector3 GetBasePointOne() => penetratorData.GetBasePointOne();
     protected Vector3 GetBasePointTwo() => penetratorData.GetBasePointTwo();
     public Transform GetRootTransform() => penetratorData.GetRootTransform();
@@ -194,7 +193,7 @@ public abstract class Penetrator : MonoBehaviour {
     }
 
     public virtual void GetFinalizedSpline(ref CatmullSpline finalizedSpline, out float distanceAlongSpline, out float insertionLerp, out PenetrationArgs? penetrationArgs) {
-        GetSpline(GetPoints(), ref finalizedSpline, out distanceAlongSpline);
+        penetratorData.GetSpline(GetPoints(), ref finalizedSpline, out distanceAlongSpline);
         penetrationArgs = null;
         insertionLerp = 0f;
     }
@@ -203,7 +202,8 @@ public abstract class Penetrator : MonoBehaviour {
         if (GetPoints().Count == 0 || !IsValid()) {
             return;
         }
-        penetratorData.GetSpline(GetPoints(), ref cachedSpline, out var distanceAlongSpline);
+
+        GetFinalizedSpline(ref cachedSpline, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
         CatmullSpline.GizmosDrawSpline(cachedSpline, Color.red, Color.green);
     }
     
