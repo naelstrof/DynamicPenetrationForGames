@@ -207,10 +207,9 @@ public class PenetratorJiggleDeform : Penetrator {
     }
 
     public void SetLinkedPenetrable(Penetrable penetrable) {
-        if (penetrable == null) {
-            penetrable.SetUnpenetrated(this);
+        if (penetrable == null && linkedPenetrable != null) {
+            linkedPenetrable.SetUnpenetrated(this);
         }
-
         linkedPenetrable = penetrable;
     }
 
