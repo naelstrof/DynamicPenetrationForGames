@@ -29,6 +29,8 @@ public abstract class Penetrable : MonoBehaviour {
         CatmullSpline.GizmosDrawSpline(spline, Color.red, Color.green);
     }
 
+    public abstract void GetHole(out Vector3 holePosition, out Vector3 holeNormal);
+
     public delegate void PenetrationAction(Penetrable penetrable, Penetrator penetrator, Penetrator.PenetrationArgs penetrationArgs);
     public delegate void UnpenetrateAction(Penetrable penetrable, Penetrator penetrator);
     public event PenetrationAction penetrated;
