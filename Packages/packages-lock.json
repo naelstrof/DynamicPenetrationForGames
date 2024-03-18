@@ -5,7 +5,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.naelstrof.splines": "2.0.0",
+        "com.naelstrof.splines": "2.0.1",
         "com.naelstrof.jigglephysics": "7.1.4"
       }
     },
