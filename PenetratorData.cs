@@ -149,7 +149,7 @@ public class PenetratorData {
     
     public Vector3 GetBasePointOne() {
         Vector3 startPoint = penetratorRootTransform.TransformPoint(penetratorRootPositionOffset);
-        return startPoint + penetratorRootTransform.TransformDirection(penetratorRootForward) * (girthData.GetWorldLength() * -0.25f);
+        return startPoint + penetratorRootTransform.TransformDirection(penetratorRootForward) * (girthData?.GetWorldLength() * -0.25f ?? 1f);
     }
 
     public Vector3 GetBasePointTwo() {

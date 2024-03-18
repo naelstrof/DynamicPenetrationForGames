@@ -109,6 +109,12 @@ public class PenetrableBasic : Penetrable {
         if (transforms == null || transforms.Length <= 1) {
             return;
         }
+
+        foreach (var t in transforms) {
+            if (t == null) {
+                return;
+            }
+        }
         cachedSpline ??= new CatmullSpline(GetPoints());
         cachedSpline.SetWeightsFromPoints(GetPoints());
         var lastColor = Gizmos.color;
@@ -117,7 +123,7 @@ public class PenetrableBasic : Penetrable {
         if (shouldClip) {
             Gizmos.color = Color.blue;
             Gizmos.DrawWireSphere(cachedSpline.GetPositionFromDistance(clippingRange.startNormalizedDistance * arcLength), 0.025f);
-            if (!clippingRange.allowAllTheWayThrough) {
+            if (clippingRange.allowAllTheWayThrough) {
                 Gizmos.DrawWireSphere(cachedSpline.GetPositionFromDistance(clippingRange.endNormalizedDistance * arcLength), 0.025f);
             }
         }

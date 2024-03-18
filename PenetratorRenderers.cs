@@ -111,6 +111,7 @@ public class PenetratorRenderers {
         data[0] = new CatmullSplineData(spline);
         catmullBuffer.SetData(data, 0, 0, 1);
         UpdateTruncateKeyword(truncation.HasValue);
+        float soFarItCantBeReached = penetratorLength * 100f;
         foreach(Renderer renderer in renderers) {
             renderer.GetPropertyBlock(propertyBlock);
             propertyBlock.SetFloat(penetratorOffsetLengthID, baseDistanceAlongSpline);
@@ -124,10 +125,10 @@ public class PenetratorRenderers {
             propertyBlock.SetFloat(squashStretchCorrectionID, squashAndStretch);
             propertyBlock.SetFloat(penetratorWorldLengthID, penetratorLength);
             propertyBlock.SetFloat(distanceToHoleID, distanceToHole);
-            propertyBlock.SetFloat(truncateLengthID, truncation?.length ?? 1000f);
+            propertyBlock.SetFloat(truncateLengthID, truncation?.length ?? soFarItCantBeReached);
             propertyBlock.SetFloat(girthRadiusID, truncation?.girth ?? 1f);
-            propertyBlock.SetFloat(startClipID, clippingRange?.startDistance ?? 0f);
-            propertyBlock.SetFloat(endClipID, clippingRange?.endDistance ?? 0f);
+            propertyBlock.SetFloat(startClipID, clippingRange?.startDistance ?? soFarItCantBeReached);
+            propertyBlock.SetFloat(endClipID, clippingRange.HasValue ? clippingRange.Value.endDistance ?? soFarItCantBeReached : 0f);
             renderer.SetPropertyBlock(propertyBlock);
         }
     }
