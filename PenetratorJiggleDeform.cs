@@ -135,6 +135,7 @@ public class PenetratorJiggleDeform : Penetrator {
             simulatedPoints[0].localScale = Vector3.one * GetSquashStretchedWorldLength();
         }
 
+
         GetFinalizedSpline(ref cachedSpline, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
 
         if (linkedPenetrable != null) {
