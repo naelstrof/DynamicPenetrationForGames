@@ -710,11 +710,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.001
+      value: 0.006
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -3.226
+      value: -0.383
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalRotation.w
@@ -743,6 +743,10 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3019428014052059092, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -2619749422985145952, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_BlendShapeWeights.Array.size
@@ -863,6 +867,7 @@ MonoBehaviour:
     penetratorRootPositionOffset: {x: -0.000000016632839, y: 0.061390065, z: 0.0053574108}
     penetratorRootForward: {x: -0.0000000020308253, y: 0.99996936, z: -0.007830262}
     penetratorRootUp: {x: 0.00000001647154, y: -0.007830262, z: -0.99996936}
+    girthUnwrapShader: {fileID: 4800000, guid: 34d24fe4568f98c4cae4724e139cb644, type: 3}
   squashAndStretch: 1
   penetratorRenderers:
     renderers:
@@ -993,19 +998,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9044806412961212599, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -6.123234e-17
+      value: -0.00071107957
       objectReference: {fileID: 0}
     - target: {fileID: 9044806412961212599, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: 0.00071073766
       objectReference: {fileID: 0}
     - target: {fileID: 9044806412961212599, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0.043345127
       objectReference: {fileID: 0}
     - target: {fileID: 9044806412961212599, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 1
+      value: 0.9990597
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1053,11 +1058,11 @@ MonoBehaviour:
   shouldTruncate: 1
   truncateNormalizedDistance: 1
   holeStartNormalizedDistance: 0.082
-  shouldClip: 1
+  shouldClip: 0
   clippingRange:
-    startNormalizedDistance: 0.137
+    startNormalizedDistance: 0.082
     allowAllTheWayThrough: 0
-    endNormalizedDistance: 1
+    endNormalizedDistance: 0.475
   penetrableFriction: 0.5
 --- !u!4 &2110675132 stripped
 Transform:
