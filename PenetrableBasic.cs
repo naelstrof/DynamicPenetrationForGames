@@ -29,6 +29,7 @@ public class PenetrableBasic : Penetrable {
     [SerializeField] private bool shouldClip = true;
     [SerializeField] private ClippingRange clippingRange;
     [SerializeField,Range(0f,1f)] private float penetrableFriction = 0.5f;
+    private CatmullSpline cachedSpline;
 
     [Serializable]
     public struct ClippingRange {
@@ -108,24 +109,32 @@ public class PenetrableBasic : Penetrable {
         if (transforms == null || transforms.Length <= 1) {
             return;
         }
-        CatmullSpline spline = new CatmullSpline(GetPoints());
+        cachedSpline ??= new CatmullSpline(GetPoints());
+        cachedSpline.SetWeightsFromPoints(GetPoints());
         var lastColor = Gizmos.color;
-        float arcLength = spline.arcLength;
+        float arcLength = cachedSpline.arcLength;
 
         if (shouldClip) {
             Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(spline.GetPositionFromDistance(clippingRange.startNormalizedDistance * arcLength), 0.025f);
+            Gizmos.DrawWireSphere(cachedSpline.GetPositionFromDistance(clippingRange.startNormalizedDistance * arcLength), 0.025f);
             if (!clippingRange.allowAllTheWayThrough) {
-                Gizmos.DrawWireSphere(spline.GetPositionFromDistance(clippingRange.endNormalizedDistance * arcLength), 0.025f);
+                Gizmos.DrawWireSphere(cachedSpline.GetPositionFromDistance(clippingRange.endNormalizedDistance * arcLength), 0.025f);
             }
         }
 
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(spline.GetPositionFromDistance(truncateNormalizedDistance*arcLength), 0.025f);
+        Gizmos.DrawWireSphere(cachedSpline.GetPositionFromDistance(truncateNormalizedDistance*arcLength), 0.025f);
         Gizmos.color = lastColor;
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(spline.GetPositionFromDistance(holeStartNormalizedDistance*arcLength), 0.025f);
+        Gizmos.DrawWireSphere(cachedSpline.GetPositionFromDistance(holeStartNormalizedDistance*arcLength), 0.025f);
         Gizmos.color = lastColor;
+    }
+
+    public override void GetHole(out Vector3 holePosition, out Vector3 holeNormal) {
+        cachedSpline ??= new CatmullSpline(GetPoints());
+        cachedSpline.SetWeightsFromPoints(GetPoints());
+        holePosition = cachedSpline.GetPositionFromDistance(holeStartNormalizedDistance * cachedSpline.arcLength);
+        holeNormal = cachedSpline.GetVelocityFromDistance(holeStartNormalizedDistance * cachedSpline.arcLength).normalized;
     }
 
     private void OnValidate() {
