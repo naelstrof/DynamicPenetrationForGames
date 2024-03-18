@@ -34,7 +34,7 @@ public class PenetratorJiggleDeform : Penetrator {
     [SerializeField, Range(-90f, 90f)] private float leftRightCurvature = 0f;
     [SerializeField, Range(-90f, 90f)] private float upDownCurvature = 0f;
     [SerializeField, Range(0f, 1f)] private float penetratorLengthFriction = 0.5f;
-    [SerializeField, Range(0f, 0.95f)] private float penetratorLengthElasticity = 0.1f;
+    [SerializeField, Range(0f, 0.95f)] private float penetratorLengthElasticity = 0.7f;
     [SerializeField, Range(0f, 2f)] private float knotForce = 1f;
 
     [SerializeField] protected Penetrable linkedPenetrable;
@@ -88,7 +88,7 @@ public class PenetratorJiggleDeform : Penetrator {
             lastPenetrablePosition = newPenetrablePosition;
 
             desiredLengthVelocity = Mathf.Lerp(desiredLengthVelocity, penetrableVelocity, penetrationResult?.penetrableFriction * penetrationResult?.penetrableFriction ?? 0f);
-            desiredLengthVelocity += penetrationResult?.knotForce ?? 0f * Time.deltaTime * knotForce * 20f;
+            desiredLengthVelocity += (penetrationResult?.knotForce ?? 0f) * Time.deltaTime * knotForce * 20f;
         } else {
             lastPenetrablePosition = null;
         }
