@@ -72,14 +72,18 @@ public class PenetrableBasic : Penetrable {
         float holeStartDepth = PenetrableNormalizedDistanceSpaceToWorldDistance(holeStartNormalizedDistance, penetrationArgs);
 
         float knotForce = penetrator.GetKnotForce(distanceFromBaseOfPenetrator + holeStartDepth);
+
+        bool isInside = !(shouldClip && clippingRange.allowAllTheWayThrough && penetrationArgs.penetrationDepth > PenetrableNormalizedDistanceSpaceToWorldDistance( clippingRange.endNormalizedDistance, penetrationArgs));
         
         return new PenetrationResult {
+            penetrable = this,
             knotForce = knotForce,
             penetrableFriction = penetrableFriction,
             clippingRange = !shouldClip ? null : new ClippingRangeWorld {
                 startDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.startNormalizedDistance, penetrationArgs),
-                endDistance = clippingRange.allowAllTheWayThrough ? distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.endNormalizedDistance, penetrationArgs) : null,
+                endDistance = clippingRange.allowAllTheWayThrough ? distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance( clippingRange.endNormalizedDistance, penetrationArgs) : null,
             },
+            tipIsInside = isInside,
             holeStartDepth = holeStartDepth,
             truncation = !shouldTruncate ? null : new Truncation {
                 girth = penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, penetrationArgs)),

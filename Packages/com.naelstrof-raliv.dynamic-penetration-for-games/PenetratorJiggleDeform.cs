@@ -87,8 +87,8 @@ public class PenetratorJiggleDeform : Penetrator {
             float penetrableVelocity = (newPenetrablePosition - (lastPenetrablePosition ?? newPenetrablePosition)) / Time.deltaTime;
             lastPenetrablePosition = newPenetrablePosition;
 
-            desiredLengthVelocity = Mathf.Lerp(desiredLengthVelocity, penetrableVelocity, penetrationResult.penetrableFriction * penetrationResult.penetrableFriction);
-            desiredLengthVelocity += penetrationResult.knotForce * Time.deltaTime * knotForce * 20f;
+            desiredLengthVelocity = Mathf.Lerp(desiredLengthVelocity, penetrableVelocity, penetrationResult?.penetrableFriction * penetrationResult?.penetrableFriction ?? 0f);
+            desiredLengthVelocity += penetrationResult?.knotForce ?? 0f * Time.deltaTime * knotForce * 20f;
         } else {
             lastPenetrablePosition = null;
         }
@@ -154,7 +154,7 @@ public class PenetratorJiggleDeform : Penetrator {
                 OnPenetrated(linkedPenetrable, penetrationArgs.Value, newResult);
             } else if (lastInsertionAmount >= 1f) {
                 linkedPenetrable.SetUnpenetrated(this);
-                SetPenetrationData(new Penetrable.PenetrationResult());
+                SetPenetrationData(null);
                 OnUnpenetrated(linkedPenetrable);
             }
         }
@@ -164,14 +164,14 @@ public class PenetratorJiggleDeform : Penetrator {
             cachedSpline,
             penetratorData.GetWorldLength(),
             squashAndStretch,
-            penetrableDistance + penetrationResult.holeStartDepth,
+            penetrableDistance + (penetrationResult?.holeStartDepth ?? 0f),
             distanceAlongSpline,
             GetRootTransform(),
             GetRootForward(),
             GetRootRight(),
             GetRootUp(),
-            penetrationResult.clippingRange,
-            penetrationResult.truncation
+            penetrationResult?.clippingRange,
+            penetrationResult?.truncation
         );
         lastInsertionAmount = insertionLerp;
     }

@@ -45,9 +45,11 @@ public abstract class Penetrable : MonoBehaviour {
     }
 
     public struct PenetrationResult {
+        public Penetrable penetrable;
         public float knotForce;
         public float penetrableFriction;
         public float holeStartDepth;
+        public bool tipIsInside;
         public Truncation? truncation;
         public ClippingRangeWorld? clippingRange;
     }

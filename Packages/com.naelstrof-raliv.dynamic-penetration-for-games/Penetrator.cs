@@ -75,7 +75,7 @@ public abstract class Penetrator : MonoBehaviour {
     
     protected CatmullSpline cachedSpline;
 
-    protected Penetrable.PenetrationResult penetrationResult = new Penetrable.PenetrationResult();
+    protected Penetrable.PenetrationResult? penetrationResult = null;
 
     protected abstract IList<Vector3> GetPoints();
 
@@ -125,9 +125,14 @@ public abstract class Penetrator : MonoBehaviour {
         return penetratorData.GetWorldGirthRadius(distanceAlongPenetrator/squashAndStretch);
     }
 
-    public virtual void SetPenetrationData(Penetrable.PenetrationResult result) {
-        this.penetrationResult = result;
+    protected virtual void SetPenetrationData(Penetrable.PenetrationResult? result) {
+        penetrationResult = result;
     }
+
+    public virtual Penetrable.PenetrationResult? GetPenetrationData() {
+        return penetrationResult;
+    }
+
     protected virtual void LateUpdate() {
         if (!IsValid()) {
             return;
@@ -143,8 +148,8 @@ public abstract class Penetrator : MonoBehaviour {
             penetratorData.GetRootForward(),
             penetratorData.GetRootRight(),
             penetratorData.GetRootUp(),
-            penetrationResult.clippingRange,
-            penetrationResult.truncation
+            penetrationResult?.clippingRange,
+            penetrationResult?.truncation
         );
     }
 
