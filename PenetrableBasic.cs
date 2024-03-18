@@ -21,7 +21,6 @@ using UnityEngine;
 
 public class PenetrableBasic : Penetrable {
     [SerializeField] private Transform[] transforms;
-    [SerializeField] private Transform entranceTransform;
     
     [SerializeField] private bool shouldTruncate = true;
     [SerializeField,Range(0f,1f)] private float truncateNormalizedDistance;
@@ -64,9 +63,6 @@ public class PenetrableBasic : Penetrable {
 
     public override PenetrationResult SetPenetrated(Penetrator penetrator, Penetrator.PenetrationArgs penetrationArgs ) {
         base.SetPenetrated(penetrator, penetrationArgs);
-        startLocalRotation ??= entranceTransform.localRotation;
-        float entranceSample = penetrationArgs.alongSpline.GetLengthFromSubsection(penetrationArgs.penetrableStartIndex);
-        entranceTransform.up = -penetrationArgs.alongSpline.GetVelocityFromDistance(entranceSample).normalized;
         
         float distanceFromBaseOfPenetrator = -penetrationArgs.penetrationDepth + penetrationArgs.penetratorData.GetWorldLength();
 
@@ -91,17 +87,6 @@ public class PenetrableBasic : Penetrable {
                 length = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, penetrationArgs),
             },
         }; // TODO: MAKE THIS USE A CONSTRUCTOR ???
-    }
-
-    public override void SetUnpenetrated(Penetrator penetrator) {
-        base.SetUnpenetrated(penetrator);
-        if (entranceTransform == null) {
-            return;
-        }
-        if (startLocalRotation.HasValue) {
-            entranceTransform.localRotation = startLocalRotation.Value;
-        }
-        entranceTransform.localScale = Vector3.one;
     }
 
     protected override void OnDrawGizmosSelected() {
