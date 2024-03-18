@@ -67,6 +67,7 @@ public class PenetratorData {
     [SerializeField] private Vector3 penetratorRootPositionOffset;
     [SerializeField] private Vector3 penetratorRootForward = Vector3.up;
     [SerializeField] private Vector3 penetratorRootUp = -Vector3.back;
+    [SerializeField] private Shader girthUnwrapShader;
 
     public Transform GetRootTransform() => penetratorRootTransform;
     public Vector3 GetRootPositionOffset() => penetratorRootPositionOffset;
@@ -130,7 +131,7 @@ public class PenetratorData {
         if (penetratorRootTransform == null || mask.renderer == null) {
             return;
         }
-        girthData = new GirthData(mask, Shader.Find("Hidden/DPG/GirthUnwrapRaw"), penetratorRootTransform, penetratorRootPositionOffset, penetratorRootForward, penetratorRootUp, right);
+        girthData = new GirthData(mask, girthUnwrapShader, penetratorRootTransform, penetratorRootPositionOffset, penetratorRootForward, penetratorRootUp, right);
     }
     
     public void GetSpline(IList<Vector3> inputPoints, ref CatmullSpline spline, out float baseDistanceAlongSpline) {
@@ -160,6 +161,12 @@ public class PenetratorData {
         if (!Application.isPlaying) {
             Reinitialize();
         }
+
+#if UNITY_EDITOR
+        if (girthUnwrapShader == null) {
+            girthUnwrapShader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath("34d24fe4568f98c4cae4724e139cb644"));
+        }
+#endif
     }
 
 }
