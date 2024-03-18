@@ -5,7 +5,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.naelstrof.splines": "2.0.1",
+        "com.naelstrof.splines": "2.0.2",
         "com.naelstrof.jigglephysics": "7.1.4"
       }
     },
@@ -21,7 +21,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "a5871140a3173ab3d20c54e95ded7557cb635f4a"
+      "hash": "08fe642729e25f2160b08382be5442559b7cc09b"
     },
     "com.unity.collab-proxy": {
       "version": "2.3.1",
