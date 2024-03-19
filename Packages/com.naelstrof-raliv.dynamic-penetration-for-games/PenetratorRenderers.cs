@@ -125,10 +125,11 @@ public class PenetratorRenderers {
             propertyBlock.SetFloat(squashStretchCorrectionID, squashAndStretch);
             propertyBlock.SetFloat(penetratorWorldLengthID, penetratorLength);
             propertyBlock.SetFloat(distanceToHoleID, distanceToHole);
-            propertyBlock.SetFloat(truncateLengthID, truncation?.length ?? soFarItCantBeReached);
+            // FIXME: For an unknown reason, gotta multiply in the squash and stretch here.
+            propertyBlock.SetFloat(truncateLengthID, truncation?.length * squashAndStretch ?? soFarItCantBeReached);
             propertyBlock.SetFloat(girthRadiusID, truncation?.girth ?? 1f);
-            propertyBlock.SetFloat(startClipID, clippingRange?.startDistance ?? soFarItCantBeReached);
-            propertyBlock.SetFloat(endClipID, clippingRange.HasValue ? clippingRange.Value.endDistance ?? soFarItCantBeReached : 0f);
+            propertyBlock.SetFloat(startClipID, clippingRange?.startDistance * squashAndStretch ?? soFarItCantBeReached);
+            propertyBlock.SetFloat(endClipID, clippingRange.HasValue ? clippingRange.Value.endDistance * squashAndStretch ?? soFarItCantBeReached : 0f);
             renderer.SetPropertyBlock(propertyBlock);
         }
     }
