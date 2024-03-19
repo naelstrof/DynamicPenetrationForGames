@@ -669,7 +669,6 @@ MonoBehaviour:
   transforms:
   - {fileID: 331355921}
   - {fileID: 934645904}
-  entranceTransform: {fileID: 331355921}
   shouldTruncate: 1
   truncateNormalizedDistance: 0
   holeStartNormalizedDistance: 0
@@ -1054,9 +1053,8 @@ MonoBehaviour:
   transforms:
   - {fileID: 2110675132}
   - {fileID: 882251532}
-  entranceTransform: {fileID: 2110675132}
-  shouldTruncate: 1
-  truncateNormalizedDistance: 1
+  shouldTruncate: 0
+  truncateNormalizedDistance: 0.169
   holeStartNormalizedDistance: 0.082
   shouldClip: 0
   clippingRange:
