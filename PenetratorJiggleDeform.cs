@@ -88,7 +88,7 @@ public class PenetratorJiggleDeform : Penetrator {
             lastPenetrablePosition = newPenetrablePosition;
 
             desiredLengthVelocity = Mathf.Lerp(desiredLengthVelocity, penetrableVelocity, penetrationResult?.penetrableFriction * penetrationResult?.penetrableFriction ?? 0f);
-            desiredLengthVelocity += (penetrationResult?.knotForce ?? 0f) * Time.deltaTime * knotForce * 20f;
+            desiredLengthVelocity += (penetrationResult?.knotForce ?? 0f) * Time.deltaTime * knotForce * 10f;
         } else {
             lastPenetrablePosition = null;
         }
@@ -208,10 +208,13 @@ public class PenetratorJiggleDeform : Penetrator {
     }
 
     public void SetLinkedPenetrable(Penetrable penetrable) {
-        if (penetrable == null && linkedPenetrable != null) {
+        if (linkedPenetrable != null && penetrable != linkedPenetrable) {
             linkedPenetrable.SetUnpenetrated(this);
         }
         linkedPenetrable = penetrable;
+        if (penetrable == null) {
+            SetPenetrationData(null);
+        }
     }
 
     protected override void OnDisable() {
