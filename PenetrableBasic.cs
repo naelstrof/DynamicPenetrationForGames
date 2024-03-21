@@ -28,7 +28,13 @@ public class PenetrableBasic : Penetrable {
     [SerializeField] private bool shouldClip = true;
     [SerializeField] private ClippingRange clippingRange;
     [SerializeField,Range(0f,1f)] private float penetrableFriction = 0.5f;
+    [SerializeField] private List<KnotForceSampleLocation> knotForceSampleLocations;
     private CatmullSpline cachedSpline;
+
+    [Serializable]
+    private struct KnotForceSampleLocation {
+        [Range(0f,1f)] public float normalizedDistance;
+    }
 
     [Serializable]
     public struct ClippingRange {
@@ -68,7 +74,10 @@ public class PenetrableBasic : Penetrable {
 
         float holeStartDepth = PenetrableNormalizedDistanceSpaceToWorldDistance(holeStartNormalizedDistance, penetrationArgs);
 
-        float knotForce = penetrator.GetKnotForce(distanceFromBaseOfPenetrator + holeStartDepth);
+        float knotForce = 0f;
+        foreach (var knotForceSampleLocation in knotForceSampleLocations) {
+            knotForce += penetrator.GetKnotForce(distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(knotForceSampleLocation.normalizedDistance, penetrationArgs));
+        }
 
         bool isInside = !(shouldClip && clippingRange.allowAllTheWayThrough && penetrationArgs.penetrationDepth > PenetrableNormalizedDistanceSpaceToWorldDistance( clippingRange.endNormalizedDistance, penetrationArgs));
         
@@ -118,6 +127,12 @@ public class PenetrableBasic : Penetrable {
         Gizmos.color = lastColor;
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(cachedSpline.GetPositionFromDistance(holeStartNormalizedDistance*arcLength), 0.025f);
+        Gizmos.color = Color.magenta;
+        if (knotForceSampleLocations != null) {
+            foreach (var knotLocation in knotForceSampleLocations) {
+                Gizmos.DrawWireSphere(cachedSpline.GetPositionFromDistance(knotLocation.normalizedDistance * arcLength), 0.025f);
+            }
+        }
         Gizmos.color = lastColor;
     }
 

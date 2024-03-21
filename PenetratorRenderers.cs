@@ -123,7 +123,6 @@ public class PenetratorRenderers {
             propertyBlock.SetVector(penetratorRootID, rootBone.position);
             propertyBlock.SetBuffer(catmullSplinesID, catmullBuffer);
             propertyBlock.SetFloat(squashStretchCorrectionID, squashAndStretch);
-            propertyBlock.SetFloat(penetratorWorldLengthID, penetratorLength);
             propertyBlock.SetFloat(distanceToHoleID, distanceToHole);
             // FIXME: For an unknown reason, gotta multiply in the squash and stretch here.
             propertyBlock.SetFloat(truncateLengthID, truncation?.length * squashAndStretch ?? soFarItCantBeReached);

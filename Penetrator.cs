@@ -244,6 +244,16 @@ public abstract class Penetrator : MonoBehaviour {
             globalPenetratorRootPositionRotation*Vector3.forward,
             0.1f
             );
+        
+        GetFinalizedSpline(ref cachedSpline, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
+        for (int i = 0; i < 64; i++) {
+            float dist = (float)i / 63 * GetSquashStretchedWorldLength();
+            Vector3 pos = cachedSpline.GetPositionFromDistance(dist+distanceAlongSpline);
+            float girth = penetratorData.GetWorldGirthRadius(dist/squashAndStretch);
+            Vector3 offset = penetratorData.GetWorldOffset(dist/squashAndStretch);
+            Vector3 normal = cachedSpline.GetVelocityFromDistance(dist + distanceAlongSpline);
+            Handles.DrawWireDisc(pos + offset, normal, Mathf.Max(girth,0.025f));
+        }
     }
 #endif
 }
