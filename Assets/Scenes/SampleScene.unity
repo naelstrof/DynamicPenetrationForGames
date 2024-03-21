@@ -744,6 +744,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -6365562192104237695, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: -3019428014052059092, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalScale.y
       value: 1
@@ -812,6 +816,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bunny
       objectReference: {fileID: 0}
+    - target: {fileID: 9172721482089580321, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -864,7 +872,7 @@ MonoBehaviour:
       renderer: {fileID: 1786496131}
       mask: -3
     penetratorRootTransform: {fileID: 1786496130}
-    penetratorRootPositionOffset: {x: -0.000000007566996, y: 0.09080951, z: -0.000059865415}
+    penetratorRootPositionOffset: {x: -0.0000000072759576, y: 0.10814687, z: -0.00007220358}
     penetratorRootForward: {x: 2.2829312e-10, y: 0.99999976, z: -0.0007127524}
     penetratorRootUp: {x: 3.4148323e-10, y: -0.00071275234, z: -0.99999964}
     girthUnwrapShader: {fileID: 4800000, guid: 34d24fe4568f98c4cae4724e139cb644, type: 3}

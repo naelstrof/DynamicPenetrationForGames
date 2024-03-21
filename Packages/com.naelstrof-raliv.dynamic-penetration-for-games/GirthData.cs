@@ -256,12 +256,8 @@ public class GirthData {
         return data != null && data.rendererMask != null && data.girthDeltaFrames != null && data.girthDeltaFrames.Count != 0 && data.rootLocalPenetratorForward == forward && data.rootLocalPenetratorRight == right && data.rootLocalPenetratorUp == up;
     }
     
-    private float localPenetratorRendererForwardness => Vector3.Dot(rendererLocalPenetratorRoot, rendererLocalPenetratorForward);
-
-    private float worldPenetratorForwardness => Vector3.Dot(rendererToWorld.MultiplyVector(rendererLocalPenetratorRoot), rendererToWorld.MultiplyVector(rendererLocalPenetratorForward))*GetPenetratorScaleFactor(rootLocalPenetratorForward);
-
     public float GetWorldLength() {
-        Vector3 renderLength = GetLocalRenderLength() * rendererLocalPenetratorForward - rendererLocalPenetratorRoot;
+        Vector3 renderLength = GetLocalRenderLength() * rendererLocalPenetratorForward;
         return rendererToWorld.MultiplyVector(renderLength).magnitude * GetPenetratorScaleFactor(rootLocalPenetratorForward);
     }
     
@@ -283,7 +279,7 @@ public class GirthData {
     }
 
     public float GetKnotForce(float worldDistanceAlongPenetrator) {
-        var worldDistanceAlongPenetratorFromMinVertex = worldDistanceAlongPenetrator + worldPenetratorForwardness;
+        var worldDistanceAlongPenetratorFromMinVertex = worldDistanceAlongPenetrator;
         if (worldDistanceAlongPenetratorFromMinVertex < 0f || worldDistanceAlongPenetratorFromMinVertex > GetWorldRenderLength()) {
             return 0f;
         }
@@ -491,7 +487,7 @@ public class GirthData {
                     BoneWeight1 weight = weights[wt];
                     if (validBones.Contains(weight.boneIndex) && weight.weight > 0.1f) {
                         Vector3 pos = staticVertices[vt];
-                        float length = Vector3.Dot(rendererLocalPenetratorForward, pos);
+                        float length = Vector3.Dot(rendererLocalPenetratorForward, pos-rendererLocalPenetratorRoot);
                         float girth = Vector3.Distance(pos,
                             (rendererLocalPenetratorRoot + rendererLocalPenetratorForward * length));
                         frame.maxLocalGirthRadius = Mathf.Max(girth, frame.maxLocalGirthRadius);
