@@ -15,7 +15,6 @@ Shader "DickShader"
 		[HideInInspector]_EndClip("EndClip", Float) = 0
 		[HideInInspector]_SquashStretchCorrection("SquashStretchCorrection", Float) = 1
 		[HideInInspector]_DistanceToHole("DistanceToHole", Float) = 0
-		[HideInInspector]_PenetratorWorldLength("PenetratorWorldLength", Float) = 1
 		[HideInInspector]_PenetratorOffsetLength("PenetratorOffsetLength", Float) = 0
 		[Toggle(_TRUNCATESPHERIZE_ON)] _TruncateSpherize("TruncateSpherize", Float) = 0
 		_GirthRadius("GirthRadius", Float) = 0.1
@@ -49,7 +48,6 @@ Shader "DickShader"
 		uniform float3 _PenetratorStartWorld;
 		uniform float _SquashStretchCorrection;
 		uniform float _DistanceToHole;
-		uniform float _PenetratorWorldLength;
 		uniform float _TruncateLength;
 		uniform float _GirthRadius;
 		uniform float _PenetratorOffsetLength;
@@ -117,8 +115,7 @@ Shader "DickShader"
 			float4 appendResult67_g1 = (float4(ase_vertex3Pos , 1.0));
 			float4 transform66_g1 = mul(unity_ObjectToWorld,appendResult67_g1);
 			float3 localPenetratorSpaceVertexPosition142_g1 = ( (transform66_g1).xyz - ( _PenetratorStartWorld - penetratorRootWorld122_g1 ) );
-			float3 temp_output_12_0_g1 = mul( localChangeOfBasis9_g1, ( localPenetratorSpaceVertexPosition142_g1 - penetratorRootWorld122_g1 ) );
-			float3 break15_g1 = temp_output_12_0_g1;
+			float3 break15_g1 = mul( localChangeOfBasis9_g1, ( localPenetratorSpaceVertexPosition142_g1 - penetratorRootWorld122_g1 ) );
 			float temp_output_18_0_g1 = ( break15_g1.z * _SquashStretchCorrection );
 			float3 appendResult26_g1 = (float3(break15_g1.x , break15_g1.y , temp_output_18_0_g1));
 			float3 appendResult25_g1 = (float3(( break15_g1.x / _SquashStretchCorrection ) , ( break15_g1.y / _SquashStretchCorrection ) , temp_output_18_0_g1));
@@ -127,7 +124,7 @@ Shader "DickShader"
 			float smoothstepResult23_g1 = smoothstep( 0.0 , temp_output_17_0_g1 , temp_output_18_0_g1);
 			float smoothstepResult22_g1 = smoothstep( distanceToHole180_g1 , temp_output_17_0_g1 , temp_output_18_0_g1);
 			float3 lerpResult31_g1 = lerp( appendResult26_g1 , appendResult25_g1 , min( smoothstepResult23_g1 , smoothstepResult22_g1 ));
-			float3 lerpResult32_g1 = lerp( lerpResult31_g1 , ( temp_output_12_0_g1 + ( ( distanceToHole180_g1 - ( ( distanceToHole180_g1 / ( _SquashStretchCorrection * _PenetratorWorldLength ) ) * _PenetratorWorldLength ) ) * float3(0,0,1) ) ) , step( distanceToHole180_g1 , temp_output_18_0_g1 ));
+			float3 lerpResult32_g1 = lerp( lerpResult31_g1 , appendResult26_g1 , step( distanceToHole180_g1 , temp_output_18_0_g1 ));
 			float3 squashStretchedPosition44_g1 = lerpResult32_g1;
 			float3 temp_output_150_0_g1 = ( float3(0,0,1) * _TruncateLength );
 			float3 temp_output_149_0_g1 = ( squashStretchedPosition44_g1 - temp_output_150_0_g1 );
@@ -190,17 +187,17 @@ Shader "DickShader"
 }
 /*ASEBEGIN
 Version=19302
-Node;AmplifyShaderEditor.SamplerNode;3;-587.004,67.5;Inherit;True;Property;_MetallicGlossMap;MetallicGlossMap;17;0;Create;True;0;0;0;False;0;False;-1;None;f920b22d535aa2546a12d783e1be0338;True;0;False;gray;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.SamplerNode;2;-604.5,-149.5;Inherit;True;Property;_MainTex;MainTex;16;0;Create;True;0;0;0;False;0;False;-1;None;f9c4c3b88bc300c4ca69f83d9e36bf9b;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.SamplerNode;4;-582.0278,289.9303;Inherit;True;Property;_BumpMap;BumpMap;18;0;Create;True;0;0;0;False;0;False;-1;None;0248ebb3931f38c4ea6664623270933a;True;0;True;bump;Auto;True;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.FunctionNode;66;-769.4998,515.1;Inherit;False;PenetratorDeformation;1;;1;ac383a8a454dc764caec4e7e5816beae;0;3;64;FLOAT3;0,0,0;False;69;FLOAT3;0,0,0;False;71;FLOAT4;0,0,0,0;False;4;FLOAT3;61;FLOAT3;62;FLOAT4;63;FLOAT;0
+Node;AmplifyShaderEditor.SamplerNode;3;-587.004,67.5;Inherit;True;Property;_MetallicGlossMap;MetallicGlossMap;16;0;Create;True;0;0;0;False;0;False;-1;None;f920b22d535aa2546a12d783e1be0338;True;0;False;gray;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.SamplerNode;2;-604.5,-149.5;Inherit;True;Property;_MainTex;MainTex;15;0;Create;True;0;0;0;False;0;False;-1;None;f9c4c3b88bc300c4ca69f83d9e36bf9b;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.SamplerNode;4;-582.0278,289.9303;Inherit;True;Property;_BumpMap;BumpMap;17;0;Create;True;0;0;0;False;0;False;-1;None;0248ebb3931f38c4ea6664623270933a;True;0;True;bump;Auto;True;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.FunctionNode;68;-769.4998,515.1;Inherit;False;PenetratorDeformation;1;;1;ac383a8a454dc764caec4e7e5816beae;0;3;64;FLOAT3;0,0,0;False;69;FLOAT3;0,0,0;False;71;FLOAT4;0,0,0,0;False;4;FLOAT3;61;FLOAT3;62;FLOAT4;63;FLOAT;0
 Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;0,0;Float;False;True;-1;2;ASEMaterialInspector;0;0;Standard;DickShader;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Masked;0;True;True;0;False;TransparentCutout;;AlphaTest;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Absolute;0;;0;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;0;0;2;0
 WireConnection;0;1;4;0
 WireConnection;0;3;3;1
 WireConnection;0;4;3;4
-WireConnection;0;10;66;0
-WireConnection;0;11;66;61
-WireConnection;0;12;66;62
+WireConnection;0;10;68;0
+WireConnection;0;11;68;61
+WireConnection;0;12;68;62
 ASEEND*/
-//CHKSM=FC69F790967E78B5ED77530F418BD7F248F52CD5
+//CHKSM=65C5BA6FFEC5B4BAFBBA8AA7AE84659499A970F4

@@ -76,8 +76,10 @@ public class PenetratorData {
     public Texture2D GetDetailMap() => girthData.GetDetailMap();
     public RenderTexture GetGirthMap() => girthData.GetGirthMap();
     public Vector3 GetRootRight() => Vector3.Cross(penetratorRootUp, penetratorRootForward);
+    public Vector3 GetWorldOffset(float alongLength) => girthData.GetScaledSplineSpaceOffset(alongLength);
     
     public float GetWorldLength() => girthData.GetWorldLength();
+    public float GetRendererLength() => girthData.GetWorldRenderLength();
     public float GetWorldGirthRadius(float alongLength) => girthData.GetWorldGirthRadius(alongLength);
     public float GetGirthScaleFactor() => girthData.GetGirthScaleFactor();
     public float GetKnotForce(float alongLength) => girthData.GetKnotForce(alongLength);

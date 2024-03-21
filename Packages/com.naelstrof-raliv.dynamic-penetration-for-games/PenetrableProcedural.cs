@@ -148,8 +148,8 @@ public class PenetrableProcedural : MonoBehaviour {
             initialUp[1] = 0;
             initialUp[2] = 0;
         }
-        public PenetratorData(CatmullSpline penetrablePath, CatmullSpline penetratorPath, Penetrator penetrator, float worldDistance) {
-            worldDickLength = penetrator.GetSquashStretchedWorldLength();
+        public PenetratorData(CatmullSpline penetrablePath, CatmullSpline penetratorPath, Penetrator penetrator, float worldDistance, float worldDickLength) {
+            this.worldDickLength = worldDickLength;
             blend = worldDistance > worldDickLength ? 0f : 1f;
             this.worldDistance = worldDistance;
             girthScaleFactor = penetrator.GetGirthScaleFactor();
@@ -293,8 +293,9 @@ public class PenetrableProcedural : MonoBehaviour {
         
         int index = penetrables.IndexOf(penetrable);
 
+        float diff = penetrationArgs.penetratorData.GetWorldLength() - penetrator.GetSquashStretchedWorldLength();
         var penetrableSpline = new CatmullSpline(penetrable.GetPoints());
-        data[index] = new PenetratorData(penetrableSpline, penetrationArgs.alongSpline, penetrator, penetrator.GetSquashStretchedWorldLength()-penetrationArgs.penetrationDepth);
+        data[index] = new PenetratorData(penetrableSpline, penetrationArgs.alongSpline, penetrator, penetrator.GetSquashStretchedWorldLength()-penetrationArgs.penetrationDepth+diff, penetrationArgs.penetratorData.GetRendererLength());
         splineData[index] = new CatmullSplineData(penetrableSpline);
         penetratorBuffer.SetData(data);
         splineBuffer.SetData(splineData);

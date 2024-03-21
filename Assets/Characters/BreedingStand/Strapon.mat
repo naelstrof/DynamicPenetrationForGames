@@ -42,7 +42,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: c28221feda5c6804b96c26725cb1f83d, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _PENETRATION_DEFORMATION_ON
   m_InvalidKeywords:
   - _ALPHAPREMULTIPLY_ON
   - _DISABLE_SSR_TRANSPARENT

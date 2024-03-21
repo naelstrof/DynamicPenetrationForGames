@@ -253,7 +253,7 @@ void GetDeformationFromPenetrator(inout float3 worldPosition, float holeNormaliz
     float dist = TimeToDistance(curveIndex, holeT)+data.worldDistance;
     float2 girthSampleUV = float2(dist/data.worldPenetratorLength, (-holeAngle+data.angle)/6.28318530718);
 
-    float texSample = tex2Dlod(girthMap,float4(frac(girthSampleUV.xy),0,diffDistance*smoothness*smoothness)).r;
+    float texSample = tex2Dlod(girthMap,float4(girthSampleUV.xy,0,diffDistance*smoothness*smoothness)).r;
     texSample *= 1-pow(2,-10*saturate(1-girthSampleUV.x));
     float girthSample = texSample*data.girthScaleFactor;
 
@@ -286,7 +286,7 @@ void GetDetailFromPenetrator(inout float3 worldPosition, float holeNormalizedDis
     float2 girthSampleUV = float2(dist/data.worldPenetratorLength, (-holeAngle+data.angle)/6.28318530718);
 
     
-    float texSample = tex2Dlod(girthMap,float4(frac(girthSampleUV.xy),0,diffDistance*smoothness*smoothness)).r;
+    float texSample = tex2Dlod(girthMap,float4(girthSampleUV.xy,0,diffDistance*smoothness*smoothness)).r;
     texSample *= 1-pow(2,-10*saturate(1-girthSampleUV.x));
     float girthSample = (texSample-0.5)*data.girthScaleFactor;
     

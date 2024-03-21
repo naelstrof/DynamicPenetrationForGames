@@ -678,6 +678,7 @@ MonoBehaviour:
     allowAllTheWayThrough: 0
     endNormalizedDistance: 0
   penetrableFriction: 0.5
+  knotForceSampleLocations: []
 --- !u!4 &1402581000 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
@@ -705,15 +706,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.003
+      value: -0.012
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.006
+      value: 0.152
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.383
+      value: -0.701
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalRotation.w
@@ -863,9 +864,9 @@ MonoBehaviour:
       renderer: {fileID: 1786496131}
       mask: -3
     penetratorRootTransform: {fileID: 1786496130}
-    penetratorRootPositionOffset: {x: -0.000000016632839, y: 0.061390065, z: 0.0053574108}
-    penetratorRootForward: {x: -0.0000000020308253, y: 0.99996936, z: -0.007830262}
-    penetratorRootUp: {x: 0.00000001647154, y: -0.007830262, z: -0.99996936}
+    penetratorRootPositionOffset: {x: -0.000000007566996, y: 0.09080951, z: -0.000059865415}
+    penetratorRootForward: {x: 2.2829312e-10, y: 0.99999976, z: -0.0007127524}
+    penetratorRootUp: {x: 3.4148323e-10, y: -0.00071275234, z: -0.99999964}
     girthUnwrapShader: {fileID: 4800000, guid: 34d24fe4568f98c4cae4724e139cb644, type: 3}
   squashAndStretch: 1
   penetratorRenderers:
@@ -877,7 +878,7 @@ MonoBehaviour:
   upDownCurvature: -5
   penetratorLengthFriction: 0.5
   penetratorLengthElasticity: 0.765
-  knotForce: 1
+  knotForce: 2
   linkedPenetrable: {fileID: 2110675131}
 --- !u!114 &1786496136
 MonoBehaviour:
@@ -1054,14 +1055,17 @@ MonoBehaviour:
   - {fileID: 2110675132}
   - {fileID: 882251532}
   shouldTruncate: 0
-  truncateNormalizedDistance: 0.169
+  truncateNormalizedDistance: 0.08
   holeStartNormalizedDistance: 0.082
   shouldClip: 0
   clippingRange:
-    startNormalizedDistance: 0.082
+    startNormalizedDistance: 0.08
     allowAllTheWayThrough: 0
     endNormalizedDistance: 0.475
   penetrableFriction: 0.5
+  knotForceSampleLocations:
+  - normalizedDistance: 0.078
+  - normalizedDistance: 0.875
 --- !u!4 &2110675132 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9044806412961212599, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
