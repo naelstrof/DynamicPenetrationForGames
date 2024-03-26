@@ -33,6 +33,8 @@ public class PenetratorJiggleDeform : Penetrator {
     [SerializeField] private JiggleSettingsBase jiggleSettings;
     [SerializeField, Range(-90f, 90f)] private float leftRightCurvature = 0f;
     [SerializeField, Range(-90f, 90f)] private float upDownCurvature = 0f;
+    [SerializeField, Range(-90f, 90f)] private float baseUpDownCurvatureOffset = 0f;
+    [SerializeField, Range(-90f, 90f)] private float baseLeftRightCurvatureOffset = 0f;
     [SerializeField, Range(0f, 1f)] private float penetratorLengthFriction = 0.5f;
     [SerializeField, Range(0f, 0.95f)] private float penetratorLengthElasticity = 0.7f;
     [SerializeField, Range(0f, 2f)] private float knotForce = 1f;
@@ -88,7 +90,7 @@ public class PenetratorJiggleDeform : Penetrator {
             lastPenetrablePosition = newPenetrablePosition;
 
             desiredLengthVelocity = Mathf.Lerp(desiredLengthVelocity, penetrableVelocity, penetrationResult?.penetrableFriction * penetrationResult?.penetrableFriction ?? 0f);
-            desiredLengthVelocity += (penetrationResult?.knotForce ?? 0f) * Time.deltaTime * knotForce * 10f;
+            desiredLengthVelocity += (penetrationResult?.knotForce ?? 0f) * Time.deltaTime * knotForce * 7f;
         } else {
             lastPenetrablePosition = null;
         }
@@ -256,7 +258,7 @@ public class PenetratorJiggleDeform : Penetrator {
                 simulatedPoints[i].transform.rotation =
                     Quaternion.LookRotation(GetRootTransform().TransformDirection(GetRootForward()),
                         GetRootTransform().TransformDirection(GetRootUp())) *
-                    Quaternion.Euler(segmentCurvature.y, segmentCurvature.x, 0f);
+                    Quaternion.Euler(segmentCurvature.y+baseUpDownCurvatureOffset, segmentCurvature.x+baseLeftRightCurvatureOffset, 0f);
                 simulatedPoints[i].transform.position = GetRootTransform().TransformPoint(GetRootPositionOffset());
             } else {
                 simulatedPoints[i].transform.localRotation =

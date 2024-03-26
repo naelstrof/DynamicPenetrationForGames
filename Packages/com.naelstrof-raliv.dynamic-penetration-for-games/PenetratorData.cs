@@ -24,16 +24,35 @@ using UnityEditor;
 [CustomPropertyDrawer(typeof(PenetratorData))]
 public class PenetratorDataPropertyDrawer : PropertyDrawer {
     private static bool foldout;
+    private float height = 20;
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
         // Using BeginProperty / EndProperty on the parent property means that
         // prefab override logic works on the entire property.
         EditorGUI.BeginProperty(position, label, property);
+        float startPos = position.y;
         var rect = new Rect(position.x, position.y, position.width, 20);
         foldout = EditorGUI.BeginFoldoutHeaderGroup(rect, foldout, "Penetrator Data");
         if (foldout) {
             rect.y += 20;
             rect.x += 10;
             rect.width -= 10;
+            if (property.FindPropertyRelative("mask").FindPropertyRelative("renderer").objectReferenceValue is SkinnedMeshRenderer skinnedMeshRenderer) {
+                if (!skinnedMeshRenderer.sharedMesh.isReadable) {
+                    rect.height += 10;
+                    EditorGUI.HelpBox(rect, $"Imported mesh {skinnedMeshRenderer.sharedMesh.name} must have Read/Write enabled in the import settings.", MessageType.Error);
+                    rect.height -= 10;
+                    rect.y += 30;
+                    if (GUI.Button(rect, "Auto-Fix")) {
+                        var path = AssetDatabase.GetAssetPath(skinnedMeshRenderer.sharedMesh);
+                        var importer = AssetImporter.GetAtPath(path);
+                        if (importer is ModelImporter modelImporter) {
+                            modelImporter.isReadable = true;
+                            modelImporter.SaveAndReimport();
+                        }
+                    }
+                    rect.y += 20;
+                }
+            }
             EditorGUIUtility.labelWidth = rect.width*0.4f;
             //EditorGUI.PropertyField(minRect, property.FindPropertyRelative("mask"));
             EditorGUI.PropertyField(rect, property.FindPropertyRelative("mask"), GUIContent.none);
@@ -47,13 +66,14 @@ public class PenetratorDataPropertyDrawer : PropertyDrawer {
                 property.FindPropertyRelative("penetratorRootUp").vector3Value = Vector3.up;
             }
         }
+        float endPos = rect.y+rect.height;
         EditorGUI.EndFoldoutHeaderGroup();
         EditorGUI.EndProperty();
-        
+        height = endPos - startPos;
     }
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {
-        return foldout?80:20;
+        return height;
     }
     
 }

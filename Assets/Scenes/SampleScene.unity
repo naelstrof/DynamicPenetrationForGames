@@ -694,27 +694,27 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.0599145
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.0599145
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.0599145
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.012
+      value: 0.073
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.152
+      value: -0.004
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.701
+      value: -0.178
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalRotation.w
@@ -872,9 +872,9 @@ MonoBehaviour:
       renderer: {fileID: 1786496131}
       mask: -3
     penetratorRootTransform: {fileID: 1786496130}
-    penetratorRootPositionOffset: {x: -0.0000000072759576, y: 0.10814687, z: -0.00007220358}
-    penetratorRootForward: {x: 2.2829312e-10, y: 0.99999976, z: -0.0007127524}
-    penetratorRootUp: {x: 3.4148323e-10, y: -0.00071275234, z: -0.99999964}
+    penetratorRootPositionOffset: {x: -0.00000002438901, y: 0.11021614, z: 0.010138243}
+    penetratorRootForward: {x: 2.1348203e-12, y: 1, z: 0.0001972914}
+    penetratorRootUp: {x: 6.5394423e-10, y: 0.00019729137, z: -0.9999999}
     girthUnwrapShader: {fileID: 4800000, guid: 34d24fe4568f98c4cae4724e139cb644, type: 3}
   squashAndStretch: 1
   penetratorRenderers:
@@ -884,9 +884,11 @@ MonoBehaviour:
   jiggleSettings: {fileID: 11400000, guid: 4ca2d81757477b54e920f4ae97317be4, type: 2}
   leftRightCurvature: 0
   upDownCurvature: -5
+  baseUpDownCurvatureOffset: 0
+  baseLeftRightCurvatureOffset: 0
   penetratorLengthFriction: 0.5
   penetratorLengthElasticity: 0.765
-  knotForce: 2
+  knotForce: 1
   linkedPenetrable: {fileID: 2110675131}
 --- !u!114 &1786496136
 MonoBehaviour:
@@ -1063,17 +1065,17 @@ MonoBehaviour:
   - {fileID: 2110675132}
   - {fileID: 882251532}
   shouldTruncate: 0
-  truncateNormalizedDistance: 0.08
+  truncateNormalizedDistance: 0.082
   holeStartNormalizedDistance: 0.082
   shouldClip: 0
   clippingRange:
-    startNormalizedDistance: 0.08
+    startNormalizedDistance: 0.169
     allowAllTheWayThrough: 0
-    endNormalizedDistance: 0.475
-  penetrableFriction: 0.5
+    endNormalizedDistance: 0.337
+  penetrableFriction: 0.52
   knotForceSampleLocations:
   - normalizedDistance: 0.078
-  - normalizedDistance: 0.875
+  - normalizedDistance: 0.863
 --- !u!4 &2110675132 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9044806412961212599, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
