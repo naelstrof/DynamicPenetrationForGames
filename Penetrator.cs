@@ -38,8 +38,8 @@ public class PenetratorInspector : Editor {
 
     protected void OnSceneGUI() {
         var script = (Penetrator)target;
-        Undo.RecordObject(this, "Transforms Updated");
-        script.DrawSceneGUI(isEditingRoot);
+        script.DrawSceneGUI(isEditingRoot, serializedObject.FindProperty("penetratorData"));
+        serializedObject.ApplyModifiedProperties();
     }
 
 }
@@ -208,10 +208,9 @@ public abstract class Penetrator : MonoBehaviour {
     }
 
     protected virtual void OnDrawGizmosSelected() {
-        if (GetPoints().Count == 0 || !IsValid()) {
+        if (!IsValid() || GetPoints().Count == 0) {
             return;
         }
-
         GetFinalizedSpline(ref cachedSpline, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
         CatmullSpline.GizmosDrawSpline(cachedSpline, Color.red, Color.green);
     }
@@ -224,9 +223,8 @@ public abstract class Penetrator : MonoBehaviour {
     }
     
 #if UNITY_EDITOR
-    public void DrawSceneGUI(bool isEditingRoot) {
+    public void DrawSceneGUI(bool isEditingRoot, SerializedProperty penetratorDataProp) {
         if (!isEditingRoot) return;
-        Undo.RecordObject(this, "Transforms Updated");
         EditorGUI.BeginChangeCheck();
         Handles.color = Color.white;
         var globalPenetratorRootPositionRotation = Quaternion.LookRotation(penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootForward()), penetratorData.GetRootTransform().TransformDirection(penetratorData.GetRootUp()));
@@ -234,11 +232,14 @@ public abstract class Penetrator : MonoBehaviour {
         globalPenetratorRootPositionOffset = Handles.PositionHandle(globalPenetratorRootPositionOffset, globalPenetratorRootPositionRotation);
         globalPenetratorRootPositionRotation = Handles.RotationHandle(globalPenetratorRootPositionRotation, globalPenetratorRootPositionOffset);
         if (EditorGUI.EndChangeCheck()) {
-            penetratorData.SetPenetratorPositionInfo(
-                penetratorData.GetRootTransform().InverseTransformPoint(globalPenetratorRootPositionOffset),
-                Quaternion.Inverse(penetratorData.GetRootTransform().rotation) * globalPenetratorRootPositionRotation
-            );
+            Vector3 position = penetratorData.GetRootTransform().InverseTransformPoint(globalPenetratorRootPositionOffset);
+            Quaternion rotation = Quaternion.Inverse(penetratorData.GetRootTransform().rotation) * globalPenetratorRootPositionRotation;
+            penetratorDataProp.FindPropertyRelative("penetratorRootPositionOffset").vector3Value = position;
+            penetratorDataProp.FindPropertyRelative("penetratorRootForward").vector3Value = rotation*Vector3.forward;
+            penetratorDataProp.FindPropertyRelative("penetratorRootUp").vector3Value = rotation*Vector3.up;
         }
+
+        Handles.color = Color.blue;
         Handles.DrawWireDisc(
             globalPenetratorRootPositionOffset+globalPenetratorRootPositionRotation*Vector3.forward * penetratorData.GetWorldLength(),
             globalPenetratorRootPositionRotation*Vector3.forward,
@@ -246,13 +247,20 @@ public abstract class Penetrator : MonoBehaviour {
             );
         
         GetFinalizedSpline(ref cachedSpline, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
-        for (int i = 0; i < 64; i++) {
-            float dist = (float)i / 63 * GetSquashStretchedWorldLength();
+        float length = GetSquashStretchedWorldLength();
+        for (int i = 0; i < 32; i++) {
+            float dist = (float)i / 31 * length;
             Vector3 pos = cachedSpline.GetPositionFromDistance(dist+distanceAlongSpline);
             float girth = penetratorData.GetWorldGirthRadius(dist/squashAndStretch);
             Vector3 offset = penetratorData.GetWorldOffset(dist/squashAndStretch);
             Vector3 normal = cachedSpline.GetVelocityFromDistance(dist + distanceAlongSpline);
-            Handles.DrawWireDisc(pos + offset, normal, Mathf.Max(girth,0.025f));
+            if (girth <= 0) {
+                Handles.color = Color.yellow;
+                Handles.DrawWireDisc(pos + offset, normal, 0.01f);
+            } else {
+                Handles.color = Color.white;
+                Handles.DrawWireDisc(pos + offset, normal, girth);
+            }
         }
     }
 #endif
