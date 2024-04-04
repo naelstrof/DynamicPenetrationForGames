@@ -32,7 +32,7 @@ public class PenetrableBasic : Penetrable {
     private CatmullSpline cachedSpline;
 
     [Serializable]
-    private struct KnotForceSampleLocation {
+    public struct KnotForceSampleLocation {
         [Range(0f,1f)] public float normalizedDistance;
     }
 
@@ -47,15 +47,12 @@ public class PenetrableBasic : Penetrable {
 
     private List<Vector3> points = new();
 
-    private Quaternion? startLocalRotation;
-
     public void GetTransforms(IList<Transform> output) {
         output.Clear();
         foreach (var t in transforms) {
             output.Add(t);
         }
     }
-    
     public void SetTransforms(IList<Transform> newTransforms) {
         if (transforms == null) {
             transforms = new List<Transform>(newTransforms);
@@ -64,6 +61,51 @@ public class PenetrableBasic : Penetrable {
         transforms.Clear();
         transforms.AddRange(newTransforms);
     }
+    public void SetShouldTruncate(bool shouldTruncate) {
+        this.shouldTruncate = shouldTruncate;
+    }
+    public bool GetShouldTruncate() {
+        return shouldTruncate;
+    }
+    public void SetShouldClip(bool shouldClip) {
+        this.shouldClip = shouldClip;
+    }
+    public bool GetShouldClip() {
+        return shouldClip;
+    }
+    public ClippingRange GetClippingRange() {
+        return clippingRange;
+    }
+    public void SetClippingRange(ClippingRange clippingRange) {
+        this.clippingRange = clippingRange;
+    }
+    public void GetKnotForceSampleLocations(IList<KnotForceSampleLocation> knotForceSampleLocations) {
+        knotForceSampleLocations.Clear();
+        foreach (var location in this.knotForceSampleLocations) {
+            knotForceSampleLocations.Add(location);
+        }
+    }
+    public void SetKnotForceSampleLocations(IList<KnotForceSampleLocation> knotForceSampleLocations) {
+        if (this.knotForceSampleLocations == null) {
+            this.knotForceSampleLocations = new List<KnotForceSampleLocation>(knotForceSampleLocations);
+            return;
+        }
+        this.knotForceSampleLocations.Clear();
+        this.knotForceSampleLocations.AddRange(knotForceSampleLocations);
+    }
+    public float GetPenetrableFriction() => penetrableFriction;
+    public void SetPenetrableFriction(float newFriction) {
+        penetrableFriction = newFriction;
+    }
+
+    public void SetTruncateNormalizedDistance(float truncateNormalizedDistance) {
+        this.truncateNormalizedDistance = truncateNormalizedDistance;
+    }
+    public float GetTruncateNormalizedDistance() => truncateNormalizedDistance;
+    public void SetHoleStartNormalizedDistance(float holeStartNormalizedDistance) {
+        this.holeStartNormalizedDistance = holeStartNormalizedDistance;
+    }
+    public float GetHoleStartNormalizedDistance() => holeStartNormalizedDistance;
 
     public override IList<Vector3> GetPoints() {
         points.Clear();
@@ -157,10 +199,6 @@ public class PenetrableBasic : Penetrable {
         cachedSpline.SetWeightsFromPoints(GetPoints());
         holePosition = cachedSpline.GetPositionFromDistance(holeStartNormalizedDistance * cachedSpline.arcLength);
         holeNormal = cachedSpline.GetVelocityFromDistance(holeStartNormalizedDistance * cachedSpline.arcLength).normalized;
-    }
-
-    private void OnValidate() {
-        startLocalRotation = null;
     }
 }
 
