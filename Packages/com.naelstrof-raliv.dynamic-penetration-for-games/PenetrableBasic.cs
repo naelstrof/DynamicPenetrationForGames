@@ -20,7 +20,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class PenetrableBasic : Penetrable {
-    [SerializeField] private Transform[] transforms;
+    [SerializeField] private List<Transform> transforms;
     
     [SerializeField] private bool shouldTruncate = true;
     [SerializeField,Range(0f,1f)] private float truncateNormalizedDistance;
@@ -48,6 +48,22 @@ public class PenetrableBasic : Penetrable {
     private List<Vector3> points = new();
 
     private Quaternion? startLocalRotation;
+
+    public void GetTransforms(IList<Transform> output) {
+        output.Clear();
+        foreach (var t in transforms) {
+            output.Add(t);
+        }
+    }
+    
+    public void SetTransforms(IList<Transform> newTransforms) {
+        if (transforms == null) {
+            transforms = new List<Transform>(newTransforms);
+            return;
+        }
+        transforms.Clear();
+        transforms.AddRange(newTransforms);
+    }
 
     public override IList<Vector3> GetPoints() {
         points.Clear();
@@ -100,7 +116,7 @@ public class PenetrableBasic : Penetrable {
 
     protected override void OnDrawGizmosSelected() {
         base.OnDrawGizmosSelected();
-        if (transforms == null || transforms.Length <= 1) {
+        if (transforms == null || transforms.Count <= 1) {
             return;
         }
 
