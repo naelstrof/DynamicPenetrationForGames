@@ -180,15 +180,15 @@ public class PenetratorData {
     }
 
     public void OnValidate() {
-        if (!Application.isPlaying) {
-            Reinitialize();
-        }
-
 #if UNITY_EDITOR
         if (girthUnwrapShader == null) {
             girthUnwrapShader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath("34d24fe4568f98c4cae4724e139cb644"));
         }
 #endif
+        
+        if (!Application.isPlaying) {
+            Reinitialize();
+        }
     }
 
 }

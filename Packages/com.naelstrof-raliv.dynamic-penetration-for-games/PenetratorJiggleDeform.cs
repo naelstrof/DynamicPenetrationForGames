@@ -48,7 +48,7 @@ public class PenetratorJiggleDeform : Penetrator {
     private float lastInsertionAmount = 0f;
     private List<Collider> setupColliders = new();
 
-    private float desiredLength = 1f;
+    private float desiredLength;
     private float desiredLengthVelocity;
     private float? lastPenetrablePosition;
 
@@ -71,6 +71,7 @@ public class PenetratorJiggleDeform : Penetrator {
         rig = new JiggleRigBuilder.JiggleRig(simulatedPoints[0], jiggleSettings, new Transform[] { }, setupColliders);
         builder.jiggleRigs = new List<JiggleRigBuilder.JiggleRig> { rig };
         builder.enabled = false;
+        desiredLength = penetratorData.GetWorldLength();
     }
 
     private bool GetSimulationAvailable() => simulatedPoints != null && simulatedPoints.Count != 0;
@@ -236,7 +237,10 @@ public class PenetratorJiggleDeform : Penetrator {
         points.Clear();
         points.Add(GetBasePointOne());
         points.Add(GetBasePointTwo());
-        if (!GetSimulationAvailable()) return points;
+        if (!GetSimulationAvailable()) {
+            points.Add(GetRootTransform().TransformPoint(GetRootPositionOffset()) + GetRootTransform().TransformDirection(GetRootForward())*GetSquashStretchedWorldLength());
+            return points;
+        }
         for (int i = 1; i < simulatedPoints.Count; i++) {
             points.Add(simulatedPoints[i].position);
         }
