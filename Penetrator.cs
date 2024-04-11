@@ -85,8 +85,8 @@ public abstract class Penetrator : MonoBehaviour {
     
     protected virtual void OnEnable() {
         cachedSpline = new CatmullSpline(new[] { Vector3.zero, Vector3.one });
-        penetratorData.Initialize();
-        penetratorRenderers.Initialize();
+        penetratorData?.Initialize();
+        penetratorRenderers?.Initialize();
     }
 
     protected bool IsValid() {
