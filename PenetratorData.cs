@@ -62,8 +62,8 @@ public class PenetratorDataPropertyDrawer : PropertyDrawer {
             rect.y += 20;
             if (GUI.Button(rect, "Reset position and orientation")) {
                 property.FindPropertyRelative("penetratorRootPositionOffset").vector3Value = Vector3.zero;
-                property.FindPropertyRelative("penetratorRootForward").vector3Value = Vector3.forward;
-                property.FindPropertyRelative("penetratorRootUp").vector3Value = Vector3.up;
+                property.FindPropertyRelative("penetratorRootForward").vector3Value = Vector3.up;
+                property.FindPropertyRelative("penetratorRootUp").vector3Value = Vector3.back;
             }
         }
         float endPos = rect.y+rect.height;
@@ -86,7 +86,7 @@ public class PenetratorData {
     [SerializeField] private Transform penetratorRootTransform;
     [SerializeField] private Vector3 penetratorRootPositionOffset;
     [SerializeField] private Vector3 penetratorRootForward = Vector3.up;
-    [SerializeField] private Vector3 penetratorRootUp = -Vector3.back;
+    [SerializeField] private Vector3 penetratorRootUp = Vector3.back;
     [SerializeField] private Shader girthUnwrapShader;
 
     public Transform GetRootTransform() => penetratorRootTransform;

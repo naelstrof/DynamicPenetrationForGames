@@ -1,11 +1,11 @@
 {
-    "name": "com.naelstrof-raliv.dynamic-penetration-for-games",
-    "displayName": "Dynamic Penetration for Games",
-    "version": "2.1.1",
-    "dependencies": {
-        "com.naelstrof.splines": "2.0.5",
-        "com.naelstrof.jigglephysics": "7.1.4"
-    },
-    "unity": "2022.3",
-    "description": "Tools to assist with penetration in games."
+  "name": "com.naelstrof-raliv.dynamic-penetration-for-games",
+  "displayName": "Dynamic Penetration for Games",
+  "version": "2.1.2",
+  "dependencies": {
+    "com.naelstrof.splines": "2.0.5",
+    "com.naelstrof.jigglephysics": "7.1.4"
+  },
+  "unity": "2022.3",
+  "description": "Tools to assist with penetration in games."
 }
