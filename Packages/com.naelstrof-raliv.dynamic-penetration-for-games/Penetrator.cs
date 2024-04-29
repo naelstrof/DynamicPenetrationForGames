@@ -235,8 +235,12 @@ public abstract class Penetrator : MonoBehaviour {
             Vector3 position = penetratorData.GetRootTransform().InverseTransformPoint(globalPenetratorRootPositionOffset);
             Quaternion rotation = Quaternion.Inverse(penetratorData.GetRootTransform().rotation) * globalPenetratorRootPositionRotation;
             penetratorDataProp.FindPropertyRelative("penetratorRootPositionOffset").vector3Value = position;
-            penetratorDataProp.FindPropertyRelative("penetratorRootForward").vector3Value = rotation*Vector3.forward;
-            penetratorDataProp.FindPropertyRelative("penetratorRootUp").vector3Value = rotation*Vector3.up;
+            Vector3 forward = rotation * Vector3.forward;
+            Vector3 up = rotation * Vector3.up;
+            Vector3 right = rotation * Vector3.right;
+            Vector3.OrthoNormalize(ref forward, ref up, ref right);
+            penetratorDataProp.FindPropertyRelative("penetratorRootForward").vector3Value = forward;
+            penetratorDataProp.FindPropertyRelative("penetratorRootUp").vector3Value = up;
         }
 
         Handles.color = Color.blue;
