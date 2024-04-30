@@ -148,12 +148,10 @@ public class PenetratorData {
         if (up == penetratorRootForward) {
             throw new UnityException("Non-orthogonal basis given!!!");
         }
-        Vector3 right = Vector3.right;
-        Vector3.OrthoNormalize(ref penetratorRootForward, ref up, ref right);
         if (penetratorRootTransform == null || mask.renderer == null) {
             return;
         }
-        girthData = new GirthData(mask, girthUnwrapShader, penetratorRootTransform, penetratorRootPositionOffset, penetratorRootForward, penetratorRootUp, right);
+        girthData = new GirthData(mask, girthUnwrapShader, penetratorRootTransform, penetratorRootPositionOffset, penetratorRootForward, penetratorRootUp, GetRootRight());
     }
     
     public void GetSpline(IList<Vector3> inputPoints, ref CatmullSpline spline, out float baseDistanceAlongSpline) {
