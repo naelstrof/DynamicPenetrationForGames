@@ -146,6 +146,11 @@ public class GirthData {
         }
 
         private void PopulateOffsetCurves(NativeArray<byte> bytes, int width, int height) {
+            Matrix4x4 stack = new Matrix4x4();
+            stack.SetRow(0, rendererLocalPenetratorRight);
+            stack.SetRow(1, rendererLocalPenetratorUp);
+            stack.SetRow(2, rendererLocalPenetratorForward);
+            stack = stack.transpose;
             for (int x = 0;x<width;x++) {
                 Vector2 positionSum = Vector2.zero;
                 for (int y = 0;y<height/2;y++) {
@@ -154,7 +159,7 @@ public class GirthData {
                     float distFromCore = color*maxLocalGirthRadius;
                     float xPosition = Mathf.Sin(rad-Mathf.PI/2f)*distFromCore;
                     float yPosition = Mathf.Cos(rad-Mathf.PI/2f)*distFromCore;
-                    Vector2 position = new Vector2(xPosition, yPosition);
+                    Vector2 position = stack.MultiplyVector(new Vector2(xPosition, yPosition));
 
                     int oppositeY = (y+height/2)%height;
                     float oppositeColor = ((float)bytes[x + oppositeY * width]/255f);//cpuTex.GetPixel(x,oppositeY).r;
@@ -162,7 +167,7 @@ public class GirthData {
                     float oppositeDistFromCore = oppositeColor*maxLocalGirthRadius;
                     float oppositeXPosition = Mathf.Sin(oppositeRad-Mathf.PI/2f)*oppositeDistFromCore;
                     float oppositeYPosition = Mathf.Cos(oppositeRad-Mathf.PI/2f)*oppositeDistFromCore;
-                    Vector2 oppositePosition = new Vector2(oppositeXPosition, oppositeYPosition);
+                    Vector2 oppositePosition = stack.MultiplyVector(new Vector2(oppositeXPosition, oppositeYPosition));
                     positionSum += (position+oppositePosition)*0.5f;
 
                     //Vector3 point = rendererLocalDickForward * (((float)x/(float)width) * maxLocalLength);
@@ -526,20 +531,20 @@ public class GirthData {
 
         if (staticMaterialA == null) {
             staticMaterialA = new Material(girthUnwrapShader);
-            staticMaterialA.SetFloat("_AngleOffset", Mathf.PI / 2f);
         }
 
         if (staticMaterialB == null) {
             staticMaterialB = new Material(girthUnwrapShader);
-            staticMaterialB.SetFloat("_AngleOffset", -Mathf.PI / 2f);
         }
 
+        staticMaterialA.SetFloat("_AngleOffset", Mathf.PI / 2f);
         staticMaterialA.SetVector("_PenetratorOrigin", rendererLocalPenetratorRoot);
         staticMaterialA.SetVector("_PenetratorForward", rendererLocalPenetratorForward);
         staticMaterialA.SetVector("_PenetratorUp", rendererLocalPenetratorUp);
         staticMaterialA.SetVector("_PenetratorRight", rendererLocalPenetratorRight);
         staticMaterialA.SetFloat("_MaxLength", frame.maxLocalLength);
         staticMaterialA.SetFloat("_MaxGirth", frame.maxLocalGirthRadius);
+        staticMaterialB.SetFloat("_AngleOffset", -Mathf.PI / 2f);
         staticMaterialB.SetVector("_PenetratorOrigin", rendererLocalPenetratorRoot);
         staticMaterialB.SetVector("_PenetratorForward", rendererLocalPenetratorForward);
         staticMaterialB.SetVector("_PenetratorUp", rendererLocalPenetratorUp);

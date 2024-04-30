@@ -239,6 +239,7 @@ public abstract class Penetrator : MonoBehaviour {
             Vector3 up = rotation * Vector3.up;
             Vector3 right = rotation * Vector3.right;
             Vector3.OrthoNormalize(ref forward, ref up, ref right);
+            
             penetratorDataProp.FindPropertyRelative("penetratorRootForward").vector3Value = forward;
             penetratorDataProp.FindPropertyRelative("penetratorRootUp").vector3Value = up;
         }
