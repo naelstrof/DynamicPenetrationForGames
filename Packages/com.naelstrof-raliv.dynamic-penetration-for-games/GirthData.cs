@@ -296,10 +296,21 @@ public class GirthData {
     }
 
     private float GetPenetratorScaleFactor(Vector3 axis) {
-        if (rendererMask.renderer is SkinnedMeshRenderer) {
-            Matrix4x4 rootMatrix = Matrix4x4.TRS(Vector3.zero, penetratorRoot.localRotation, penetratorRoot.localScale);
-            float scale = rootMatrix.MultiplyVector(axis).magnitude;
-            return scale;
+        if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
+#if UNITY_EDITOR
+            if (skinnedMeshRenderer.rootBone == null) {
+                Debug.LogError("Skinned Mesh Renderer is missing a root bone! This is required to determine scales...");
+                return 1f;
+            }
+#endif
+            Vector3 lossyScale = axis;
+            Transform t = penetratorRoot;
+            int i = 0;
+            while (t != skinnedMeshRenderer.rootBone && i++ < 100) {
+                lossyScale = Matrix4x4.TRS(Vector3.zero, t.localRotation, t.localScale).MultiplyVector(lossyScale);
+                t = t.parent;
+            }
+            return lossyScale.magnitude;
         }
         // TODO: Fails on non skinned renderers
         return 1f;
