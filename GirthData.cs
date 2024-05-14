@@ -311,7 +311,7 @@ public class GirthData {
             Vector3 lossyScale = axis;
             Transform t = penetratorRoot;
             int i = 0;
-            while (t != skinnedMeshRenderer.rootBone && i++ < 100) {
+            while (t != skinnedMeshRenderer.rootBone && t != skinnedMeshRenderer.rootBone.parent && i++ < 100) {
                 lossyScale = Matrix4x4.TRS(Vector3.zero, t.localRotation, t.localScale).MultiplyVector(lossyScale);
                 t = t.parent;
             }
