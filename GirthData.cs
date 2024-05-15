@@ -315,6 +315,7 @@ public class GirthData {
                 lossyScale = Matrix4x4.TRS(Vector3.zero, t.localRotation, t.localScale).MultiplyVector(lossyScale);
                 t = t.parent;
             }
+            
             return lossyScale.magnitude;
         }
         // TODO: Fails on non skinned renderers
