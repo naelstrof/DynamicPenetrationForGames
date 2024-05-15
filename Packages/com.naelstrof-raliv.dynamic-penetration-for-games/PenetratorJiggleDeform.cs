@@ -135,7 +135,7 @@ public class PenetratorJiggleDeform : Penetrator {
         }
 
         if (GetSimulationAvailable()) {
-            simulatedPoints[0].localScale = Vector3.one * GetSquashStretchedWorldLength();
+            simulatedPoints[0].localScale = simulatedPoints[0].parent.InverseTransformVector(Vector3.one * GetSquashStretchedWorldLength());
         }
 
 
@@ -272,7 +272,7 @@ public class PenetratorJiggleDeform : Penetrator {
             }
         }
 
-        simulatedPoints[0].localScale = Vector3.one * GetSquashStretchedWorldLength();
+        simulatedPoints[0].localScale = simulatedPoints[0].parent.InverseTransformVector(Vector3.one * GetSquashStretchedWorldLength());
     }
 
     protected override void OnValidate() {
