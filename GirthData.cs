@@ -159,7 +159,7 @@ public class GirthData {
                     float distFromCore = color*maxLocalGirthRadius;
                     float xPosition = Mathf.Sin(rad-Mathf.PI/2f)*distFromCore;
                     float yPosition = Mathf.Cos(rad-Mathf.PI/2f)*distFromCore;
-                    Vector2 position = stack.MultiplyVector(new Vector2(xPosition, yPosition));
+                    Vector2 position = new Vector2(xPosition, yPosition);
 
                     int oppositeY = (y+height/2)%height;
                     float oppositeColor = ((float)bytes[x + oppositeY * width]/255f);//cpuTex.GetPixel(x,oppositeY).r;
@@ -167,7 +167,7 @@ public class GirthData {
                     float oppositeDistFromCore = oppositeColor*maxLocalGirthRadius;
                     float oppositeXPosition = Mathf.Sin(oppositeRad-Mathf.PI/2f)*oppositeDistFromCore;
                     float oppositeYPosition = Mathf.Cos(oppositeRad-Mathf.PI/2f)*oppositeDistFromCore;
-                    Vector2 oppositePosition = stack.MultiplyVector(new Vector2(oppositeXPosition, oppositeYPosition));
+                    Vector2 oppositePosition = new Vector2(oppositeXPosition, oppositeYPosition);
                     positionSum += (position+oppositePosition)*0.5f;
 
                     //Vector3 point = rendererLocalDickForward * (((float)x/(float)width) * maxLocalLength);
@@ -299,13 +299,13 @@ public class GirthData {
         }
         return knotForce;
     }
-
-    private float GetPenetratorScaleFactor(Vector3 axis) {
+    
+    private Vector3 GetPenetratorScaleAxis(Vector3 axis) {
         if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
 #if UNITY_EDITOR
             if (skinnedMeshRenderer.rootBone == null) {
                 Debug.LogError("Skinned Mesh Renderer is missing a root bone! This is required to determine scales...");
-                return 1f;
+                return Vector3.one;
             }
 #endif
             Vector3 lossyScale = axis;
@@ -316,10 +316,14 @@ public class GirthData {
                 t = t.parent;
             }
             
-            return lossyScale.magnitude;
+            return lossyScale;
         }
         // TODO: Fails on non skinned renderers
-        return 1f;
+        return Vector3.one;
+    }
+
+    private float GetPenetratorScaleFactor(Vector3 axis) {
+        return GetPenetratorScaleAxis(axis).magnitude;
     }
 
     public float GetGirthScaleFactor() {
@@ -336,10 +340,8 @@ public class GirthData {
         return scaleFactor * GetPenetratorScaleFactor(rootLocalPenetratorUp);
     }
     
-    // Dick space is arbitrary, "Spline space" refers to Z forward, Y Up, and X right space. 
-    // This is to make it easier to place onto a spline.
-    public Vector3 GetScaledSplineSpaceOffset(float worldDistanceAlongPenetrator) {
-        float localDistanceAlongPenetrator = worldToRenderer.MultiplyVector(worldDistanceAlongPenetrator*rendererToWorld.MultiplyVector((rendererLocalPenetratorForward)).normalized).magnitude / GetPenetratorScaleFactor(rootLocalPenetratorForward);
+    public Vector3 GetWorldOffset(float worldDistanceAlongPenetrator) {
+        float localDistanceAlongPenetrator = worldToRenderer.MultiplyVector(worldDistanceAlongPenetrator*rendererToWorld.MultiplyVector(rendererLocalPenetratorForward).normalized).magnitude / GetPenetratorScaleFactor(rootLocalPenetratorForward);
         float lengthScaleFactor = baseGirthFrame.maxLocalLength / GetLocalRenderLength();
         float baseLocalXOffsetSample = baseGirthFrame.localXOffsetCurve.Evaluate(localDistanceAlongPenetrator*lengthScaleFactor);
         float baseLocalYOffsetSample = baseGirthFrame.localYOffsetCurve.Evaluate(localDistanceAlongPenetrator*lengthScaleFactor);
@@ -356,13 +358,11 @@ public class GirthData {
             }
         }
 
-        Vector3 worldOffset = rendererToWorld.MultiplyVector(rendererLocalPenetratorRight*localXOffsetSample+rendererLocalPenetratorUp*localYOffsetSample)*GetPenetratorScaleFactor(rootLocalPenetratorRight);
-        Matrix4x4 changeOfBasis = Matrix4x4.identity;
-        changeOfBasis.SetRow(0,rendererToWorld.MultiplyVector(rendererLocalPenetratorRight).normalized);
-        changeOfBasis.SetRow(1,rendererToWorld.MultiplyVector(rendererLocalPenetratorUp).normalized);
-        changeOfBasis.SetRow(2,rendererToWorld.MultiplyVector(rendererLocalPenetratorForward).normalized);
-        changeOfBasis[3,3] = 1f;
-        return changeOfBasis.MultiplyVector(worldOffset);
+        float xScale = rendererToWorld.MultiplyVector(rendererLocalPenetratorRight).magnitude;
+
+        Vector3 worldOffset = xScale*GetPenetratorScaleAxis(rootLocalPenetratorRight * -localXOffsetSample + rootLocalPenetratorUp * -localYOffsetSample);
+        
+        return Vector3.ProjectOnPlane(worldOffset, penetratorRoot.TransformDirection(rootLocalPenetratorForward));
     }
     
     public Texture2D GetDetailMap() {
