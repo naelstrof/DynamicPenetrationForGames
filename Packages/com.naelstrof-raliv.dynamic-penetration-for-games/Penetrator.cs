@@ -108,6 +108,10 @@ public abstract class Penetrator : MonoBehaviour {
     public RenderTexture GetGirthMap() => penetratorData.GetGirthMap();
     public float GetGirthScaleFactor() => penetratorData.GetGirthScaleFactor();
     public float GetKnotForce(float alongLength) => penetratorData.GetKnotForce(alongLength);
+    public Vector3 GetWorldOffset(float alongLength, CatmullSpline path, float distanceAlongSpline) {
+        var trans = path.GetReferenceFrameFromT(cachedSpline.GetTimeFromDistance(alongLength + distanceAlongSpline));
+        return trans.MultiplyVector(penetratorData.GetWorldOffset(alongLength/squashAndStretch));
+    }
     public float GetPenetratorAngleOffset(CatmullSpline path) {
         Vector3 initialRight = path.GetBinormalFromT(0f);
         Vector3 initialForward = path.GetVelocityFromT(0f).normalized;
@@ -257,7 +261,7 @@ public abstract class Penetrator : MonoBehaviour {
             float dist = (float)i / 31 * length;
             Vector3 pos = cachedSpline.GetPositionFromDistance(dist+distanceAlongSpline);
             float girth = penetratorData.GetWorldGirthRadius(dist/squashAndStretch);
-            Vector3 offset = penetratorData.GetWorldOffset(dist/squashAndStretch);
+            Vector3 offset = GetWorldOffset(dist/squashAndStretch, cachedSpline, distanceAlongSpline);
             Vector3 normal = cachedSpline.GetVelocityFromDistance(dist + distanceAlongSpline);
             if (girth <= 0) {
                 Handles.color = Color.yellow;

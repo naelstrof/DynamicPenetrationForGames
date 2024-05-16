@@ -96,7 +96,7 @@ public class PenetratorData {
     public Texture2D GetDetailMap() => girthData.GetDetailMap();
     public RenderTexture GetGirthMap() => girthData.GetGirthMap();
     public Vector3 GetRootRight() => Vector3.Cross(penetratorRootUp, penetratorRootForward);
-    public Vector3 GetWorldOffset(float alongLength) => girthData.GetScaledSplineSpaceOffset(alongLength);
+    public Vector3 GetWorldOffset(float alongLength) => girthData.GetWorldOffset(alongLength);
     
     public float GetWorldLength() => girthData.GetWorldLength();
     public float GetRendererLength() => girthData.GetWorldRenderLength();
