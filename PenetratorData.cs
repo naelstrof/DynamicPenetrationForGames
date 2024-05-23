@@ -99,7 +99,6 @@ public class PenetratorData {
     public Vector3 GetWorldOffset(float alongLength) => girthData.GetWorldOffset(alongLength);
     
     public float GetWorldLength() => girthData.GetWorldLength();
-    public float GetRendererLength() => girthData.GetWorldRenderLength();
     public float GetWorldGirthRadius(float alongLength) => girthData.GetWorldGirthRadius(alongLength);
     public float GetGirthScaleFactor() => girthData.GetGirthScaleFactor();
     public float GetKnotForce(float alongLength) => girthData.GetKnotForce(alongLength);
