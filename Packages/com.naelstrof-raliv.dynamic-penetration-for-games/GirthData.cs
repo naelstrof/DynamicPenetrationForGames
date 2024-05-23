@@ -233,7 +233,6 @@ public class GirthData {
     
     private RendererSubMeshMask rendererMask;
     private Transform penetratorRoot;
-    private List<Transform> skinnedMeshBoneChain;
     private Vector3 rendererLocalPenetratorForward;
     private Vector3 rendererLocalPenetratorUp;
     private Vector3 rendererLocalPenetratorRight;
@@ -291,55 +290,30 @@ public class GirthData {
         return knotForce * riseOverRunAdjustment;
     }
     
-    private Vector3 LocalDickRootBoneToWorldLossy(Vector3 axis) {
-        if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
-#if UNITY_EDITOR
-            if (skinnedMeshRenderer.rootBone == null) {
-                Debug.LogError("Skinned Mesh Renderer is missing a root bone! This is required to determine scales...");
-                return Vector3.one;
-            }
-#endif
-            Vector3 lossyScale = axis;
-            for (int i = 0; i < skinnedMeshBoneChain.Count; i++) {
-                lossyScale = Matrix4x4.TRS(Vector3.zero, skinnedMeshBoneChain[i].localRotation, skinnedMeshBoneChain[i].localScale).MultiplyVector(lossyScale);
-            }
-            
-            Matrix4x4 changeOfBasis = Matrix4x4.identity;
-            changeOfBasis.SetRow(0, rendererLocalPenetratorRight);
-            changeOfBasis.SetRow(1, rendererLocalPenetratorUp);
-            changeOfBasis.SetRow(2, rendererLocalPenetratorForward);
-            
-            return rendererToWorld.MultiplyVector(changeOfBasis.inverse * lossyScale);
-        }
-        // TODO: Fails on non skinned renderers
-        return Vector3.one;
+    private Vector3 LocalDickRootBoneToWorldLossy(Vector3 vector) {
+        Vector3 lossyScale = vector;
+        lossyScale = penetratorRoot.TransformVector(lossyScale);
+        
+        Matrix4x4 changeOfBasis = Matrix4x4.identity;
+        changeOfBasis.SetRow(0, rendererLocalPenetratorRight);
+        changeOfBasis.SetRow(1, rendererLocalPenetratorUp);
+        changeOfBasis.SetRow(2, rendererLocalPenetratorForward);
+        
+        return Matrix4x4.TRS(Vector3.zero, rendererMask.renderer.transform.localRotation, rendererMask.renderer.transform.localScale).MultiplyVector(changeOfBasis.inverse * lossyScale);
     }
 
-    private Vector3 WorldToLocalDickRootBoneLossy(Vector3 axis) {
-        if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
-#if UNITY_EDITOR
-            if (skinnedMeshRenderer.rootBone == null) {
-                Debug.LogError("Skinned Mesh Renderer is missing a root bone! This is required to determine scales...");
-                return Vector3.one;
-            }
-#endif
-            Vector3 lossyScale = worldToRenderer.MultiplyVector(axis);
-            
-            Matrix4x4 changeOfBasis = Matrix4x4.identity;
-            changeOfBasis.SetRow(0, rendererLocalPenetratorRight);
-            changeOfBasis.SetRow(1, rendererLocalPenetratorUp);
-            changeOfBasis.SetRow(2, rendererLocalPenetratorForward);
-            
-            lossyScale = changeOfBasis * lossyScale;
-            
-            for (int i = skinnedMeshBoneChain.Count-1; i >= 0; i--) {
-                lossyScale = Matrix4x4.TRS(Vector3.zero, skinnedMeshBoneChain[i].localRotation, skinnedMeshBoneChain[i].localScale).inverse.MultiplyVector(lossyScale);
-            }
-            
-            return lossyScale;
-        }
-        // TODO: Fails on non skinned renderers
-        return Vector3.one;
+    private Vector3 WorldToLocalDickRootBoneLossy(Vector3 vector) {
+        Vector3 lossyScale = Matrix4x4.TRS(Vector3.zero, rendererMask.renderer.transform.localRotation, rendererMask.renderer.transform.localScale).inverse.MultiplyVector(vector);
+        
+        Matrix4x4 changeOfBasis = Matrix4x4.identity;
+        changeOfBasis.SetRow(0, rendererLocalPenetratorRight);
+        changeOfBasis.SetRow(1, rendererLocalPenetratorUp);
+        changeOfBasis.SetRow(2, rendererLocalPenetratorForward);
+        
+        lossyScale = changeOfBasis * lossyScale;
+        lossyScale = penetratorRoot.InverseTransformVector(lossyScale);
+        
+        return lossyScale;
     }
 
     public float GetGirthScaleFactor() {
@@ -598,12 +572,6 @@ public class GirthData {
         this.rootLocalPenetratorRight = rootPenetratorRight;
         this.rootLocalPenetratorRoot = rootLocalPenetratorRoot;
         if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
-            int o = 0;
-            skinnedMeshBoneChain = new List<Transform>();
-            while (t != skinnedMeshRenderer.rootBone && t != skinnedMeshRenderer.rootBone.parent && o++ < 100) {
-                skinnedMeshBoneChain.Add(t);
-                t = t.parent;
-            }
             int rootBoneID = -1;
             for (int i = 0; i < skinnedMeshRenderer.bones.Length; i++) {
                 if (skinnedMeshRenderer.bones[i] == root) {
