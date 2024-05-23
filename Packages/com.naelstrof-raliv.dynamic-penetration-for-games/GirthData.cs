@@ -146,11 +146,6 @@ public class GirthData {
         }
 
         private void PopulateOffsetCurves(NativeArray<byte> bytes, int width, int height) {
-            Matrix4x4 stack = new Matrix4x4();
-            stack.SetRow(0, rendererLocalPenetratorRight);
-            stack.SetRow(1, rendererLocalPenetratorUp);
-            stack.SetRow(2, rendererLocalPenetratorForward);
-            stack = stack.transpose;
             for (int x = 0;x<width;x++) {
                 Vector2 positionSum = Vector2.zero;
                 for (int y = 0;y<height/2;y++) {
@@ -238,6 +233,7 @@ public class GirthData {
     
     private RendererSubMeshMask rendererMask;
     private Transform penetratorRoot;
+    private List<Transform> skinnedMeshBoneChain;
     private Vector3 rendererLocalPenetratorForward;
     private Vector3 rendererLocalPenetratorUp;
     private Vector3 rendererLocalPenetratorRight;
@@ -262,14 +258,7 @@ public class GirthData {
     }
     
     public float GetWorldLength() {
-        Vector3 renderLength = GetLocalRenderLength() * rendererLocalPenetratorForward;
-        return rendererToWorld.MultiplyVector(renderLength).magnitude * GetPenetratorScaleFactor(rootLocalPenetratorForward);
-    }
-    
-    public float GetWorldRenderLength() {
-        // This handles skewed forwards, and even non-proportional scales of the dick (making it stubbier or longer)
-        Vector3 length = GetLocalRenderLength() * rendererLocalPenetratorForward;
-        return rendererToWorld.MultiplyVector(length).magnitude * GetPenetratorScaleFactor(rootLocalPenetratorForward);
+        return LocalDickRootBoneToWorldLossy(rootLocalPenetratorForward*GetLocalRenderLength()).magnitude;
     }
 
     private float GetLocalRenderLength() {
@@ -285,11 +274,11 @@ public class GirthData {
 
     public float GetKnotForce(float worldDistanceAlongPenetrator) {
         var worldDistanceAlongPenetratorFromMinVertex = worldDistanceAlongPenetrator;
-        if (worldDistanceAlongPenetratorFromMinVertex < 0f || worldDistanceAlongPenetratorFromMinVertex > GetWorldRenderLength()) {
+        if (worldDistanceAlongPenetratorFromMinVertex < 0f || worldDistanceAlongPenetratorFromMinVertex > GetWorldLength()) {
             return 0f;
         }
 
-        float localDistanceAlongPenetratorFromMinVertex = worldToRenderer.MultiplyVector(worldDistanceAlongPenetratorFromMinVertex*rendererToWorld.MultiplyVector(rendererLocalPenetratorForward).normalized).magnitude / GetPenetratorScaleFactor(rootLocalPenetratorForward);
+        float localDistanceAlongPenetratorFromMinVertex = WorldToLocalDickRootBoneLossy(penetratorRoot.TransformDirection(rootLocalPenetratorForward) * worldDistanceAlongPenetrator).magnitude;
         float baseKnotForce = GetPiecewiseDerivative(baseGirthFrame.localGirthRadiusCurve, localDistanceAlongPenetratorFromMinVertex*(baseGirthFrame.maxLocalLength / GetLocalRenderLength()));
         float knotForce = baseKnotForce;
         if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
@@ -297,10 +286,12 @@ public class GirthData {
                 knotForce += (GetPiecewiseDerivative(girthDeltaFrames[i].localGirthRadiusCurve, localDistanceAlongPenetratorFromMinVertex*(girthDeltaFrames[i].maxLocalLength/GetLocalRenderLength()))-baseKnotForce) * (skinnedMeshRenderer.GetBlendShapeWeight(i) / 100f);
             }
         }
-        return knotForce;
+
+        float riseOverRunAdjustment = LocalDickRootBoneToWorldLossy(rootLocalPenetratorUp).magnitude / Mathf.Max(LocalDickRootBoneToWorldLossy(rootLocalPenetratorForward).magnitude,0.01f);
+        return knotForce * riseOverRunAdjustment;
     }
     
-    private Vector3 GetPenetratorScaleAxis(Vector3 axis) {
+    private Vector3 LocalDickRootBoneToWorldLossy(Vector3 axis) {
         if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
 #if UNITY_EDITOR
             if (skinnedMeshRenderer.rootBone == null) {
@@ -309,21 +300,46 @@ public class GirthData {
             }
 #endif
             Vector3 lossyScale = axis;
-            Transform t = penetratorRoot;
-            int i = 0;
-            while (t != skinnedMeshRenderer.rootBone && t != skinnedMeshRenderer.rootBone.parent && i++ < 100) {
-                lossyScale = Matrix4x4.TRS(Vector3.zero, t.localRotation, t.localScale).MultiplyVector(lossyScale);
-                t = t.parent;
+            for (int i = 0; i < skinnedMeshBoneChain.Count; i++) {
+                lossyScale = Matrix4x4.TRS(Vector3.zero, skinnedMeshBoneChain[i].localRotation, skinnedMeshBoneChain[i].localScale).MultiplyVector(lossyScale);
+            }
+            
+            Matrix4x4 changeOfBasis = Matrix4x4.identity;
+            changeOfBasis.SetRow(0, rendererLocalPenetratorRight);
+            changeOfBasis.SetRow(1, rendererLocalPenetratorUp);
+            changeOfBasis.SetRow(2, rendererLocalPenetratorForward);
+            
+            return rendererToWorld.MultiplyVector(changeOfBasis.inverse * lossyScale);
+        }
+        // TODO: Fails on non skinned renderers
+        return Vector3.one;
+    }
+
+    private Vector3 WorldToLocalDickRootBoneLossy(Vector3 axis) {
+        if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
+#if UNITY_EDITOR
+            if (skinnedMeshRenderer.rootBone == null) {
+                Debug.LogError("Skinned Mesh Renderer is missing a root bone! This is required to determine scales...");
+                return Vector3.one;
+            }
+#endif
+            Vector3 lossyScale = worldToRenderer.MultiplyVector(axis);
+            
+            Matrix4x4 changeOfBasis = Matrix4x4.identity;
+            changeOfBasis.SetRow(0, rendererLocalPenetratorRight);
+            changeOfBasis.SetRow(1, rendererLocalPenetratorUp);
+            changeOfBasis.SetRow(2, rendererLocalPenetratorForward);
+            
+            lossyScale = changeOfBasis * lossyScale;
+            
+            for (int i = skinnedMeshBoneChain.Count-1; i >= 0; i--) {
+                lossyScale = Matrix4x4.TRS(Vector3.zero, skinnedMeshBoneChain[i].localRotation, skinnedMeshBoneChain[i].localScale).inverse.MultiplyVector(lossyScale);
             }
             
             return lossyScale;
         }
         // TODO: Fails on non skinned renderers
         return Vector3.one;
-    }
-
-    private float GetPenetratorScaleFactor(Vector3 axis) {
-        return GetPenetratorScaleAxis(axis).magnitude;
     }
 
     public float GetGirthScaleFactor() {
@@ -335,13 +351,11 @@ public class GirthData {
                          (skinnedMeshRenderer.GetBlendShapeWeight(i) / 100f);
             }
         }
-        Vector3 localGirth = rendererLocalPenetratorUp*girthRadius;
-        float scaleFactor = rendererToWorld.MultiplyVector(localGirth).magnitude;
-        return scaleFactor * GetPenetratorScaleFactor(rootLocalPenetratorUp);
+        return LocalDickRootBoneToWorldLossy(rootLocalPenetratorUp * girthRadius).magnitude;
     }
     
     public Vector3 GetWorldOffset(float worldDistanceAlongPenetrator) {
-        float localDistanceAlongPenetrator = worldToRenderer.MultiplyVector(worldDistanceAlongPenetrator*rendererToWorld.MultiplyVector(rendererLocalPenetratorForward).normalized).magnitude / GetPenetratorScaleFactor(rootLocalPenetratorForward);
+        float localDistanceAlongPenetrator = WorldToLocalDickRootBoneLossy(penetratorRoot.TransformDirection(rootLocalPenetratorForward) * worldDistanceAlongPenetrator).magnitude;
         float lengthScaleFactor = baseGirthFrame.maxLocalLength / GetLocalRenderLength();
         float baseLocalXOffsetSample = baseGirthFrame.localXOffsetCurve.Evaluate(localDistanceAlongPenetrator*lengthScaleFactor);
         float baseLocalYOffsetSample = baseGirthFrame.localYOffsetCurve.Evaluate(localDistanceAlongPenetrator*lengthScaleFactor);
@@ -358,11 +372,7 @@ public class GirthData {
             }
         }
 
-        float xScale = rendererToWorld.MultiplyVector(rendererLocalPenetratorRight).magnitude;
-
-        Vector3 worldOffset = xScale*GetPenetratorScaleAxis(rootLocalPenetratorRight * -localXOffsetSample + rootLocalPenetratorUp * -localYOffsetSample);
-        
-        return Vector3.ProjectOnPlane(worldOffset, penetratorRoot.TransformDirection(rootLocalPenetratorForward));
+        return LocalDickRootBoneToWorldLossy(rootLocalPenetratorRight * localXOffsetSample + rootLocalPenetratorUp * localYOffsetSample);
     }
     
     public Texture2D GetDetailMap() {
@@ -397,7 +407,7 @@ public class GirthData {
     }
 
     public float GetWorldGirthRadius(float worldDistanceAlongPenetrator) {
-        float localDistanceAlongPenetrator = worldToRenderer.MultiplyVector(worldDistanceAlongPenetrator*rendererToWorld.MultiplyVector((rendererLocalPenetratorForward)).normalized).magnitude / GetPenetratorScaleFactor(rootLocalPenetratorForward);
+        float localDistanceAlongPenetrator = WorldToLocalDickRootBoneLossy(penetratorRoot.TransformDirection(rootLocalPenetratorForward) * worldDistanceAlongPenetrator).magnitude;
         // TODO: There's no real way to actually get the girth correctly, since we cannot interpret skewed scales. This is probably acceptable, though instead of just using localDickUp, maybe it should be a diagonal between up and right.
         // I currently just choose a single axis, though users shouldn't skew scale on the up/right axis anyway.
         float baseLocalGirthSample = baseGirthFrame.localGirthRadiusCurve.Evaluate(localDistanceAlongPenetrator*(baseGirthFrame.maxLocalLength / GetLocalRenderLength()));
@@ -407,9 +417,7 @@ public class GirthData {
                 localGirthSample += (girthDeltaFrames[i].localGirthRadiusCurve.Evaluate(localDistanceAlongPenetrator*(girthDeltaFrames[i].maxLocalLength / GetLocalRenderLength()))-baseLocalGirthSample) * (skinnedMeshRenderer.GetBlendShapeWeight(i) / 100f);
             }
         }
-
-        Vector3 localGirth = rendererLocalPenetratorUp*localGirthSample;
-        return rendererToWorld.MultiplyVector(localGirth).magnitude * GetPenetratorScaleFactor(rootLocalPenetratorUp);
+        return LocalDickRootBoneToWorldLossy(rootLocalPenetratorUp * localGirthSample).magnitude;
     }
     private static void GetBindPoseBoneLocalPositionRotation(Matrix4x4 boneMatrix, out Vector3 position, out Quaternion rotation, out float scale) {
         // Get global matrix for bone
@@ -584,11 +592,18 @@ public class GirthData {
     public GirthData(RendererSubMeshMask rendererWithMask, Shader girthUnwrapShader, Transform root, Vector3 rootLocalPenetratorRoot, Vector3 rootPenetratorForward, Vector3 rootPenetratorUp, Vector3 rootPenetratorRight) {
         rendererMask = rendererWithMask;
         penetratorRoot = root;
+        Transform t = penetratorRoot;
         this.rootLocalPenetratorUp = rootPenetratorUp;
         this.rootLocalPenetratorForward = rootPenetratorForward;
         this.rootLocalPenetratorRight = rootPenetratorRight;
         this.rootLocalPenetratorRoot = rootLocalPenetratorRoot;
         if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
+            int o = 0;
+            skinnedMeshBoneChain = new List<Transform>();
+            while (t != skinnedMeshRenderer.rootBone && t != skinnedMeshRenderer.rootBone.parent && o++ < 100) {
+                skinnedMeshBoneChain.Add(t);
+                t = t.parent;
+            }
             int rootBoneID = -1;
             for (int i = 0; i < skinnedMeshRenderer.bones.Length; i++) {
                 if (skinnedMeshRenderer.bones[i] == root) {

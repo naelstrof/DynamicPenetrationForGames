@@ -110,7 +110,7 @@ public abstract class Penetrator : MonoBehaviour {
     public float GetKnotForce(float alongLength) => penetratorData.GetKnotForce(alongLength);
     public Vector3 GetWorldOffset(float alongLength, CatmullSpline path, float distanceAlongSpline) {
         var trans = path.GetReferenceFrameFromT(cachedSpline.GetTimeFromDistance(alongLength + distanceAlongSpline));
-        return trans.MultiplyVector(penetratorData.GetWorldOffset(alongLength/squashAndStretch));
+        return penetratorData.GetWorldOffset(alongLength/squashAndStretch);
     }
     public float GetPenetratorAngleOffset(CatmullSpline path) {
         Vector3 initialRight = path.GetBinormalFromT(0f);
