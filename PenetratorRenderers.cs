@@ -31,11 +31,11 @@ public class PenetratorRenderers {
 
     private struct MaterialReference {
         public Renderer targetRenderer;
-        public bool IsValid(Material targetMaterial) {
+        public bool IsValid(Material targetMaterial, bool isUnityValidating) {
             if (targetRenderer == null) {
                 return false;
             }
-            if (!targetRenderer.sharedMaterials.Contains(targetMaterial)) {
+            if (!isUnityValidating && !targetRenderer.sharedMaterials.Contains(targetMaterial)) {
                 return false;
             }
             return true;
@@ -73,7 +73,7 @@ public class PenetratorRenderers {
         }
     }
 
-    static void AddRefCount(Renderer renderer, Material material) {
+    static void AddRefCount(Renderer renderer, Material material, bool isUnityValidating) {
 #if UNITY_EDITOR
         if (!Application.isPlaying && renderer == null) {
             return;
@@ -91,10 +91,10 @@ public class PenetratorRenderers {
         sharedMaterialUses[material].Add(new MaterialReference() {
             targetRenderer = renderer
         });
-        UpdateReferences();
+        UpdateReferences(isUnityValidating);
     }
 
-    static void RemoveRefCount(Renderer renderer, Material material) {
+    static void RemoveRefCount(Renderer renderer, Material material, bool isUnityValidating) {
 #if UNITY_EDITOR
         if (!Application.isPlaying && renderer == null) {
             return;
@@ -105,13 +105,13 @@ public class PenetratorRenderers {
             sharedMaterialUses.Add(material, new List<MaterialReference>());
         }
         sharedMaterialUses[material].RemoveAll((a) => a.targetRenderer == renderer);
-        UpdateReferences();
+        UpdateReferences(isUnityValidating);
     }
 
-    static void UpdateReferences() {
+    static void UpdateReferences(bool isUnityValidating) {
         List<Material> removeList = new List<Material>();
         foreach (var pair in sharedMaterialUses) {
-            pair.Value.RemoveAll((a) => !a.IsValid(pair.Key));
+            pair.Value.RemoveAll((a) => !a.IsValid(pair.Key, isUnityValidating));
             if (pair.Value.Count == 0) {
                 pair.Key.DisableKeyword("_DPG_CURVE_SKINNING");
                 removeList.Add(pair.Key);
@@ -125,7 +125,7 @@ public class PenetratorRenderers {
         }
     }
 
-    private void SetFlags(Renderer renderer, bool active) {
+    private void SetFlags(Renderer renderer, bool active, bool isUnityValidating) {
 #if UNITY_EDITOR
         if (!Application.isPlaying && renderer == null) {
             return;
@@ -140,9 +140,9 @@ public class PenetratorRenderers {
                 }
 
                 if (active) {
-                    AddRefCount(renderer, material);
+                    AddRefCount(renderer, material, isUnityValidating);
                 } else {
-                    RemoveRefCount(renderer, material);
+                    RemoveRefCount(renderer, material, isUnityValidating);
                     renderer.SetPropertyBlock(null);
                 }
             }
@@ -171,24 +171,24 @@ public class PenetratorRenderers {
             return;
         }
         renderers.Add(renderer);
-        SetFlags(renderer, true);
+        SetFlags(renderer, true, false);
     }
     
     public void RemoveRenderer(Renderer renderer) {
-        SetFlags(renderer, false);
+        SetFlags(renderer, false, false);
         if (renderers.Contains(renderer)) {
             renderers.Remove(renderer);
         }
     }
 
-    private void UpdateTruncateKeyword(bool newHasTruncate) {
+    private void UpdateTruncateKeyword(bool newHasTruncate, bool isUnityValidating) {
         if (hasTruncateKeyword == newHasTruncate) {
             return;
         }
         hasTruncateKeyword = newHasTruncate;
         
         foreach (var renderer in renderers) {
-            SetFlags(renderer, true);
+            SetFlags(renderer, true, isUnityValidating);
         }
     }
 
@@ -212,7 +212,7 @@ public class PenetratorRenderers {
         Initialize();
         data[0] = new CatmullSplineData(spline);
         catmullBuffer.SetData(data, 0, 0, 1);
-        UpdateTruncateKeyword(truncation.HasValue);
+        UpdateTruncateKeyword(truncation.HasValue, false);
         float soFarItCantBeReached = penetratorLength * 100f;
         foreach(Renderer renderer in renderers) {
             renderer.GetPropertyBlock(propertyBlock);
@@ -245,13 +245,13 @@ public class PenetratorRenderers {
         foreach (var renderer in renderers) {
             if (!previousRenderers.Contains(renderer)) {
                 // new renderer
-                SetFlags(renderer, true);
+                SetFlags(renderer, true, true);
             }
         }
         foreach (var renderer in previousRenderers) {
             if (!renderers.Contains(renderer)) {
                 // removed renderer
-                SetFlags(renderer, false);
+                SetFlags(renderer, false, true);
             }
         }
         previousRenderers = new List<Renderer>(renderers);
@@ -263,7 +263,7 @@ public class PenetratorRenderers {
             return;
         }
         foreach (var renderer in renderers) {
-            SetFlags(renderer, true);
+            SetFlags(renderer, true, false);
         }
         previousRenderers = new List<Renderer>(renderers);
     }
@@ -271,7 +271,7 @@ public class PenetratorRenderers {
     public void OnDisable() {
         if (previousRenderers != null) {
             foreach (var renderer in previousRenderers) {
-                SetFlags(renderer, false);
+                SetFlags(renderer, false, false);
             }
 
             previousRenderers = null;
