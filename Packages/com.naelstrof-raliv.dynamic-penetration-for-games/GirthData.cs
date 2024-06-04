@@ -175,6 +175,7 @@ public class GirthData {
                 float distFromRoot = ((float)x/(float)width)*maxLocalLength;
                 Vector2 positionAverage = positionSum/(float)(height/2);
                 positionAverage *= 2;
+        
                 localXOffsetCurve.AddKey(distFromRoot, positionAverage.x);
                 localYOffsetCurve.AddKey(distFromRoot, positionAverage.y);
             }
@@ -241,6 +242,7 @@ public class GirthData {
     private Vector3 rootLocalPenetratorUp;
     private Vector3 rootLocalPenetratorRight;
     private Vector3 rootLocalPenetratorRoot;
+    private Matrix4x4 poseMatrix;
 
     private static float GetPiecewiseDerivative(AnimationCurve curve, float t) {
         float epsilon = 0.00001f;
@@ -292,26 +294,19 @@ public class GirthData {
     
     private Vector3 LocalDickRootBoneToWorldLossy(Vector3 vector) {
         Vector3 lossyScale = vector;
+        
+        lossyScale = poseMatrix.MultiplyVector(lossyScale);
         lossyScale = penetratorRoot.TransformVector(lossyScale);
         
-        Matrix4x4 changeOfBasis = Matrix4x4.identity;
-        changeOfBasis.SetRow(0, rendererLocalPenetratorRight);
-        changeOfBasis.SetRow(1, rendererLocalPenetratorUp);
-        changeOfBasis.SetRow(2, rendererLocalPenetratorForward);
-        
-        return Matrix4x4.TRS(Vector3.zero, rendererMask.renderer.transform.localRotation, rendererMask.renderer.transform.localScale).MultiplyVector(changeOfBasis.inverse * lossyScale);
+        //return changeOfBasis.inverse * lossyScale;
+        return lossyScale;
     }
 
     private Vector3 WorldToLocalDickRootBoneLossy(Vector3 vector) {
-        Vector3 lossyScale = Matrix4x4.TRS(Vector3.zero, rendererMask.renderer.transform.localRotation, rendererMask.renderer.transform.localScale).inverse.MultiplyVector(vector);
+        Vector3 lossyScale = vector;
         
-        Matrix4x4 changeOfBasis = Matrix4x4.identity;
-        changeOfBasis.SetRow(0, rendererLocalPenetratorRight);
-        changeOfBasis.SetRow(1, rendererLocalPenetratorUp);
-        changeOfBasis.SetRow(2, rendererLocalPenetratorForward);
-        
-        lossyScale = changeOfBasis * lossyScale;
         lossyScale = penetratorRoot.InverseTransformVector(lossyScale);
+        lossyScale = poseMatrix.inverse.MultiplyVector(lossyScale);
         
         return lossyScale;
     }
@@ -346,7 +341,7 @@ public class GirthData {
             }
         }
 
-        return LocalDickRootBoneToWorldLossy(rootLocalPenetratorRight * localXOffsetSample + rootLocalPenetratorUp * localYOffsetSample);
+        return LocalDickRootBoneToWorldLossy(rendererLocalPenetratorRight * localXOffsetSample + rendererLocalPenetratorUp * localYOffsetSample);
     }
     
     public Texture2D GetDetailMap() {
@@ -589,11 +584,13 @@ public class GirthData {
             rendererLocalPenetratorUp = (poseRotation * rootPenetratorUp).normalized;
             rendererLocalPenetratorRight = (poseRotation * rootPenetratorRight).normalized;
             rendererLocalPenetratorRoot = posePosition+(poseRotation*rootLocalPenetratorRoot*scale);
+            poseMatrix = skinnedMeshRenderer.sharedMesh.bindposes[rootBoneID];
         } else {
             rendererLocalPenetratorForward = worldToRenderer.MultiplyVector(root.TransformDirection(rootPenetratorForward)).normalized;
             rendererLocalPenetratorUp = worldToRenderer.MultiplyVector(root.TransformDirection(rootPenetratorUp)).normalized;
             rendererLocalPenetratorRight = worldToRenderer.MultiplyVector(root.TransformDirection(rootPenetratorRight)).normalized;
             rendererLocalPenetratorRoot = worldToRenderer.MultiplyPoint(root.TransformPoint(rootLocalPenetratorRoot));
+            poseMatrix = Matrix4x4.identity;
         }
 
 
