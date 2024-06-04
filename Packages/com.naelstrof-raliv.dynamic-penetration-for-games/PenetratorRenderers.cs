@@ -32,10 +32,13 @@ public class PenetratorRenderers {
     private struct MaterialReference {
         public Renderer targetRenderer;
         public bool IsValid(Material targetMaterial) {
-            bool valid = true;
-            valid &= targetRenderer != null;
-            valid &= targetRenderer.sharedMaterials.Contains(targetMaterial);
-            return valid;
+            if (targetRenderer == null) {
+                return false;
+            }
+            if (!targetRenderer.sharedMaterials.Contains(targetMaterial)) {
+                return false;
+            }
+            return true;
         }
     }
     private static Dictionary<Material,List<MaterialReference>> sharedMaterialUses;
