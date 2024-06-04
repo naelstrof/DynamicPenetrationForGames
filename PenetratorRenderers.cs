@@ -71,6 +71,11 @@ public class PenetratorRenderers {
     }
 
     static void AddRefCount(Renderer renderer, Material material) {
+#if UNITY_EDITOR
+        if (!Application.isPlaying && renderer == null) {
+            return;
+        }
+#endif
         sharedMaterialUses ??= new Dictionary<Material, List<MaterialReference>>();
         if (!sharedMaterialUses.ContainsKey(material)) {
             sharedMaterialUses.Add(material,new List<MaterialReference>());
@@ -87,6 +92,11 @@ public class PenetratorRenderers {
     }
 
     static void RemoveRefCount(Renderer renderer, Material material) {
+#if UNITY_EDITOR
+        if (!Application.isPlaying && renderer == null) {
+            return;
+        }
+#endif
         sharedMaterialUses ??= new Dictionary<Material, List<MaterialReference>>();
         if (!sharedMaterialUses.ContainsKey(material)) {
             sharedMaterialUses.Add(material, new List<MaterialReference>());
@@ -113,6 +123,11 @@ public class PenetratorRenderers {
     }
 
     private void SetFlags(Renderer renderer, bool active) {
+#if UNITY_EDITOR
+        if (!Application.isPlaying && renderer == null) {
+            return;
+        }
+#endif
         if (!Application.isPlaying) {
             foreach (var material in renderer.sharedMaterials) {
                 if (hasTruncateKeyword && active) {
@@ -158,7 +173,9 @@ public class PenetratorRenderers {
     
     public void RemoveRenderer(Renderer renderer) {
         SetFlags(renderer, false);
-        renderers.Remove(renderer);
+        if (renderers.Contains(renderer)) {
+            renderers.Remove(renderer);
+        }
     }
 
     private void UpdateTruncateKeyword(bool newHasTruncate) {
