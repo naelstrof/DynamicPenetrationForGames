@@ -14,6 +14,8 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Linq;
+
 namespace DPG {
 
 using System.Collections.Generic;
@@ -24,6 +26,19 @@ using UnityEngine;
 public class PenetratorRenderers {
     [SerializeField]
     private List<Renderer> renderers;
+
+    private List<Renderer> previousRenderers;
+
+    private struct MaterialReference {
+        public Renderer targetRenderer;
+        public bool IsValid(Material targetMaterial) {
+            bool valid = true;
+            valid &= targetRenderer != null;
+            valid &= targetRenderer.sharedMaterials.Contains(targetMaterial);
+            return valid;
+        }
+    }
+    private static Dictionary<Material,List<MaterialReference>> sharedMaterialUses;
     
     private static readonly int catmullSplinesID = Shader.PropertyToID("_CatmullSplines");
     private static readonly int penetratorForwardID = Shader.PropertyToID("_PenetratorForwardWorld");
@@ -46,6 +61,7 @@ public class PenetratorRenderers {
     private static readonly int girthRadiusID = Shader.PropertyToID("_GirthRadius");
 
     private bool hasTruncateKeyword = false;
+    private static readonly int DpgBlend = Shader.PropertyToID("_DPGBlend");
 
     public void GetRenderers(IList<Renderer> output) {
         output.Clear();
@@ -54,21 +70,94 @@ public class PenetratorRenderers {
         }
     }
 
+    static void AddRefCount(Renderer renderer, Material material) {
+        sharedMaterialUses ??= new Dictionary<Material, List<MaterialReference>>();
+        if (!sharedMaterialUses.ContainsKey(material)) {
+            sharedMaterialUses.Add(material,new List<MaterialReference>());
+        }
+        foreach (var use in sharedMaterialUses[material]) {
+            if (use.targetRenderer == renderer) {
+                return;
+            }
+        }
+        sharedMaterialUses[material].Add(new MaterialReference() {
+            targetRenderer = renderer
+        });
+        UpdateReferences();
+    }
+
+    static void RemoveRefCount(Renderer renderer, Material material) {
+        sharedMaterialUses ??= new Dictionary<Material, List<MaterialReference>>();
+        if (!sharedMaterialUses.ContainsKey(material)) {
+            sharedMaterialUses.Add(material, new List<MaterialReference>());
+        }
+        sharedMaterialUses[material].RemoveAll((a) => a.targetRenderer == renderer);
+        UpdateReferences();
+    }
+
+    static void UpdateReferences() {
+        List<Material> removeList = new List<Material>();
+        foreach (var pair in sharedMaterialUses) {
+            pair.Value.RemoveAll((a) => !a.IsValid(pair.Key));
+            if (pair.Value.Count == 0) {
+                pair.Key.DisableKeyword("_DPG_CURVE_SKINNING");
+                removeList.Add(pair.Key);
+            } else {
+                pair.Key.EnableKeyword("_DPG_CURVE_SKINNING");
+            }
+        }
+
+        foreach (var key in removeList) {
+            sharedMaterialUses.Remove(key);
+        }
+    }
+
+    private void SetFlags(Renderer renderer, bool active) {
+        if (!Application.isPlaying) {
+            foreach (var material in renderer.sharedMaterials) {
+                if (hasTruncateKeyword && active) {
+                    material.EnableKeyword("_DPG_TRUNCATE_SPHERIZE");
+                } else {
+                    material.DisableKeyword("_DPG_TRUNCATE_SPHERIZE");
+                }
+
+                if (active) {
+                    AddRefCount(renderer, material);
+                } else {
+                    RemoveRefCount(renderer, material);
+                    renderer.SetPropertyBlock(null);
+                }
+            }
+        } else {
+            foreach (var material in renderer.materials) {
+                if (hasTruncateKeyword && active) {
+                    material.EnableKeyword("_DPG_TRUNCATE_SPHERIZE");
+                } else {
+                    material.DisableKeyword("_DPG_TRUNCATE_SPHERIZE");
+                }
+
+                if (active) {
+                    material.EnableKeyword("_DPG_CURVE_SKINNING");
+                } else {
+                    material.DisableKeyword("_DPG_CURVE_SKINNING");
+                    renderer.GetPropertyBlock(propertyBlock);
+                    propertyBlock.SetFloat(DpgBlend, 0f);
+                    renderer.SetPropertyBlock(propertyBlock);
+                }
+            }
+        }
+    }
+
     public void AddRenderer(Renderer renderer) {
         if (renderers.Contains(renderer)) {
             return;
         }
         renderers.Add(renderer);
-        foreach (var material in Application.isPlaying ? renderer.materials : renderer.sharedMaterials) {
-            if (hasTruncateKeyword) {
-                material.EnableKeyword("_TRUNCATESPHERIZE_ON");
-            } else {
-                material.DisableKeyword("_TRUNCATESPHERIZE_ON");
-            }
-        }
+        SetFlags(renderer, true);
     }
     
     public void RemoveRenderer(Renderer renderer) {
+        SetFlags(renderer, false);
         renderers.Remove(renderer);
     }
 
@@ -76,18 +165,11 @@ public class PenetratorRenderers {
         if (hasTruncateKeyword == newHasTruncate) {
             return;
         }
-
-        foreach (var renderer in renderers) {
-            foreach (var material in Application.isPlaying ? renderer.materials : renderer.sharedMaterials) {
-                if (newHasTruncate) {
-                    material.EnableKeyword("_TRUNCATESPHERIZE_ON");
-                } else {
-                    material.DisableKeyword("_TRUNCATESPHERIZE_ON");
-                }
-            }
-        }
-
         hasTruncateKeyword = newHasTruncate;
+        
+        foreach (var renderer in renderers) {
+            SetFlags(renderer, true);
+        }
     }
 
     public bool IsValid() {
@@ -123,6 +205,7 @@ public class PenetratorRenderers {
             propertyBlock.SetVector(penetratorRootID, rootBone.position);
             propertyBlock.SetBuffer(catmullSplinesID, catmullBuffer);
             propertyBlock.SetFloat(squashStretchCorrectionID, squashAndStretch);
+            propertyBlock.SetFloat(DpgBlend, 1f);
             propertyBlock.SetFloat(distanceToHoleID, distanceToHole);
             // FIXME: For an unknown reason, gotta multiply in the squash and stretch here.
             propertyBlock.SetFloat(truncateLengthID, truncation?.length * squashAndStretch ?? soFarItCantBeReached);
@@ -133,7 +216,46 @@ public class PenetratorRenderers {
         }
     }
 
-    public void OnDestroy() {
+    public void OnValidate() {
+        if (renderers == null) {
+            return;
+        }
+
+        previousRenderers ??= new List<Renderer>();
+        foreach (var renderer in renderers) {
+            if (!previousRenderers.Contains(renderer)) {
+                // new renderer
+                SetFlags(renderer, true);
+            }
+        }
+        foreach (var renderer in previousRenderers) {
+            if (!renderers.Contains(renderer)) {
+                // removed renderer
+                SetFlags(renderer, false);
+            }
+        }
+        previousRenderers = new List<Renderer>(renderers);
+    }
+
+    public void OnEnable() {
+        Initialize();
+        if (renderers == null) {
+            return;
+        }
+        foreach (var renderer in renderers) {
+            SetFlags(renderer, true);
+        }
+        previousRenderers = new List<Renderer>(renderers);
+    }
+
+    public void OnDisable() {
+        if (previousRenderers != null) {
+            foreach (var renderer in previousRenderers) {
+                SetFlags(renderer, false);
+            }
+
+            previousRenderers = null;
+        }
         catmullBuffer.Release();
         data.Dispose();
         propertyBlock = null;
