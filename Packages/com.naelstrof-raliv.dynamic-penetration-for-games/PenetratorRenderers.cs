@@ -131,7 +131,7 @@ public class PenetratorRenderers {
             return;
         }
 #endif
-        if (!Application.isPlaying) {
+        if (!Application.isPlaying || isUnityValidating) {
             foreach (var material in renderer.sharedMaterials) {
                 if (hasTruncateKeyword && active) {
                     material.EnableKeyword("_DPG_TRUNCATE_SPHERIZE");
