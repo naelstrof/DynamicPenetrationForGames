@@ -125,7 +125,7 @@ public class PenetratorData {
     private bool GetInitialized() => girthData != null;
 
     public bool IsValid() {
-        return mask.renderer != null && penetratorRootTransform != null && Vector3.Dot(penetratorRootForward, penetratorRootUp) <= Mathf.Epsilon;
+        return mask.renderer != null && penetratorRootTransform != null && 1f-Mathf.Abs(Vector3.Dot(penetratorRootForward, penetratorRootUp)) > Mathf.Epsilon;
     }
 
     public void Release() {
