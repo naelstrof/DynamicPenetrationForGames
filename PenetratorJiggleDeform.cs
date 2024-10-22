@@ -70,7 +70,6 @@ public class PenetratorJiggleDeform : Penetrator {
         builder = gameObject.AddComponent<JiggleRigBuilder>();
         rig = new JiggleRigBuilder.JiggleRig(simulatedPoints[0], jiggleSettings, new Transform[] { }, setupColliders);
         builder.jiggleRigs = new List<JiggleRigBuilder.JiggleRig> { rig };
-        builder.enabled = false;
         desiredLength = penetratorData.GetWorldLength();
     }
 
@@ -130,18 +129,13 @@ public class PenetratorJiggleDeform : Penetrator {
             return;
         }
 
-        if (Application.isPlaying) {
-            builder.Advance(Time.deltaTime);
-        }
-
         if (GetSimulationAvailable()) {
             simulatedPoints[0].localScale = Vector3.one * simulatedPoints[0].parent.InverseTransformVector(GetRootTransform().TransformDirection(GetRootForward()) * GetSquashStretchedWorldLength()).magnitude;
         }
 
-
         GetFinalizedSpline(ref cachedSpline, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
 
-        if (linkedPenetrable != null) {
+        if (linkedPenetrable) {
             if (insertionLerp >= 1f && penetrationArgs.HasValue) {
                 if (GetSimulationAvailable()) {
                     for (int i = 0; i < simulatedPointCount; i++) {
@@ -150,7 +144,7 @@ public class PenetratorJiggleDeform : Penetrator {
                         simulatedPoints[i].position = cachedSpline.GetPositionFromDistance(totalDistance);
                     }
 
-                    rig.SampleAndReset();
+                    rig.SetTargetAndResetToLastValidPose();
                 }
                 
                 var newResult = linkedPenetrable.SetPenetrated(this, penetrationArgs.Value);
@@ -182,16 +176,15 @@ public class PenetratorJiggleDeform : Penetrator {
 
     public void SetJiggleSettingsBlend(float blend) {
         if (jiggleSettings is not JiggleSettingsBlend jiggleSettingsBlend) return;
-        jiggleSettingsBlend.normalizedBlend = blend;
+        jiggleSettingsBlend.SetNormalizedBlend(blend);
     }
 
     public void AddJiggleSettingsCollider(Collider collider) {
+        if (!setupColliders.Contains(collider)) setupColliders.Add(collider);
         if (rig == null) {
-            if (!setupColliders.Contains(collider)) setupColliders.Add(collider);
             return;
         }
-
-        if (!rig.colliders.Contains(collider)) rig.colliders.Add(collider);
+        rig.SetColliders(setupColliders);
     }
 
 
