@@ -6,15 +6,15 @@
       "source": "embedded",
       "dependencies": {
         "com.naelstrof.splines": "2.0.5",
-        "com.naelstrof.jigglephysics": "10.0.1"
+        "com.naelstrof.jigglephysics": "10.0.5"
       }
     },
     "com.naelstrof.jigglephysics": {
-      "version": "https://github.com/naelstrof/UnityJigglePhysics.git#v10.0.1",
+      "version": "https://github.com/naelstrof/UnityJigglePhysics.git#v10.0.5",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "4dbfd8f4373b1ca578078abfeca8adb88e0bc615"
+      "hash": "9efc7895ec0901dee617ad2d13d0697fd14b0d69"
     },
     "com.naelstrof.splines": {
       "version": "https://github.com/naelstrof/com.naelstrof.splines.git",

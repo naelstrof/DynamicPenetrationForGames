@@ -68,7 +68,9 @@ public class PenetratorJiggleDeform : Penetrator {
 
         SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
         builder = gameObject.AddComponent<JiggleRigBuilder>();
-        rig = new JiggleRigBuilder.JiggleRig(simulatedPoints[0], jiggleSettings, new Transform[] { }, setupColliders);
+        rig = new JiggleRigBuilder.JiggleRig(simulatedPoints[0], jiggleSettings, new Transform[] { }, setupColliders) {
+            animated = true
+        };
         builder.jiggleRigs = new List<JiggleRigBuilder.JiggleRig> { rig };
         desiredLength = penetratorData.GetWorldLength();
     }
