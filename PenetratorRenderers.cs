@@ -21,6 +21,9 @@ namespace DPG {
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 [System.Serializable]
 public class PenetratorRenderers {
@@ -28,20 +31,6 @@ public class PenetratorRenderers {
     private List<Renderer> renderers;
 
     private List<Renderer> previousRenderers;
-
-    private struct MaterialReference {
-        public Renderer targetRenderer;
-        public bool IsValid(Material targetMaterial, bool isUnityValidating) {
-            if (targetRenderer == null) {
-                return false;
-            }
-            if (!isUnityValidating && !targetRenderer.sharedMaterials.Contains(targetMaterial)) {
-                return false;
-            }
-            return true;
-        }
-    }
-    private static Dictionary<Material,List<MaterialReference>> sharedMaterialUses;
     
     private static readonly int catmullSplinesID = Shader.PropertyToID("_CatmullSplines");
     private static readonly int penetratorForwardID = Shader.PropertyToID("_PenetratorForwardWorld");
@@ -52,12 +41,12 @@ public class PenetratorRenderers {
 
     private ComputeBuffer catmullBuffer;
     private NativeArray<CatmullSplineData> data;
+    
     private MaterialPropertyBlock propertyBlock;
     private static readonly int penetratorOffsetLengthID = Shader.PropertyToID("_PenetratorOffsetLength");
     private static readonly int penetratorStartWorldID = Shader.PropertyToID("_PenetratorStartWorld");
     private static readonly int squashStretchCorrectionID = Shader.PropertyToID("_SquashStretchCorrection");
     private static readonly int distanceToHoleID = Shader.PropertyToID("_DistanceToHole");
-    private static readonly int penetratorWorldLengthID = Shader.PropertyToID("_PenetratorWorldLength");
     private static readonly int truncateLengthID = Shader.PropertyToID("_TruncateLength");
     private static readonly int startClipID = Shader.PropertyToID("_StartClip");
     private static readonly int endClipID = Shader.PropertyToID("_EndClip");
@@ -73,57 +62,6 @@ public class PenetratorRenderers {
         }
     }
 
-    static void AddRefCount(Renderer renderer, Material material, bool isUnityValidating) {
-#if UNITY_EDITOR
-        if (!Application.isPlaying && renderer == null) {
-            return;
-        }
-#endif
-        sharedMaterialUses ??= new Dictionary<Material, List<MaterialReference>>();
-        if (!sharedMaterialUses.ContainsKey(material)) {
-            sharedMaterialUses.Add(material,new List<MaterialReference>());
-        }
-        foreach (var use in sharedMaterialUses[material]) {
-            if (use.targetRenderer == renderer) {
-                return;
-            }
-        }
-        sharedMaterialUses[material].Add(new MaterialReference() {
-            targetRenderer = renderer
-        });
-        UpdateReferences(isUnityValidating);
-    }
-
-    static void RemoveRefCount(Renderer renderer, Material material, bool isUnityValidating) {
-#if UNITY_EDITOR
-        if (!Application.isPlaying && renderer == null) {
-            return;
-        }
-#endif
-        sharedMaterialUses ??= new Dictionary<Material, List<MaterialReference>>();
-        if (!sharedMaterialUses.ContainsKey(material)) {
-            sharedMaterialUses.Add(material, new List<MaterialReference>());
-        }
-        sharedMaterialUses[material].RemoveAll((a) => a.targetRenderer == renderer);
-        UpdateReferences(isUnityValidating);
-    }
-
-    static void UpdateReferences(bool isUnityValidating) {
-        List<Material> removeList = new List<Material>();
-        foreach (var pair in sharedMaterialUses) {
-            pair.Value.RemoveAll((a) => !a.IsValid(pair.Key, isUnityValidating));
-            if (pair.Value.Count == 0) {
-                pair.Key.DisableKeyword("_DPG_CURVE_SKINNING");
-                removeList.Add(pair.Key);
-            } else {
-                pair.Key.EnableKeyword("_DPG_CURVE_SKINNING");
-            }
-        }
-
-        foreach (var key in removeList) {
-            sharedMaterialUses.Remove(key);
-        }
-    }
 
     private void SetFlags(Renderer renderer, bool active, bool isUnityValidating) {
 #if UNITY_EDITOR
@@ -131,22 +69,20 @@ public class PenetratorRenderers {
             return;
         }
 #endif
-        if (!Application.isPlaying || isUnityValidating) {
+        if (Application.isEditor && (!Application.isPlaying || isUnityValidating)) {
             foreach (var material in renderer.sharedMaterials) {
                 if (hasTruncateKeyword && active) {
                     material.EnableKeyword("_DPG_TRUNCATE_SPHERIZE");
                 } else {
                     material.DisableKeyword("_DPG_TRUNCATE_SPHERIZE");
                 }
-
                 if (active) {
-                    AddRefCount(renderer, material, isUnityValidating);
+                    SharedMaterialDatabase.GetInstance().AddTrackedMaterial(material);
                 } else {
-                    RemoveRefCount(renderer, material, isUnityValidating);
                     renderer.SetPropertyBlock(null);
                 }
             }
-        } else {
+        } else if (!isUnityValidating) {
             foreach (var material in renderer.materials) {
                 if (hasTruncateKeyword && active) {
                     material.EnableKeyword("_DPG_TRUNCATE_SPHERIZE");
