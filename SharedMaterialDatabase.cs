@@ -108,8 +108,8 @@ public class SharedMaterialDatabase : ScriptableObject {
     }
 
     public void AddTrackedMaterial(Material material) {
-        if (trackedMaterials.Contains(material)) {
-            return;
+        if (!trackedMaterials.Contains(material)) {
+            trackedMaterials.Add(material);
         }
         if (!nullData.IsCreated) {
             nullCatmullBuffer = new ComputeBuffer(1, CatmullSplineData.GetSize());
@@ -117,7 +117,6 @@ public class SharedMaterialDatabase : ScriptableObject {
             nullData[0] = new CatmullSplineData(new CatmullSpline(new List<Vector3>() { Vector3.zero, Vector3.one }));
             nullCatmullBuffer.SetData(nullData, 0, 0, 1);
         }
-        trackedMaterials.Add(material);
         material.EnableKeyword("_DPG_CURVE_SKINNING");
         material.SetFloat(penetratorOffsetLengthID, 0f);
         material.SetVector(penetratorStartWorldID, Vector3.zero);
