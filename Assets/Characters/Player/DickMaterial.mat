@@ -237,9 +237,9 @@ Material:
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
     - _EnableGeometricSpecularAA: 0
-    - _EndClip: 0.03
+    - _EndClip: 0
     - _EnergyConservingSpecularColor: 1
-    - _GirthRadius: 0.1
+    - _GirthRadius: 1
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -288,9 +288,9 @@ Material:
     - _SpecularAAThreshold: 0.2
     - _SpecularHighlights: 1
     - _SpecularOcclusionMode: 1
-    - _SquashStretchCorrection: 1
+    - _SquashStretchCorrection: 0
     - _SrcBlend: 1
-    - _StartClip: 0.03
+    - _StartClip: 0
     - _StencilRef: 0
     - _StencilRefDepth: 8
     - _StencilRefDistortionVec: 4
@@ -316,7 +316,7 @@ Material:
     - _TransparentSortPriority: 0
     - _TransparentWritingMotionVec: 0
     - _TransparentZWrite: 0
-    - _TruncateLength: 1
+    - _TruncateLength: 0
     - _TruncateSpherize: 1
     - _UVBase: 0
     - _UVDetail: 0
