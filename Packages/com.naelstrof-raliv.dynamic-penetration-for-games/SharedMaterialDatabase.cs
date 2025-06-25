@@ -22,11 +22,14 @@ public class SharedMaterialDatabase : ScriptableObject {
         if (sharedMaterialDatabase != null) {
             return sharedMaterialDatabase;
         }
-        sharedMaterialDatabase = Resources.FindObjectsOfTypeAll<SharedMaterialDatabase>().FirstOrDefault();
+        string path = "Assets/DPG/Resources/SharedMaterialDatabase.asset";
+        sharedMaterialDatabase = Resources.Load<SharedMaterialDatabase>(path);
 #if UNITY_EDITOR
         if (sharedMaterialDatabase == null) {
+            sharedMaterialDatabase = AssetDatabase.LoadAssetAtPath<SharedMaterialDatabase>(path);
+        }
+        if (sharedMaterialDatabase == null) {
             sharedMaterialDatabase = CreateInstance<SharedMaterialDatabase>();
-            string path = "Assets/DPG/Resources/SharedMaterialDatabase.asset";
             if (!AssetDatabase.IsValidFolder("Assets/DPG")) {
                 AssetDatabase.CreateFolder("Assets", "DPG");
             }
@@ -80,44 +83,18 @@ public class SharedMaterialDatabase : ScriptableObject {
             // In the editor, we can't know if various shared materials have it enabled or not. In Vulkan, buffers aren't 0, therefore we must set some default values.
             foreach (var material in trackedMaterials) {
                 material.EnableKeyword("_DPG_CURVE_SKINNING");
-                material.SetFloat(penetratorOffsetLengthID, 0f);
-                material.SetVector(penetratorStartWorldID, Vector3.zero);
-                material.SetFloat(curveBlendID, 1f);
-                material.SetVector(penetratorForwardID, Vector3.zero);
-                material.SetVector(penetratorRightID, Vector3.zero);
-                material.SetVector(penetratorUpID, Vector3.zero);
-                material.SetVector(penetratorRootID, Vector3.zero);
-                material.SetBuffer(catmullSplinesID, nullCatmullBuffer);
-                material.SetFloat(squashStretchCorrectionID, 0f);
-                material.SetFloat(DpgBlend, 0f);
-                material.SetFloat(distanceToHoleID, 0f);
-                material.SetFloat(truncateLengthID, 0f);
-                material.SetFloat(girthRadiusID, 1f);
-                material.SetFloat(startClipID, 0f);
-                material.SetFloat(endClipID, 0f);
+                SetDefaults(material);
             }
             
         }
     }
-
-    private void OnDestroy() {
-        if (nullData.IsCreated) {
-            nullData.Dispose();
-            nullCatmullBuffer.Release();
-        }
-    }
-
-    public void AddTrackedMaterial(Material material) {
-        if (!trackedMaterials.Contains(material)) {
-            trackedMaterials.Add(material);
-        }
+    private void SetDefaults(Material material) {
         if (!nullData.IsCreated) {
             nullCatmullBuffer = new ComputeBuffer(1, CatmullSplineData.GetSize());
             nullData = new NativeArray<CatmullSplineData>(1, Allocator.Persistent);
             nullData[0] = new CatmullSplineData(new CatmullSpline(new List<Vector3>() { Vector3.zero, Vector3.one }));
             nullCatmullBuffer.SetData(nullData, 0, 0, 1);
         }
-        material.EnableKeyword("_DPG_CURVE_SKINNING");
         material.SetFloat(penetratorOffsetLengthID, 0f);
         material.SetVector(penetratorStartWorldID, Vector3.zero);
         material.SetFloat(curveBlendID, 1f);
@@ -134,6 +111,22 @@ public class SharedMaterialDatabase : ScriptableObject {
         material.SetFloat(startClipID, 0f);
         material.SetFloat(endClipID, 0f);
     }
+
+    private void OnDestroy() {
+        if (nullData.IsCreated) {
+            nullData.Dispose();
+            nullCatmullBuffer.Release();
+        }
+    }
+
+    public void AddTrackedMaterial(Material material) {
+        if (!trackedMaterials.Contains(material)) {
+            trackedMaterials.Add(material);
+        }
+        material.EnableKeyword("_DPG_CURVE_SKINNING");
+        SetDefaults(material);
+    }
+
     private void OnValidate() {
         trackedMaterials.RemoveAll((m) => m == null);
     }
