@@ -124,7 +124,7 @@ public class SharedMaterialDatabase : ScriptableObject {
             trackedMaterials.Add(material);
         }
         material.EnableKeyword("_DPG_CURVE_SKINNING");
-        SetDefaults(material);
+        //SetDefaults(material);
     }
 
     private void OnValidate() {
