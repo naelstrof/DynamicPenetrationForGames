@@ -81,11 +81,10 @@ public class SharedMaterialDatabase : ScriptableObject {
             }
         } else {
             // In the editor, we can't know if various shared materials have it enabled or not. In Vulkan, buffers aren't 0, therefore we must set some default values.
-            foreach (var material in trackedMaterials) {
-                material.EnableKeyword("_DPG_CURVE_SKINNING");
-                SetDefaults(material);
-            }
-            
+            //foreach (var material in trackedMaterials) {
+                //material.EnableKeyword("_DPG_CURVE_SKINNING");
+                //SetDefaults(material);
+            //}
         }
     }
     private void SetDefaults(Material material) {
