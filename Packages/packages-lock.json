@@ -27,7 +27,7 @@
       "hash": "536755b5f26ae71d2abcb0605c0c67f3aece1972"
     },
     "com.unity.animation.rigging": {
-      "version": "1.4.0",
+      "version": "1.4.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
