@@ -47,6 +47,7 @@ public class PenetratorJiggleDeform : Penetrator {
 
     [SerializeField, HideInInspector] private bool hasSerializedJiggleData;
     [SerializeField] private JiggleTreeInputParameters jiggleRigData;
+    [SerializeField] private bool isAnimatedJigglePhysics;
     
     [SerializeField] private GameObject jigglePrefab;
     
@@ -71,6 +72,10 @@ public class PenetratorJiggleDeform : Penetrator {
             obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             //obj.hideFlags = HideFlags.HideAndDontSave;
             Assert.IsTrue(obj.transform.childCount == 1, $"Prefab is misconfigured, first transform must be a container for the actual jiggles! Got {obj.transform.childCount} children instead of 1");
+            
+            jiggleRig = obj.GetComponentInChildren<JiggleRig>();
+            jiggleRig.SetInputParameters(jiggleRigData);
+            
             jiggleRoot = obj.transform.GetChild(0);
             simulatedPoints = new List<Transform>();
             var transformCrawl = jiggleRoot;
@@ -139,6 +144,11 @@ public class PenetratorJiggleDeform : Penetrator {
     protected override void LateUpdate() {
         if (!IsValid()) {
             return;
+        }
+
+        if (isAnimatedJigglePhysics) {
+            jiggleRig.SetInputParameters(jiggleRigData);
+            jiggleRig.UpdateParameters();
         }
 
         if (GetSimulationAvailable()) {
@@ -290,6 +300,8 @@ public class PenetratorJiggleDeform : Penetrator {
         if (!Application.isPlaying) return;
         if (simulatedPoints == null || simulatedPoints.Count <= 1) return;
         SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
+        jiggleRig.SetInputParameters(jiggleRigData);
+        jiggleRig.UpdateParameters();
     }
 }
 
