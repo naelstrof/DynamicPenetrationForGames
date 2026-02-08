@@ -69,6 +69,7 @@ public class PenetratorJiggleDeform : Penetrator {
         if (jiggleRoot == null) {
             var obj = Instantiate(jigglePrefab, transform);
             obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            //obj.hideFlags = HideFlags.HideAndDontSave;
             Assert.IsTrue(obj.transform.childCount == 1, $"Prefab is misconfigured, first transform must be a container for the actual jiggles! Got {obj.transform.childCount} children instead of 1");
             jiggleRoot = obj.transform.GetChild(0);
             simulatedPoints = new List<Transform>();
@@ -163,6 +164,7 @@ public class PenetratorJiggleDeform : Penetrator {
                 linkedPenetrable.SetUnpenetrated(this);
                 SetPenetrationData(null);
                 OnUnpenetrated(linkedPenetrable);
+                SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
             }
         }
 
