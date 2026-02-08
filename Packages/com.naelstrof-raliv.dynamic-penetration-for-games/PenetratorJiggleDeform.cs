@@ -68,7 +68,7 @@ public class PenetratorJiggleDeform : Penetrator {
 
 
         if (jiggleRoot == null) {
-            var obj = Instantiate(jigglePrefab, transform);
+            var obj = Instantiate(jigglePrefab, GetRootTransform());
             obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             //obj.hideFlags = HideFlags.HideAndDontSave;
             Assert.IsTrue(obj.transform.childCount == 1, $"Prefab is misconfigured, first transform must be a container for the actual jiggles! Got {obj.transform.childCount} children instead of 1");
