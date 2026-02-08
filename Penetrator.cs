@@ -14,6 +14,8 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using UnityEngine.UIElements;
+
 namespace DPG {
 
 using System.Collections.Generic;
@@ -21,19 +23,25 @@ using UnityEngine;
 using UnityEngine.Serialization;
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.UIElements;
 
 [CustomEditor(typeof(Penetrator))]
 public class PenetratorInspector : Editor {
     
     private bool isEditingRoot;
-    
-    public override void OnInspectorGUI() {
-        var script = target as Penetrator;
-        if (GUILayout.Button("Edit position and orientation")) {
+
+    public override VisualElement CreateInspectorGUI() {
+        var visualElement = new VisualElement();
+        var button = new Button {
+            text = "Edit Position and Rotation"
+        };
+        button.clicked += () => {
             isEditingRoot = true;
             SceneView.RepaintAll();
-        }
-        base.OnInspectorGUI();
+        };
+        visualElement.Add(button);
+        InspectorElement.FillDefaultInspector(visualElement, serializedObject, this);
+        return visualElement;
     }
 
     protected void OnSceneGUI() {

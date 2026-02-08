@@ -13,9 +13,13 @@
  * OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+using System;
+using UnityEngine.Assertions;
+
 namespace DPG {
 using System.Collections.Generic;
-using JigglePhysics;
+using GatorDragonGames.JigglePhysics;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -29,8 +33,6 @@ public class PenetratorJiggleDeformInspector : PenetratorInspector {
 
 [ExecuteAlways]
 public class PenetratorJiggleDeform : Penetrator {
-    [SerializeField, Range(1, 5)] private int simulatedPointCount = 3;
-    [SerializeField] private JiggleSettingsBase jiggleSettings;
     [SerializeField, Range(-90f, 90f)] private float leftRightCurvature = 0f;
     [SerializeField, Range(-90f, 90f)] private float upDownCurvature = 0f;
     [SerializeField, Range(-90f, 90f)] private float baseUpDownCurvatureOffset = 0f;
@@ -40,13 +42,20 @@ public class PenetratorJiggleDeform : Penetrator {
     [SerializeField, Range(0f, 2f)] private float knotForce = 1f;
 
     [SerializeField] protected Penetrable linkedPenetrable;
+    
+    private JiggleRig jiggleRig;
 
+    [SerializeField, HideInInspector] private bool hasSerializedJiggleData;
+    [SerializeField] private JiggleTreeInputParameters jiggleRigData;
+    
+    [SerializeField] private GameObject jigglePrefab;
+    
     private List<Transform> simulatedPoints;
     private List<Vector3> points = new();
-    private JiggleRigBuilder builder;
-    private JiggleRigBuilder.JiggleRig rig;
     private float lastInsertionAmount = 0f;
     private List<Collider> setupColliders = new();
+    
+    private Transform jiggleRoot;
 
     private float desiredLength;
     private float desiredLengthVelocity;
@@ -55,23 +64,23 @@ public class PenetratorJiggleDeform : Penetrator {
     protected override void OnEnable() {
         base.OnEnable();
         if (!Application.isPlaying) return;
-        if (jiggleSettings is JiggleSettingsBlend) {
-            jiggleSettings = Instantiate(jiggleSettings);
-        }
 
-        simulatedPoints = new List<Transform>();
-        for (int i = 0; i < simulatedPointCount; i++) {
-            var simulatedPointObj = new GameObject($"PenetratorJiggle{i}");
-            simulatedPointObj.transform.SetParent(i == 0 ? GetRootTransform().parent : simulatedPoints[^1]);
-            simulatedPoints.Add(simulatedPointObj.transform);
-        }
 
+        if (jiggleRoot == null) {
+            var obj = Instantiate(jigglePrefab, transform);
+            obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            Assert.IsTrue(obj.transform.childCount == 1, $"Prefab is misconfigured, first transform must be a container for the actual jiggles! Got {obj.transform.childCount} children instead of 1");
+            jiggleRoot = obj.transform.GetChild(0);
+            simulatedPoints = new List<Transform>();
+            var transformCrawl = jiggleRoot;
+            int iterations = 0;
+            const int maxIterations = 100;
+            while (transformCrawl.childCount != 0 && iterations++ < maxIterations) {
+                simulatedPoints.Add(transformCrawl);
+                transformCrawl = transformCrawl.GetChild(0);
+            }
+        }
         SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
-        builder = gameObject.AddComponent<JiggleRigBuilder>();
-        rig = new JiggleRigBuilder.JiggleRig(simulatedPoints[0], jiggleSettings, new Transform[] { }, setupColliders) {
-            animated = true
-        };
-        builder.jiggleRigs = new List<JiggleRigBuilder.JiggleRig> { rig };
         desiredLength = penetratorData.GetWorldLength();
     }
 
@@ -140,13 +149,11 @@ public class PenetratorJiggleDeform : Penetrator {
         if (linkedPenetrable) {
             if (insertionLerp >= 1f && penetrationArgs.HasValue) {
                 if (GetSimulationAvailable()) {
-                    for (int i = 0; i < simulatedPointCount; i++) {
-                        float progress = (float)i / (simulatedPointCount - 1);
+                    for (int i = 0; i < simulatedPoints.Count; i++) {
+                        float progress = (float)i / (simulatedPoints.Count - 1);
                         float totalDistance = progress * GetSquashStretchedWorldLength();
                         simulatedPoints[i].position = cachedSpline.GetPositionFromDistance(totalDistance);
                     }
-
-                    rig.SetTargetAndResetToLastValidPose();
                 }
                 
                 var newResult = linkedPenetrable.SetPenetrated(this, penetrationArgs.Value);
@@ -176,19 +183,13 @@ public class PenetratorJiggleDeform : Penetrator {
         lastInsertionAmount = insertionLerp;
     }
 
-    public void SetJiggleSettingsBlend(float blend) {
-        if (jiggleSettings is not JiggleSettingsBlend jiggleSettingsBlend) return;
-        jiggleSettingsBlend.SetNormalizedBlend(blend);
+    public void SetJiggleSettingsBlend(JiggleTreeInputParameters data) {
+        
     }
-
-    public void AddJiggleSettingsCollider(Collider collider) {
-        if (!setupColliders.Contains(collider)) setupColliders.Add(collider);
-        if (rig == null) {
-            return;
-        }
-        rig.SetColliders(setupColliders);
+    
+    public JiggleTreeInputParameters GetJiggleSettingsBlend() {
+        return jiggleRigData;
     }
-
 
     private List<Vector3> cachedPenetrablePoints;
     protected virtual PenetrationArgs GetPenetrableSplineInfo(out float insertionAmount) {
@@ -219,7 +220,6 @@ public class PenetratorJiggleDeform : Penetrator {
 
     protected override void OnDisable() {
         if (Application.isPlaying) {
-            Destroy(builder);
             foreach (var t in simulatedPoints) {
                 Destroy(t.gameObject);
             }
@@ -252,8 +252,8 @@ public class PenetratorJiggleDeform : Penetrator {
         leftRightCurvature = curvature.x;
         upDownCurvature = curvature.y;
 
-        Vector2 segmentCurvature = curvature / Mathf.Max(simulatedPointCount - 1, 1f);
-        for (int i = 0; i < simulatedPointCount; i++) {
+        Vector2 segmentCurvature = curvature / Mathf.Max(simulatedPoints.Count - 1, 1f);
+        for (int i = 0; i < simulatedPoints.Count; i++) {
             if (i == 0) {
                 simulatedPoints[i].localScale = Vector3.one;
                 simulatedPoints[i].transform.rotation =
@@ -264,7 +264,7 @@ public class PenetratorJiggleDeform : Penetrator {
             } else {
                 simulatedPoints[i].transform.localRotation =
                     Quaternion.Euler(segmentCurvature.y, segmentCurvature.x, 0f);
-                float moveAmount = 1f / (simulatedPointCount - 1);
+                float moveAmount = 1f / (simulatedPoints.Count - 1);
                 simulatedPoints[i].transform.localPosition = Vector3.forward * moveAmount;
             }
         }
@@ -274,6 +274,17 @@ public class PenetratorJiggleDeform : Penetrator {
 
     protected override void OnValidate() {
         base.OnValidate();
+#if UNITY_EDITOR
+        if (jigglePrefab == null) {
+            jigglePrefab = AssetDatabase.LoadAssetByGUID<GameObject>(new GUID("bf0f13679933bbb57b506ceb38f2cb75"));
+            Debug.Log(jigglePrefab);
+        }
+#endif
+        if (!hasSerializedJiggleData) {
+            jiggleRigData = JiggleTreeInputParameters.Default();
+            hasSerializedJiggleData = true;
+        }
+        jiggleRigData.OnValidate();
         if (!Application.isPlaying) return;
         if (simulatedPoints == null || simulatedPoints.Count <= 1) return;
         SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
