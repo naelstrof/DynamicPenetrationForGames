@@ -1158,6 +1158,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 5119137500375318447, guid: 821755141bcd38f83ad9f8b684e086e1, type: 3}
+      propertyPath: debugDraw
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5119137500375318447, guid: 821755141bcd38f83ad9f8b684e086e1, type: 3}
+      propertyPath: proceduralMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 18899840c1d15ffe099fec72b61a5daa, type: 2}
     - target: {fileID: 6988777920009514149, guid: 821755141bcd38f83ad9f8b684e086e1, type: 3}
       propertyPath: m_Name
       value: JigglePhysicsUpdater
@@ -1703,8 +1711,8 @@ MonoBehaviour:
   linkedPenetrable: {fileID: 2110675131}
   hasSerializedJiggleData: 1
   jiggleRigData:
-    advancedToggle: 0
-    collisionToggle: 0
+    advancedToggle: 1
+    collisionToggle: 1
     angleLimitToggle: 0
     stiffness:
       value: 0.8
