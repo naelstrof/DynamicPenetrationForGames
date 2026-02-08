@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 960627219309476642}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.25}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -57,7 +57,7 @@ Transform:
   m_GameObject: {fileID: 1284783532171789539}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.5}
+  m_LocalPosition: {x: 0, y: 0, z: 0.25}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -115,8 +115,8 @@ MonoBehaviour:
     rootBone: {fileID: 3169375687178040304}
     excludeRoot: 0
     jiggleTreeInputParameters:
-      advancedToggle: 0
-      collisionToggle: 0
+      advancedToggle: 1
+      collisionToggle: 1
       angleLimitToggle: 0
       stiffness:
         value: 0.8
@@ -317,22 +317,27 @@ MonoBehaviour:
     - bone: {fileID: 3169375687178040304}
       normalizedDistanceFromRoot: 0
       lossyScale: 1
-      restLocalPosition: {x: 0, y: 0, z: 0.25}
+      restLocalPosition: {x: 0, y: 0, z: 0}
       restLocalRotation: {x: 0, y: 0, z: 0, w: 1}
     - bone: {fileID: 3801950987299226908}
-      normalizedDistanceFromRoot: 0.22222222
+      normalizedDistanceFromRoot: 0.25
       lossyScale: 1
-      restLocalPosition: {x: 0, y: 0, z: 0.5}
+      restLocalPosition: {x: 0, y: 0, z: 0.25}
       restLocalRotation: {x: -0, y: -0, z: -0, w: 1}
     - bone: {fileID: 2625137751891865364}
-      normalizedDistanceFromRoot: 0.5555556
+      normalizedDistanceFromRoot: 0.5
       lossyScale: 1
-      restLocalPosition: {x: 0, y: 0, z: 0.75}
+      restLocalPosition: {x: 0, y: 0, z: 0.25}
       restLocalRotation: {x: -0, y: -0, z: -0, w: 1}
     - bone: {fileID: 2218545579345216625}
+      normalizedDistanceFromRoot: 0.75
+      lossyScale: 1
+      restLocalPosition: {x: 0, y: 0, z: 0.25}
+      restLocalRotation: {x: -0, y: -0, z: -0, w: 1}
+    - bone: {fileID: 6140946839529470357}
       normalizedDistanceFromRoot: 1
       lossyScale: 1
-      restLocalPosition: {x: 0, y: 0, z: 1}
+      restLocalPosition: {x: 0, y: 0, z: 0.25}
       restLocalRotation: {x: -0, y: -0, z: -0, w: 1}
     jiggleColliders: []
   animatedParameters: 0
@@ -361,7 +366,7 @@ Transform:
   m_GameObject: {fileID: 3580933819340057247}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.75}
+  m_LocalPosition: {x: 0, y: 0, z: 0.25}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -393,9 +398,41 @@ Transform:
   m_GameObject: {fileID: 5956619109576083421}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6140946839529470357}
+  m_Father: {fileID: 2625137751891865364}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8657558314182006707
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6140946839529470357}
+  m_Layer: 0
+  m_Name: Jiggle (4)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6140946839529470357
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8657558314182006707}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.25}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2625137751891865364}
+  m_Father: {fileID: 2218545579345216625}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
