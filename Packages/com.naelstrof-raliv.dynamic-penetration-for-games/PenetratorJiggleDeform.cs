@@ -91,19 +91,17 @@ public class PenetratorJiggleDeform : Penetrator {
 
     [SerializeField] protected Penetrable linkedPenetrable;
     
-    private JiggleRig jiggleRig;
-
     [SerializeField, HideInInspector] private bool hasSerializedJiggleData;
     [SerializeField] private JiggleTreeInputParameters jiggleRigData;
     [SerializeField] private bool isAnimatedJigglePhysics;
     
     [SerializeField] private GameObject jigglePrefab;
     
+    private JiggleRig jiggleRig;
     private List<Transform> simulatedPoints;
     private List<Vector3> points = new();
     private float lastInsertionAmount = 0f;
     private List<Collider> setupColliders = new();
-    
     private Transform jiggleRoot;
     private PenetratorSquashStretch squashStretch;
 
@@ -111,29 +109,32 @@ public class PenetratorJiggleDeform : Penetrator {
         base.OnEnable();
         //PenetrationManager.SubscribeToPenetratorFixedUpdates(OnPenetratorFixedUpdate);
         if (!Application.isPlaying) return;
-
-
+        
+        squashStretch = new PenetratorSquashStretch(penetratorData.GetWorldLength());
         if (jiggleRoot == null) {
-            var obj = Instantiate(jigglePrefab, GetRootTransform());
-            obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-            //obj.hideFlags = HideFlags.HideAndDontSave;
-            Assert.IsTrue(obj.transform.childCount == 1, $"Prefab is misconfigured, first transform must be a container for the actual jiggles! Got {obj.transform.childCount} children instead of 1");
-            
-            jiggleRig = obj.GetComponentInChildren<JiggleRig>();
-            jiggleRig.SetInputParameters(jiggleRigData);
-            
-            jiggleRoot = obj.transform.GetChild(0);
-            simulatedPoints = new List<Transform>();
-            var transformCrawl = jiggleRoot;
-            int iterations = 0;
-            const int maxIterations = 100;
-            while (transformCrawl.childCount != 0 && iterations++ < maxIterations) {
-                simulatedPoints.Add(transformCrawl);
-                transformCrawl = transformCrawl.GetChild(0);
-            }
+            InitializeJiggleRoot();
         }
         SetPoseFromCurvature();
-        squashStretch = new PenetratorSquashStretch(penetratorData.GetWorldLength());
+    }
+
+    private void InitializeJiggleRoot() {
+        var obj = Instantiate(jigglePrefab, GetRootTransform());
+        obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+        //obj.hideFlags = HideFlags.HideAndDontSave;
+        Assert.IsTrue(obj.transform.childCount == 1, $"Prefab is misconfigured, first transform must be a container for the actual jiggles! Got {obj.transform.childCount} children instead of 1");
+            
+        jiggleRig = obj.GetComponentInChildren<JiggleRig>();
+        jiggleRig.SetInputParameters(jiggleRigData);
+            
+        jiggleRoot = obj.transform.GetChild(0);
+        simulatedPoints = new List<Transform>();
+        var transformCrawl = jiggleRoot;
+        int iterations = 0;
+        const int maxIterations = 100;
+        while (transformCrawl.childCount != 0 && iterations++ < maxIterations) {
+            simulatedPoints.Add(transformCrawl);
+            transformCrawl = transformCrawl.GetChild(0);
+        }
     }
 
     private bool GetSimulationAvailable() => simulatedPoints != null && simulatedPoints.Count != 0;
