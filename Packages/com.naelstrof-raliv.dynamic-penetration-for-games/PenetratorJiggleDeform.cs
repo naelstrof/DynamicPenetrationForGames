@@ -29,8 +29,6 @@ public class PenetratorSquashStretch {
     
     const float TICKRATE = 0.02f;
     
-    float lengthFrictionSquared;
-    float lengthElasticity;
     private float desiredLength;
     private float desiredLengthVelocity;
     private float? lastPenetrablePosition;
@@ -39,25 +37,23 @@ public class PenetratorSquashStretch {
 
     public float GetSquashStretch() => squashStretch;
 
-    public PenetratorSquashStretch(float initialLength, float lengthElasticity, float lengthFriction) {
+    public PenetratorSquashStretch(float initialLength) {
         desiredLength = initialLength;
-        this.lengthElasticity = lengthElasticity;
-        lengthFrictionSquared = lengthFriction * lengthFriction;
     }
 
-    public void Tick(bool inserted, float penetratorLength, float newPenetrablePosition, float penetrableFriction, float knotForce, float deltaTime) {
+    public void Tick(bool inserted, float penetratorLength, float newPenetrablePosition, float penetrableFriction, float lengthElasticity, float lengthFriction, float knotForce, float deltaTime) {
         timeSinceLastTick += deltaTime;
         if (timeSinceLastTick < TICKRATE) {
             return;
         }
-        desiredLengthVelocity *= 1f - lengthFrictionSquared;
+        desiredLengthVelocity *= 1f - (lengthFriction * lengthFriction);
 
         if (inserted) {
             float penetrableVelocity = (newPenetrablePosition - (lastPenetrablePosition ?? newPenetrablePosition)) / TICKRATE;
             lastPenetrablePosition = newPenetrablePosition;
 
-            desiredLengthVelocity = Mathf.Lerp(desiredLengthVelocity, penetrableVelocity, penetrableFriction * TICKRATE);
-            desiredLengthVelocity += knotForce;
+            desiredLengthVelocity = Mathf.Lerp(desiredLengthVelocity, penetrableVelocity, penetrableFriction);
+            desiredLengthVelocity += knotForce * TICKRATE;
         } else {
             lastPenetrablePosition = null;
         }
@@ -136,8 +132,8 @@ public class PenetratorJiggleDeform : Penetrator {
                 transformCrawl = transformCrawl.GetChild(0);
             }
         }
-        SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
-        squashStretch = new PenetratorSquashStretch(penetratorData.GetWorldLength(), penetratorLengthElasticity, penetratorLengthFriction);
+        SetPoseFromCurvature();
+        squashStretch = new PenetratorSquashStretch(penetratorData.GetWorldLength());
     }
 
     private bool GetSimulationAvailable() => simulatedPoints != null && simulatedPoints.Count != 0;
@@ -192,8 +188,10 @@ public class PenetratorJiggleDeform : Penetrator {
                 penetrationArgs.HasValue
                     ? cachedSpline.GetLengthFromSubsection(penetrationArgs.Value.penetrableStartIndex)
                     : 0f,
-                (penetrationResult?.knotForce ?? 0f) * knotForce * 7f,
                 penetrationResult?.penetrableFriction * penetrationResult?.penetrableFriction ?? 0f,
+                penetratorLengthElasticity,
+                penetratorLengthFriction,
+                (penetrationResult?.knotForce ?? 0f) * knotForce * 7f,
                 Time.deltaTime
             );
             squashAndStretch = squashStretch.GetSquashStretch();
@@ -216,7 +214,7 @@ public class PenetratorJiggleDeform : Penetrator {
                 linkedPenetrable.SetUnpenetrated(this);
                 SetPenetrationData(null);
                 OnUnpenetrated(linkedPenetrable);
-                SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
+                SetPoseFromCurvature();
             }
         }
 
@@ -299,28 +297,32 @@ public class PenetratorJiggleDeform : Penetrator {
         return points;
     }
 
-    public void SetCurvature(Vector2 curvature) {
+    public void SetCurvature(float leftRight, float upDown) {
+        leftRightCurvature = leftRight;
+        upDownCurvature = upDown;
+        SetPoseFromCurvature();
+    }
+
+    private void SetPoseFromCurvature() {
         if (!Application.isPlaying) return;
         if (simulatedPoints == null || simulatedPoints.Count <= 1) return;
 
-        leftRightCurvature = curvature.x;
-        upDownCurvature = curvature.y;
-
-        Vector2 segmentCurvature = curvature / Mathf.Max(simulatedPoints.Count - 1, 1f);
-        for (int i = 0; i < simulatedPoints.Count; i++) {
-            if (i == 0) {
-                simulatedPoints[i].localScale = Vector3.one;
-                simulatedPoints[i].transform.rotation =
-                    Quaternion.LookRotation(GetRootTransform().TransformDirection(GetRootForward()),
-                        GetRootTransform().TransformDirection(GetRootUp())) *
-                    Quaternion.Euler(segmentCurvature.y+baseUpDownCurvatureOffset, segmentCurvature.x+baseLeftRightCurvatureOffset, 0f);
-                simulatedPoints[i].transform.position = GetRootTransform().TransformPoint(GetRootPositionOffset());
-            } else {
-                simulatedPoints[i].transform.localRotation =
-                    Quaternion.Euler(segmentCurvature.y, segmentCurvature.x, 0f);
-                float moveAmount = 1f / (simulatedPoints.Count - 1);
-                simulatedPoints[i].transform.localPosition = Vector3.forward * moveAmount;
-            }
+        var segments = Mathf.Max(simulatedPoints.Count - 1, 1f);
+        float segmentCurvatureX = leftRightCurvature / segments;
+        float segmentCurvatureY = upDownCurvature / segments;
+        
+        simulatedPoints[0].localScale = Vector3.one;
+        simulatedPoints[0].transform.rotation =
+            Quaternion.LookRotation(GetRootTransform().TransformDirection(GetRootForward()),
+                GetRootTransform().TransformDirection(GetRootUp())) *
+            Quaternion.Euler(segmentCurvatureY+baseUpDownCurvatureOffset, segmentCurvatureX+baseLeftRightCurvatureOffset, 0f);
+        simulatedPoints[0].transform.position = GetRootTransform().TransformPoint(GetRootPositionOffset());
+        
+        for (int i = 1; i < simulatedPoints.Count; i++) {
+            simulatedPoints[i].transform.localRotation =
+                Quaternion.Euler(segmentCurvatureY, segmentCurvatureX, 0f);
+            float moveAmount = 1f / (simulatedPoints.Count - 1);
+            simulatedPoints[i].transform.localPosition = Vector3.forward * moveAmount;
         }
 
         simulatedPoints[0].localScale = Vector3.one * simulatedPoints[0].parent.InverseTransformVector(GetRootTransform().TransformDirection(GetRootForward()) * GetSquashStretchedWorldLength()).magnitude;
@@ -341,7 +343,7 @@ public class PenetratorJiggleDeform : Penetrator {
         jiggleRigData.OnValidate();
         if (!Application.isPlaying) return;
         if (simulatedPoints == null || simulatedPoints.Count <= 1) return;
-        SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
+        SetPoseFromCurvature();
         jiggleRig.SetInputParameters(jiggleRigData);
         jiggleRig.UpdateParameters();
     }
