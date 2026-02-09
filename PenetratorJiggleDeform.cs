@@ -25,6 +25,58 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 
+public class PenetratorSquashStretch {
+    
+    const float TICKRATE = 0.02f;
+    
+    float lengthFrictionSquared;
+    float lengthElasticity;
+    private float desiredLength;
+    private float desiredLengthVelocity;
+    private float? lastPenetrablePosition;
+    float squashStretch;
+    float timeSinceLastTick;
+
+    public float GetSquashStretch() => squashStretch;
+
+    public PenetratorSquashStretch(float initialLength, float lengthElasticity, float lengthFriction) {
+        desiredLength = initialLength;
+        this.lengthElasticity = lengthElasticity;
+        lengthFrictionSquared = lengthFriction * lengthFriction;
+    }
+
+    public void Tick(bool inserted, float penetratorLength, float newPenetrablePosition, float penetrableFriction, float knotForce, float deltaTime) {
+        timeSinceLastTick += deltaTime;
+        if (timeSinceLastTick < TICKRATE) {
+            return;
+        }
+        desiredLengthVelocity *= 1f - lengthFrictionSquared;
+
+        if (inserted) {
+            float penetrableVelocity = (newPenetrablePosition - (lastPenetrablePosition ?? newPenetrablePosition)) / TICKRATE;
+            lastPenetrablePosition = newPenetrablePosition;
+
+            desiredLengthVelocity = Mathf.Lerp(desiredLengthVelocity, penetrableVelocity, penetrableFriction * TICKRATE);
+            desiredLengthVelocity += knotForce;
+        } else {
+            lastPenetrablePosition = null;
+        }
+
+        float elasticityCalc = lengthElasticity >= 1f ? 6000f : 10f / ((1f - lengthElasticity) * (1f - lengthElasticity));
+        float squashAndStretchedWorldLength = penetratorLength * squashStretch;
+        float elasticForce = (penetratorLength - squashAndStretchedWorldLength) * TICKRATE * elasticityCalc;
+
+        desiredLengthVelocity += elasticForce;
+
+        desiredLength += desiredLengthVelocity * TICKRATE;
+        float desiredSquashAndStretch = desiredLength / penetratorLength;
+
+        squashStretch = Mathf.Clamp(desiredSquashAndStretch, 0f, 2f);
+        while(timeSinceLastTick>TICKRATE) timeSinceLastTick -= TICKRATE;
+    }
+
+}
+
 [CustomEditor(typeof(PenetratorJiggleDeform))]
 public class PenetratorJiggleDeformInspector : PenetratorInspector {
 }
@@ -57,13 +109,11 @@ public class PenetratorJiggleDeform : Penetrator {
     private List<Collider> setupColliders = new();
     
     private Transform jiggleRoot;
-
-    private float desiredLength;
-    private float desiredLengthVelocity;
-    private float? lastPenetrablePosition;
+    private PenetratorSquashStretch squashStretch;
 
     protected override void OnEnable() {
         base.OnEnable();
+        //PenetrationManager.SubscribeToPenetratorFixedUpdates(OnPenetratorFixedUpdate);
         if (!Application.isPlaying) return;
 
 
@@ -87,41 +137,10 @@ public class PenetratorJiggleDeform : Penetrator {
             }
         }
         SetCurvature(new Vector2(leftRightCurvature, upDownCurvature));
-        desiredLength = penetratorData.GetWorldLength();
+        squashStretch = new PenetratorSquashStretch(penetratorData.GetWorldLength(), penetratorLengthElasticity, penetratorLengthFriction);
     }
 
     private bool GetSimulationAvailable() => simulatedPoints != null && simulatedPoints.Count != 0;
-
-    private void FixedUpdate() {
-        if (!IsValid()) {
-            return;
-        }
-
-        GetFinalizedSpline(ref cachedSpline, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
-
-        desiredLengthVelocity *= 1f - (penetratorLengthFriction * penetratorLengthFriction);
-
-        if (insertionLerp >= 1f && Time.deltaTime > 0f && penetrationArgs.HasValue) {
-            float newPenetrablePosition = cachedSpline.GetLengthFromSubsection(penetrationArgs.Value.penetrableStartIndex);
-            float penetrableVelocity = (newPenetrablePosition - (lastPenetrablePosition ?? newPenetrablePosition)) / Time.deltaTime;
-            lastPenetrablePosition = newPenetrablePosition;
-
-            desiredLengthVelocity = Mathf.Lerp(desiredLengthVelocity, penetrableVelocity, penetrationResult?.penetrableFriction * penetrationResult?.penetrableFriction ?? 0f);
-            desiredLengthVelocity += (penetrationResult?.knotForce ?? 0f) * Time.deltaTime * knotForce * 7f;
-        } else {
-            lastPenetrablePosition = null;
-        }
-
-        float elasticityCalc = penetratorLengthElasticity >= 1f ? 6000f : 10f / ((1f - penetratorLengthElasticity) * (1f - penetratorLengthElasticity));
-        float elasticForce = (penetratorData.GetWorldLength() - GetSquashStretchedWorldLength()) * Time.deltaTime * elasticityCalc;
-
-        desiredLengthVelocity += elasticForce;
-
-        desiredLength += desiredLengthVelocity * Time.deltaTime;
-        float desiredSquashAndStretch = desiredLength / penetratorData.GetWorldLength();
-
-        squashAndStretch = Mathf.Clamp(desiredSquashAndStretch, 0f, 2f);
-    }
 
     public override void GetFinalizedSpline(ref CatmullSpline finalizedSpline, out float distanceAlongSpline, out float insertionLerp, out PenetrationArgs? penetrationArgs) {
         var jigglePoints = GetPoints();
@@ -141,7 +160,16 @@ public class PenetratorJiggleDeform : Penetrator {
         penetratorData.GetSpline(jigglePoints, ref finalizedSpline, out distanceAlongSpline);
     }
 
-    protected override void LateUpdate() {
+    //private void OnPenetratorFixedUpdate() {
+    //    if (!IsValid()) {
+    //        return;
+    //    }
+
+    //    GetFinalizedSpline(ref cachedSpline, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
+
+    //}
+
+    protected override void OnPenetratorUpdate() {
         if (!IsValid()) {
             return;
         }
@@ -156,6 +184,20 @@ public class PenetratorJiggleDeform : Penetrator {
         }
 
         GetFinalizedSpline(ref cachedSpline, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
+
+        if (Time.deltaTime > 0f) {
+            squashStretch.Tick(
+                insertionLerp >= 1f,
+                penetratorData.GetWorldLength(),
+                penetrationArgs.HasValue
+                    ? cachedSpline.GetLengthFromSubsection(penetrationArgs.Value.penetrableStartIndex)
+                    : 0f,
+                (penetrationResult?.knotForce ?? 0f) * knotForce * 7f,
+                penetrationResult?.penetrableFriction * penetrationResult?.penetrableFriction ?? 0f,
+                Time.deltaTime
+            );
+            squashAndStretch = squashStretch.GetSquashStretch();
+        }
 
         if (linkedPenetrable) {
             if (insertionLerp >= 1f && penetrationArgs.HasValue) {
