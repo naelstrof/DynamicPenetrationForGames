@@ -1747,11 +1747,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.004
+      value: 0.001
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.178
+      value: -0.029
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1937,10 +1937,10 @@ MonoBehaviour:
     - {fileID: 1786496131}
   leftRightCurvature: 0
   upDownCurvature: -25
-  baseUpDownCurvatureOffset: 15
+  baseUpDownCurvatureOffset: -0.9
   baseLeftRightCurvatureOffset: 0
-  penetratorLengthFriction: 0.5
-  penetratorLengthElasticity: 0.765
+  penetratorLengthFriction: 0.172
+  penetratorLengthElasticity: 0.45
   knotForce: 2
   linkedPenetrable: {fileID: 2110675131}
   hasSerializedJiggleData: 1
@@ -1949,7 +1949,7 @@ MonoBehaviour:
     collisionToggle: 1
     angleLimitToggle: 0
     stiffness:
-      value: 0.6
+      value: 0.517
       curveEnabled: 0
       curve:
         serializedVersion: 2
@@ -2007,7 +2007,7 @@ MonoBehaviour:
     rootStretch: 0
     ignoreRootMotion: 0
     stretch:
-      value: 0.1
+      value: 0.03
       curveEnabled: 0
       curve:
         serializedVersion: 2
@@ -2034,7 +2034,7 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 4
     drag:
-      value: 0.1
+      value: 0.047
       curveEnabled: 0
       curve:
         serializedVersion: 2
