@@ -25,6 +25,12 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 
+[CustomEditor(typeof(PenetratorJiggleDeform))]
+public class PenetratorJiggleDeformInspector : PenetratorInspector {
+}
+
+#endif
+
 public class PenetratorSquashStretch {
     
     const float TICKRATE = 0.02f;
@@ -72,12 +78,6 @@ public class PenetratorSquashStretch {
     }
 
 }
-
-[CustomEditor(typeof(PenetratorJiggleDeform))]
-public class PenetratorJiggleDeformInspector : PenetratorInspector {
-}
-
-#endif
 
 [ExecuteAlways]
 public class PenetratorJiggleDeform : Penetrator {
