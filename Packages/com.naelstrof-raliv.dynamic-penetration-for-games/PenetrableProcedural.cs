@@ -245,6 +245,7 @@ public class PenetrableProcedural : MonoBehaviour {
         if (data.IsCreated || penetrables == null || penetrables.Count == 0 || targetRenderers == null || targetRenderers.Count == 0) {
             return;
         }
+
         penetratorBuffer = new ComputeBuffer(4,PenetratorData.GetSize());
         data = new NativeArray<PenetratorData>(4, Allocator.Persistent);
         splineBuffer = new ComputeBuffer(4,CatmullSplineData.GetSize());
