@@ -105,6 +105,18 @@ public class RendererSubMeshMask : ISerializationCallbackReceiver {
             mask = ~0;
         }
     }
+
+    public Mesh GetMesh() {
+        Mesh mesh;
+        if (renderer is SkinnedMeshRenderer skinnedMeshRenderer1) {
+            mesh = skinnedMeshRenderer1.sharedMesh;
+        } else if (renderer is MeshRenderer) {
+            mesh = renderer.GetComponent<MeshFilter>().sharedMesh;
+        } else {
+            throw new UnityException("Girth data can only be generated on SkinnedMeshRenderers and MeshRenderers.");
+        }
+        return mesh;
+    }
 }
 
 }

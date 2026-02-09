@@ -23,18 +23,17 @@ using UnityEngine.Rendering;
 
 [System.Serializable]
 public class GirthData {
-    private static List<int> staticTriangles = new List<int>();
-    private static List<Vector3> staticVertices = new List<Vector3>();
-    private static Material staticMaterialA;
-    private static Material staticMaterialB;
-    
-    private static Material subtractBlit;
-    private static Material additiveBlit;
-
     private Shader additiveShader;
     private CommandBuffer renderGirthMapBuffer;
+    private static List<Vector3> staticVertices = new List<Vector3>();
+    private static Material additiveBlit;
     [System.Serializable]
     public class GirthFrame {
+        private static List<int> staticTriangles = new List<int>();
+        private static Material staticMaterialA;
+        private static Material staticMaterialB;
+    
+        private static Material subtractBlit;
         [SerializeField]
         public float maxLocalLength;
         //[SerializeField] private float maxLocalGirthRadius;
@@ -58,16 +57,136 @@ public class GirthData {
         public RenderTexture girthMap;
         [SerializeField]
         public Texture2D detailMap;
-        [HideInInspector]
-        private Vector3 rendererLocalPenetratorForward;
-        [HideInInspector]
-        private Vector3 rendererLocalPenetratorRight;
-        [HideInInspector]
-        private Vector3 rendererLocalPenetratorUp;
 
         private NativeArray<byte> nativeArray;
-        public Mesh blitMesh;
-        public bool freemesh = false;
+        
+        public GirthFrame(RendererSubMeshMask rendererMask, Transform penetratorRoot, Vector3 rendererLocalPenetratorRoot,
+            Vector3 rendererLocalPenetratorForward,
+            Vector3 rendererLocalPenetratorUp,
+            Vector3 rendererLocalPenetratorRight,
+            int blendshapeIndex, float maxGirth, Shader girthUnwrapShader) {
+            
+            var mesh = rendererMask.GetMesh();
+            girthMap = new RenderTexture(64, 64, 0, RenderTextureFormat.R8, RenderTextureReadWrite.Linear) {
+                useMipMap = true,
+                autoGenerateMips = false,
+                wrapModeU = TextureWrapMode.Clamp,
+                wrapModeV = TextureWrapMode.Repeat
+            };
+            detailMap = new Texture2D(64, 64, TextureFormat.R8, Texture.GenerateAllMips, true) {
+                wrapModeU = TextureWrapMode.Clamp,
+                wrapModeV = TextureWrapMode.Repeat
+            };
+            maxGirthRadius = maxGirth;
+            staticVertices.Clear();
+            mesh.GetVertices(staticVertices);
+            if (blendshapeIndex != -1) {
+                Vector3[] blendDeltaVertices = new Vector3[staticVertices.Count];
+                mesh.GetBlendShapeFrameVertices(blendshapeIndex,0, blendDeltaVertices, null, null);
+                for (int i = 0; i < staticVertices.Count; i++) {
+                    staticVertices[i] += blendDeltaVertices[i];
+                }
+            }
+            Mesh blitMesh;
+            bool freemesh = false;
+
+            // If we're a skinned mesh renderer, we mask by bone weights.
+            if (rendererMask.renderer is SkinnedMeshRenderer meshRenderer) {
+                var bones = meshRenderer.bones;
+                freemesh = true;
+                blitMesh = new Mesh();
+                blitMesh.SetVertices(staticVertices);
+                blitMesh.subMeshCount = mesh.subMeshCount;
+                for (int i = 0; i < mesh.subMeshCount; i++) {
+                    if (rendererMask.ShouldDrawSubmesh(i)) {
+                        staticTriangles.Clear();
+                        mesh.GetTriangles(staticTriangles, i);
+                        blitMesh.SetTriangles(staticTriangles, i);
+                    }
+                }
+
+                HashSet<int> validBones = new HashSet<int>();
+                for(int i=0;i<bones.Length;i++) {
+                    if (bones[i].IsChildOf(penetratorRoot)) {
+                        validBones.Add(i);
+                    }
+                }
+                var weights = mesh.GetAllBoneWeights();
+                var bonesPerVertex = mesh.GetBonesPerVertex();
+                int vt = 0;
+                int wt = 0;
+                for (int o = 0; o < bonesPerVertex.Length; o++) {
+                    for (int p = 0; p < bonesPerVertex[o]; p++) {
+                        BoneWeight1 weight = weights[wt];
+                        if (validBones.Contains(weight.boneIndex) && weight.weight > 0.1f) {
+                            Vector3 pos = staticVertices[vt];
+                            float length = Vector3.Dot(rendererLocalPenetratorForward, pos-rendererLocalPenetratorRoot);
+                            maxLocalLength = Mathf.Max(length, maxLocalLength);
+                        }
+                        wt++;
+                    }
+                    vt++;
+                }
+            } else {
+                // Otherwise we can just use every vert.
+                foreach (Vector3 vertexPosition in staticVertices) {
+                    //Vector3 dickSpacePosition = changeOfBasis.MultiplyPoint(vertexPosition);
+                    float length = Vector3.Dot(rendererLocalPenetratorForward, vertexPosition - rendererLocalPenetratorRoot);
+                    maxLocalLength = Mathf.Max(length, maxLocalLength);
+                }
+                blitMesh = mesh;
+                freemesh = false;
+            }
+            
+            if (staticMaterialA == null) {
+                staticMaterialA = new Material(girthUnwrapShader);
+            }
+
+            if (staticMaterialB == null) {
+                staticMaterialB = new Material(girthUnwrapShader);
+            }
+
+            staticMaterialA.SetFloat("_AngleOffset", Mathf.PI / 2f);
+            staticMaterialA.SetVector("_PenetratorOrigin", rendererLocalPenetratorRoot);
+            staticMaterialA.SetVector("_PenetratorForward", rendererLocalPenetratorForward);
+            staticMaterialA.SetVector("_PenetratorUp", rendererLocalPenetratorUp);
+            staticMaterialA.SetVector("_PenetratorRight", rendererLocalPenetratorRight);
+            staticMaterialA.SetFloat("_MaxLength", maxLocalLength);
+            staticMaterialA.SetFloat("_MaxGirth", maxGirth);
+            staticMaterialB.SetFloat("_AngleOffset", -Mathf.PI / 2f);
+            staticMaterialB.SetVector("_PenetratorOrigin", rendererLocalPenetratorRoot);
+            staticMaterialB.SetVector("_PenetratorForward", rendererLocalPenetratorForward);
+            staticMaterialB.SetVector("_PenetratorUp", rendererLocalPenetratorUp);
+            staticMaterialB.SetVector("_PenetratorRight", rendererLocalPenetratorRight);
+            staticMaterialB.SetFloat("_MaxLength", maxLocalLength);
+            staticMaterialB.SetFloat("_MaxGirth", maxGirth);
+
+            // Then use the GPU to rasterize
+            CommandBuffer buffer = new CommandBuffer();
+            buffer.SetRenderTarget(girthMap);
+            buffer.ClearRenderTarget(false, true, Color.clear);
+            for (int j = 0; j < mesh.subMeshCount; j++) {
+                if (!rendererMask.ShouldDrawSubmesh(j)) {
+                    continue;
+                }
+                buffer.DrawMesh(blitMesh, Matrix4x4.identity, staticMaterialA, j, 0);
+                buffer.DrawMesh(blitMesh, Matrix4x4.identity, staticMaterialB, j, 0);
+            }
+            Graphics.ExecuteCommandBuffer(buffer);
+            buffer.Dispose();
+            
+            girthMap.GenerateMips();
+
+            Readback();
+
+            if (freemesh) {
+                if (Application.isPlaying) {
+                    Object.Destroy(blitMesh);
+                } else {
+                    Object.DestroyImmediate(blitMesh);
+                }
+            }
+        }
 
         private void DoSlowReadback() {
             Texture2D cpuTex = new Texture2D(girthMap.width, girthMap.height, TextureFormat.R8, false, true);
@@ -144,10 +263,7 @@ public class GirthData {
             pixelData.Dispose();
         }
 
-        public void Readback(Vector3 rendererLocalPenetratorForward, Vector3 rendererLocalPenetratorRight, Vector3 rendererLocalPenetratorUp) {
-            this.rendererLocalPenetratorForward = rendererLocalPenetratorForward;
-            this.rendererLocalPenetratorRight = rendererLocalPenetratorRight;
-            this.rendererLocalPenetratorUp = rendererLocalPenetratorUp;
+        public void Readback() {
             if (SystemInfo.supportsAsyncGPUReadback && Application.isPlaying) {
                 nativeArray = new NativeArray<byte>(girthMap.width * girthMap.height * sizeof(byte), Allocator.Persistent);
                 AsyncGPUReadback.RequestIntoNativeArray(ref nativeArray, girthMap, 0, TextureFormat.R8, OnCompleteReadBack);
@@ -256,7 +372,7 @@ public class GirthData {
     private Vector3 rootLocalPenetratorRight;
     private Vector3 rootLocalPenetratorRoot;
     private Matrix4x4 poseMatrix;
-    private float globalMaxGirth;
+    private float maxGirth;
 
     private static float GetPiecewiseDerivative(AnimationCurve curve, float t) {
         float epsilon = 0.00001f;
@@ -326,7 +442,7 @@ public class GirthData {
     }
 
     public float GetGirthScaleFactor() {
-        return LocalDickRootBoneToWorldLossy(rootLocalPenetratorUp * globalMaxGirth).magnitude;
+        return LocalDickRootBoneToWorldLossy(rootLocalPenetratorUp * maxGirth).magnitude;
     }
     
     public Vector3 GetWorldOffset(float worldDistanceAlongPenetrator) {
@@ -435,142 +551,58 @@ public class GirthData {
             girthDeltaFrames.Clear();
         }
     }
-    private GirthFrame GenerateFrame(Mesh mesh, int blendshapeIndex,  ref float maxGirth) {
-        GirthFrame frame = new GirthFrame {
-            girthMap = new RenderTexture(64, 64, 0, RenderTextureFormat.R8, RenderTextureReadWrite.Linear)
-            {
-                useMipMap = true,
-                autoGenerateMips = false,
-                wrapModeU = TextureWrapMode.Clamp,
-                wrapModeV = TextureWrapMode.Repeat
-            },
-            detailMap = new Texture2D(64, 64, TextureFormat.R8, Texture.GenerateAllMips, true) {
-                wrapModeU = TextureWrapMode.Clamp,
-                wrapModeV = TextureWrapMode.Repeat
-            }
-        };
 
+    private static float GetMaxGirth(RendererSubMeshMask rendererMask, Transform penetratorRoot, Vector3 rendererLocalPenetratorForward, Vector3 rendererLocalPenetratorRoot) {
+        float maxGirth = 0f;
         staticVertices.Clear();
+        var mesh = rendererMask.GetMesh();
         mesh.GetVertices(staticVertices);
-        if (blendshapeIndex != -1) {
-            Vector3[] blendDeltaVertices = new Vector3[staticVertices.Count];
-            mesh.GetBlendShapeFrameVertices(blendshapeIndex,0, blendDeltaVertices, null, null);
+        Vector3[] blendDeltaVertices = new Vector3[staticVertices.Count];
+        for (int blendshapeIndex = -1; blendshapeIndex < mesh.blendShapeCount; blendshapeIndex++) {
+            if (blendshapeIndex != -1) {
+                mesh.GetBlendShapeFrameVertices(blendshapeIndex, 0, blendDeltaVertices, null, null);
+            }
             for (int i = 0; i < staticVertices.Count; i++) {
-                staticVertices[i] += blendDeltaVertices[i];
-            }
-        }
-
-        // If we're a skinned mesh renderer, we mask by bone weights.
-        if (rendererMask.renderer is SkinnedMeshRenderer meshRenderer) {
-            var bones = meshRenderer.bones;
-            frame.freemesh = true;
-            frame.blitMesh = new Mesh();
-            frame.blitMesh.SetVertices(staticVertices);
-            frame.blitMesh.subMeshCount = mesh.subMeshCount;
-            for (int i = 0; i < mesh.subMeshCount; i++) {
-                if (rendererMask.ShouldDrawSubmesh(i)) {
-                    staticTriangles.Clear();
-                    mesh.GetTriangles(staticTriangles, i);
-                    frame.blitMesh.SetTriangles(staticTriangles, i);
-                }
+                blendDeltaVertices[i] += staticVertices[i];
             }
 
-            HashSet<int> validBones = new HashSet<int>();
-            for(int i=0;i<bones.Length;i++) {
-                if (bones[i].IsChildOf(penetratorRoot)) {
-                    validBones.Add(i);
-                }
-            }
-            var weights = mesh.GetAllBoneWeights();
-            var bonesPerVertex = mesh.GetBonesPerVertex();
-            int vt = 0;
-            int wt = 0;
-            for (int o = 0; o < bonesPerVertex.Length; o++) {
-                for (int p = 0; p < bonesPerVertex[o]; p++) {
-                    BoneWeight1 weight = weights[wt];
-                    if (validBones.Contains(weight.boneIndex) && weight.weight > 0.1f) {
-                        Vector3 pos = staticVertices[vt];
-                        float length = Vector3.Dot(rendererLocalPenetratorForward, pos-rendererLocalPenetratorRoot);
-                        float girth = Vector3.Distance(pos, (rendererLocalPenetratorRoot + rendererLocalPenetratorForward * length));
-                        //frame.maxLocalGirthRadius = Mathf.Max(girth, frame.maxLocalGirthRadius);
-                        maxGirth = Mathf.Max(girth, maxGirth);
-                        frame.maxLocalLength = Mathf.Max(length, frame.maxLocalLength);
+            // If we're a skinned mesh renderer, we mask by bone weights.
+            if (rendererMask.renderer is SkinnedMeshRenderer meshRenderer) {
+                var bones = meshRenderer.bones;
+                HashSet<int> validBones = new HashSet<int>();
+                for (int i = 0; i < bones.Length; i++) {
+                    if (bones[i].IsChildOf(penetratorRoot)) {
+                        validBones.Add(i);
                     }
-
-                    wt++;
                 }
 
-                vt++;
-            }
-        } else {
-            // Otherwise we can just use every vert.
-            foreach (Vector3 vertexPosition in staticVertices) {
-                //Vector3 dickSpacePosition = changeOfBasis.MultiplyPoint(vertexPosition);
-                float length = Vector3.Dot(rendererLocalPenetratorForward, vertexPosition - rendererLocalPenetratorRoot);
-                float girth = Vector3.Distance(vertexPosition,
-                    (rendererLocalPenetratorRoot + rendererLocalPenetratorForward * length));
-                //frame.maxLocalGirthRadius = Mathf.Max(girth, frame.maxLocalGirthRadius);
-                maxGirth = Mathf.Max(girth, maxGirth);
-                frame.maxLocalLength = Mathf.Max(length, frame.maxLocalLength);
-            }
-            frame.blitMesh = mesh;
-            frame.freemesh = false;
-        }
-
-        return frame;
-    }
-
-    private void BlitFrame(Mesh mesh, GirthFrame frame, Shader girthUnwrapShader) {
-        frame.maxGirthRadius = globalMaxGirth;
-        if (staticMaterialA == null) {
-            staticMaterialA = new Material(girthUnwrapShader);
-        }
-
-        if (staticMaterialB == null) {
-            staticMaterialB = new Material(girthUnwrapShader);
-        }
-
-        staticMaterialA.SetFloat("_AngleOffset", Mathf.PI / 2f);
-        staticMaterialA.SetVector("_PenetratorOrigin", rendererLocalPenetratorRoot);
-        staticMaterialA.SetVector("_PenetratorForward", rendererLocalPenetratorForward);
-        staticMaterialA.SetVector("_PenetratorUp", rendererLocalPenetratorUp);
-        staticMaterialA.SetVector("_PenetratorRight", rendererLocalPenetratorRight);
-        staticMaterialA.SetFloat("_MaxLength", frame.maxLocalLength);
-        staticMaterialA.SetFloat("_MaxGirth", globalMaxGirth);
-        staticMaterialB.SetFloat("_AngleOffset", -Mathf.PI / 2f);
-        staticMaterialB.SetVector("_PenetratorOrigin", rendererLocalPenetratorRoot);
-        staticMaterialB.SetVector("_PenetratorForward", rendererLocalPenetratorForward);
-        staticMaterialB.SetVector("_PenetratorUp", rendererLocalPenetratorUp);
-        staticMaterialB.SetVector("_PenetratorRight", rendererLocalPenetratorRight);
-        staticMaterialB.SetFloat("_MaxLength", frame.maxLocalLength);
-        staticMaterialB.SetFloat("_MaxGirth", globalMaxGirth);
-
-        // Then use the GPU to rasterize
-        CommandBuffer buffer = new CommandBuffer();
-        buffer.SetRenderTarget(frame.girthMap);
-        buffer.ClearRenderTarget(false, true, Color.clear);
-        for (int j = 0; j < mesh.subMeshCount; j++) {
-            if (!rendererMask.ShouldDrawSubmesh(j)) {
-                continue;
-            }
-            buffer.DrawMesh(frame.blitMesh, Matrix4x4.identity, staticMaterialA, j, 0);
-            buffer.DrawMesh(frame.blitMesh, Matrix4x4.identity, staticMaterialB, j, 0);
-        }
-        Graphics.ExecuteCommandBuffer(buffer);
-        buffer.Dispose();
-        
-        frame.girthMap.GenerateMips();
-
-        frame.Readback(rendererLocalPenetratorForward, rendererLocalPenetratorRight, rendererLocalPenetratorUp);
-
-        if (frame.freemesh) {
-            if (Application.isPlaying) {
-                Object.Destroy(frame.blitMesh);
+                var weights = mesh.GetAllBoneWeights();
+                var bonesPerVertex = mesh.GetBonesPerVertex();
+                int vt = 0;
+                int wt = 0;
+                for (int o = 0; o < bonesPerVertex.Length; o++) {
+                    for (int p = 0; p < bonesPerVertex[o]; p++) {
+                        BoneWeight1 weight = weights[wt];
+                        if (validBones.Contains(weight.boneIndex) && weight.weight > 0.1f) {
+                            Vector3 pos = blendDeltaVertices[vt];
+                            float length = Vector3.Dot(rendererLocalPenetratorForward, pos - rendererLocalPenetratorRoot);
+                            float girth = Vector3.Distance(pos, (rendererLocalPenetratorRoot + rendererLocalPenetratorForward * length));
+                            maxGirth = Mathf.Max(girth, maxGirth);
+                        }
+                        wt++;
+                    }
+                    vt++;
+                }
             } else {
-                Object.DestroyImmediate(frame.blitMesh);
+                // Otherwise we can just use every vert.
+                foreach (Vector3 vertexPosition in blendDeltaVertices) {
+                    float length = Vector3.Dot(rendererLocalPenetratorForward, vertexPosition - rendererLocalPenetratorRoot);
+                    float girth = Vector3.Distance(vertexPosition, (rendererLocalPenetratorRoot + rendererLocalPenetratorForward * length));
+                    maxGirth = Mathf.Max(girth, maxGirth);
+                }
             }
         }
-        frame.blitMesh = null;
+        return maxGirth;
     }
 
     public GirthData(RendererSubMeshMask rendererWithMask, Shader girthUnwrapShader, Shader subtractiveShader, Shader additiveShader, Transform root, Vector3 rootLocalPenetratorRoot, Vector3 rootPenetratorForward, Vector3 rootPenetratorUp, Vector3 rootPenetratorRight) {
@@ -615,28 +647,14 @@ public class GirthData {
             poseMatrix = Matrix4x4.identity;
         }
 
-
-        Mesh mesh;
-        if (rendererMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer1) {
-            mesh = skinnedMeshRenderer1.sharedMesh;
-        } else if (rendererMask.renderer is MeshRenderer) {
-            mesh = rendererMask.renderer.GetComponent<MeshFilter>().sharedMesh;
-        } else {
-            throw new UnityException("Girth data can only be generated on SkinnedMeshRenderers and MeshRenderers.");
-        }
-
-        baseGirthFrame = GenerateFrame(mesh, -1, ref globalMaxGirth);
+        maxGirth = GetMaxGirth(rendererMask, penetratorRoot, rendererLocalPenetratorForward, rendererLocalPenetratorRoot);
+        baseGirthFrame = new GirthFrame(rendererMask, penetratorRoot, rendererLocalPenetratorRoot, rendererLocalPenetratorForward, rendererLocalPenetratorUp, rendererLocalPenetratorRight,  -1, maxGirth, girthUnwrapShader);
         // Do a quick pass to figure out how girthy and lengthy we are
         girthDeltaFrames = new List<GirthFrame>();
-        for (int i = 0; i < mesh.blendShapeCount; i++) {
-            var girthDelta = GenerateFrame(mesh, i, ref globalMaxGirth);
+        for (int i = 0; i < rendererMask.GetMesh().blendShapeCount; i++) {
+            var girthDelta = new GirthFrame(rendererMask, penetratorRoot, rendererLocalPenetratorRoot, rendererLocalPenetratorForward, rendererLocalPenetratorUp, rendererLocalPenetratorRight, i, maxGirth, girthUnwrapShader);
+            girthDelta.ConvertToBlendshape(baseGirthFrame, subtractiveShader);
             girthDeltaFrames.Add(girthDelta);
-        }
-        
-        BlitFrame(mesh, baseGirthFrame, girthUnwrapShader);
-        for (int i = 0; i < mesh.blendShapeCount; i++) {
-            BlitFrame(mesh, girthDeltaFrames[i], girthUnwrapShader);
-            girthDeltaFrames[i].ConvertToBlendshape(baseGirthFrame, subtractiveShader);
         }
     }
 }
