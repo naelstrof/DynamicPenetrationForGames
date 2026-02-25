@@ -32,7 +32,7 @@ public class PenetratorAudioTrigger : MonoBehaviour {
     }
 
     private void OnDrawGizmosSelected() {
-        if (penetrator == null) {
+        /*if (penetrator == null) {
             return;
         }
         cachedCatmullSpline ??= new CatmullSpline(new List<Vector3>() { Vector3.zero, Vector3.one });
@@ -41,6 +41,6 @@ public class PenetratorAudioTrigger : MonoBehaviour {
         var oldColor = Gizmos.color;
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(pos, 0.025f);
-        Gizmos.color = oldColor;
+        Gizmos.color = oldColor;*/
     }
 }

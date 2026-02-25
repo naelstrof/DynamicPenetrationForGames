@@ -64,13 +64,15 @@ public abstract class Penetrator : MonoBehaviour {
 
     public struct PenetrationArgs {
         public PenetratorData penetratorData;
+        public float baseToPenetrationLength;
         public float penetrationDepth;
         public CatmullSpline alongSpline;
         public int penetrableStartIndex;
 
-        public PenetrationArgs(PenetratorData penetratorData, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
+        public PenetrationArgs(PenetratorData penetratorData, float baseToPenetrationLength, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
             this.penetratorData = penetratorData;
             this.penetrationDepth = penetrationDepth;
+            this.baseToPenetrationLength = baseToPenetrationLength;
             this.alongSpline = alongSpline;
             this.penetrableStartIndex = penetrableStartIndex;
         }
