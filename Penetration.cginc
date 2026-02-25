@@ -214,6 +214,7 @@ sampler2D _PenetratorGirthMapZ;
 sampler2D _PenetratorGirthMapW;
 
 struct PenetratorData {
+    float squashStretch;
     float blend;
     float worldPenetratorLength;
     float worldDistance;
@@ -253,9 +254,10 @@ void GetDeformationFromPenetrator(inout float3 worldPosition, float holeNormaliz
     float dist = TimeToDistance(curveIndex, holeT)+data.worldDistance;
     float2 girthSampleUV = float2(dist/data.worldPenetratorLength, (-holeAngle+data.angle)/6.28318530718);
 
+    girthSampleUV.y *= data.squashStretch;
     float texSample = tex2Dlod(girthMap,float4(girthSampleUV.xy,0,diffDistance*smoothness*smoothness)).r;
     texSample *= 1-pow(2,-20*saturate(1-girthSampleUV.x));
-    float girthSample = texSample*data.girthScaleFactor;
+    float girthSample = texSample*(data.girthScaleFactor/data.squashStretch);
 
     float compressionFactor = saturate((diffDistance-girthSample)/compressibleDistance);
     

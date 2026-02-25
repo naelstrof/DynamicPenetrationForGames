@@ -27,7 +27,7 @@ public class GirthData {
     private CommandBuffer renderGirthMapBuffer;
     private static List<Vector3> staticVertices = new List<Vector3>();
     private static Material additiveBlit;
-
+    
     [SerializeField]
     private GirthFrame baseGirthFrame;
     [SerializeField]

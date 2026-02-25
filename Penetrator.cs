@@ -95,7 +95,7 @@ public abstract class Penetrator : MonoBehaviour {
         cachedSpline = new CatmullSpline(new[] { Vector3.zero, Vector3.one });
         penetratorData?.Initialize();
         penetratorRenderers?.OnEnable();
-        PenetrationManager.SubscribeToPenetratorUpdates(OnPenetratorUpdate);
+        PenetrationManager.SubscribeToPenetratorUpdates(OnPenetratorRead, OnPenetratorWrite);
     }
 
     protected bool IsValid() {
@@ -133,7 +133,11 @@ public abstract class Penetrator : MonoBehaviour {
     public virtual float GetSquashStretchedWorldLength() {
         return penetratorData.GetWorldLength() * squashAndStretch;
     }
-    
+
+    public virtual float GetSquashAndStretchRatio() {
+        return squashAndStretch;
+    }
+
     public virtual float GetWorldGirthRadius(float distanceAlongPenetrator) {
         return penetratorData.GetWorldGirthRadius(distanceAlongPenetrator/squashAndStretch);
     }
@@ -146,7 +150,11 @@ public abstract class Penetrator : MonoBehaviour {
         return penetrationResult;
     }
 
-    protected virtual void OnPenetratorUpdate() {
+    protected virtual void OnPenetratorWrite(float deltaTime) {
+        
+    }
+
+    protected virtual void OnPenetratorRead() {
         if (!IsValid()) {
             return;
         }
@@ -169,6 +177,7 @@ public abstract class Penetrator : MonoBehaviour {
     protected virtual void OnDisable() {
         penetratorData.Release();
         penetratorRenderers?.OnDisable();
+        PenetrationManager.UnsubscribeToPenetratorUpdates(OnPenetratorRead, OnPenetratorWrite);
     }
 
     protected virtual void OnValidate() {
@@ -215,7 +224,7 @@ public abstract class Penetrator : MonoBehaviour {
         }
     }
 
-    public virtual void GetFinalizedSpline(ref CatmullSpline finalizedSpline, out float distanceAlongSpline, out float insertionLerp, out PenetrationArgs? penetrationArgs) {
+    public virtual void GetFinalizedSpline(ref CatmullSpline finalizedSpline, Penetrable targetPenetrable, out float distanceAlongSpline, out float insertionLerp, out PenetrationArgs? penetrationArgs) {
         penetratorData.GetSpline(GetPoints(), ref finalizedSpline, out distanceAlongSpline);
         penetrationArgs = null;
         insertionLerp = 0f;
@@ -225,7 +234,7 @@ public abstract class Penetrator : MonoBehaviour {
         if (!IsValid() || GetPoints().Count == 0) {
             return;
         }
-        GetFinalizedSpline(ref cachedSpline, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
+        GetFinalizedSpline(ref cachedSpline, null, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
         CatmullSpline.GizmosDrawSpline(cachedSpline, Color.red, Color.green);
     }
     
@@ -265,7 +274,7 @@ public abstract class Penetrator : MonoBehaviour {
             0.1f
             );
         
-        GetFinalizedSpline(ref cachedSpline, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
+        GetFinalizedSpline(ref cachedSpline, null, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
         float length = GetSquashStretchedWorldLength();
         for (int i = 0; i < 32; i++) {
             float dist = (float)i / 31 * length;
