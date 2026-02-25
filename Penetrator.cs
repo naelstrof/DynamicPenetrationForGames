@@ -68,13 +68,21 @@ public abstract class Penetrator : MonoBehaviour {
         public float penetrationDepth;
         public CatmullSpline alongSpline;
         public int penetrableStartIndex;
+        public float penetratorFinalWorldLength;
+        public float penetratorFinalWorldGirthMultiplier;
+        public float penetratorStretchFactor;
+        public Vector3 worldPenetratorUp;
 
-        public PenetrationArgs(PenetratorData penetratorData, float baseToPenetrationLength, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex) {
+        public PenetrationArgs(PenetratorData penetratorData, float baseToPenetrationLength, float penetrationDepth, CatmullSpline alongSpline, int penetrableStartIndex, float penetratorStretchFactor, Vector3 worldPenetratorUp) {
             this.penetratorData = penetratorData;
             this.penetrationDepth = penetrationDepth;
             this.baseToPenetrationLength = baseToPenetrationLength;
             this.alongSpline = alongSpline;
             this.penetrableStartIndex = penetrableStartIndex;
+            this.penetratorFinalWorldLength = penetratorData.GetWorldLength() * penetratorStretchFactor;
+            this.penetratorFinalWorldGirthMultiplier = 1f / penetratorStretchFactor;
+            this.penetratorStretchFactor = penetratorStretchFactor;
+            this.worldPenetratorUp = worldPenetratorUp;
         }
     }
     
@@ -123,11 +131,11 @@ public abstract class Penetrator : MonoBehaviour {
         var trans = path.GetReferenceFrameFromT(cachedSpline.GetTimeFromDistance(alongLength + distanceAlongSpline));
         return penetratorData.GetWorldOffset(alongLength/squashAndStretch);
     }
-    public float GetPenetratorAngleOffset(CatmullSpline path) {
+    public static float GetPenetratorAngleOffset(CatmullSpline path, Vector3 worldSpacePenetratorUp) {
         Vector3 initialRight = path.GetBinormalFromT(0f);
         Vector3 initialForward = path.GetVelocityFromT(0f).normalized;
         Vector3 initialUp = Vector3.Cross(initialForward, initialRight).normalized;
-        Vector3 worldDickUp = GetRootTransform().TransformDirection(GetRootUp()).normalized;
+        Vector3 worldDickUp = worldSpacePenetratorUp;
         Vector2 worldDickUpFlat = new Vector2(Vector3.Dot(worldDickUp,initialRight), Vector3.Dot(worldDickUp,initialUp));
         float angle = Mathf.Atan2(worldDickUpFlat.y, worldDickUpFlat.x)-Mathf.PI/2f;
         return angle;

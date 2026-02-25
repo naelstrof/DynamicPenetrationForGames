@@ -125,8 +125,8 @@ public class PenetrableBasic : Penetrable {
         return penetrableDistance;
     }
 
-    public override PenetrationResult GetPenetrationResult(Penetrator penetrator, Penetrator.PenetrationArgs penetrationArgs ) {
-        base.GetPenetrationResult(penetrator, penetrationArgs);
+    public override PenetrationResult GetPenetrationResult(Penetrator.PenetrationArgs penetrationArgs ) {
+        base.GetPenetrationResult(penetrationArgs);
         
         float holeStartDepth = PenetrableNormalizedDistanceSpaceToWorldDistance(holeStartNormalizedDistance, penetrationArgs);
         
@@ -134,7 +134,7 @@ public class PenetrableBasic : Penetrable {
         foreach (var knotForceSampleLocation in knotForceSampleLocations) {
             float worldKnotForceSampleLocationDistance = 
                 PenetrableNormalizedDistanceSpaceToWorldDistance(knotForceSampleLocation.normalizedDistance, penetrationArgs);
-            knotForce += penetrator.GetKnotForce(penetrationArgs.baseToPenetrationLength + worldKnotForceSampleLocationDistance);
+            knotForce += penetrationArgs.penetratorData.GetKnotForce(penetrationArgs.baseToPenetrationLength + worldKnotForceSampleLocationDistance);
         }
 
         bool tipIsInside = !(shouldClip && clippingRange.allowAllTheWayThrough && penetrationArgs.penetrationDepth > PenetrableNormalizedDistanceSpaceToWorldDistance( clippingRange.endNormalizedDistance, penetrationArgs));
@@ -145,7 +145,7 @@ public class PenetrableBasic : Penetrable {
             PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.endNormalizedDistance, penetrationArgs);
         float worldTruncateDistance =
             PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, penetrationArgs);
-        float girthAtWorldTruncateDistance = penetrator.GetWorldGirthRadius(penetrationArgs.baseToPenetrationLength + worldTruncateDistance);
+        float girthAtWorldTruncateDistance = penetrationArgs.penetratorData.GetWorldGirthRadius(penetrationArgs.baseToPenetrationLength + worldTruncateDistance);
         return new PenetrationResult {
             penetrable = this,
             knotForce = knotForce,

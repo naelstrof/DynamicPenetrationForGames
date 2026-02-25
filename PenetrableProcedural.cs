@@ -150,13 +150,13 @@ public class PenetrableProcedural : MonoBehaviour {
             initialUp[1] = 0;
             initialUp[2] = 0;
         }
-        public PenetratorData(CatmullSpline penetrablePath, CatmullSpline penetratorPath, Penetrator penetrator, float worldDistance, float worldDickLength) {
-            squashStretch = penetrator.GetSquashAndStretchRatio();
+        public PenetratorData(CatmullSpline penetrablePath, CatmullSpline penetratorPath, float worldDistance, float worldDickLength, float squashStretch, float girthScaleFactor, float angleOffset) {
+            this.squashStretch = squashStretch;
             this.worldDickLength = worldDickLength;
             blend = worldDistance > worldDickLength ? 0f : 1f;
             this.worldDistance = worldDistance;
-            girthScaleFactor = penetrator.GetGirthScaleFactor();
-            angle = penetrator.GetPenetratorAngleOffset(penetratorPath);
+            this.girthScaleFactor = girthScaleFactor;
+            angle = angleOffset;
             Vector3 iRight = penetrablePath.GetBinormalFromT(0f);
             Vector3 iForward = penetrablePath.GetVelocityFromT(0f).normalized;
             Vector3 iUp = Vector3.Cross(iForward, iRight).normalized;
@@ -300,22 +300,30 @@ public class PenetrableProcedural : MonoBehaviour {
         }
     }
 
-    private void NotifyPenetration(Penetrable penetrable, Penetrator penetrator, Penetrator.PenetrationArgs penetrationArgs) {
+    private void NotifyPenetration(Penetrable penetrable, Penetrator.PenetrationArgs penetrationArgs) {
         Initialize();
         SetKeyword(true);
         
         int index = penetrables.IndexOf(penetrable);
 
-        float diff = penetrationArgs.penetratorData.GetWorldLength() - penetrator.GetSquashStretchedWorldLength();
+        float diff = penetrationArgs.penetratorData.GetWorldLength() - penetrationArgs.penetratorFinalWorldLength;
         var penetrableSpline = new CatmullSpline(penetrable.GetPoints());
-        data[index] = new PenetratorData(penetrableSpline, penetrationArgs.alongSpline, penetrator, penetrator.GetSquashStretchedWorldLength()-penetrationArgs.penetrationDepth+diff, penetrationArgs.penetratorData.GetWorldLength());
+        data[index] = new PenetratorData(
+            penetrableSpline,
+            penetrationArgs.alongSpline,
+            penetrationArgs.penetratorFinalWorldLength-penetrationArgs.penetrationDepth+diff,
+            penetrationArgs.penetratorData.GetWorldLength(),
+            penetrationArgs.penetratorStretchFactor,
+            penetrationArgs.penetratorData.GetGirthScaleFactor(),
+            Penetrator.GetPenetratorAngleOffset(penetrationArgs.alongSpline,penetrationArgs.worldPenetratorUp)
+            );
         splineData[index] = new CatmullSplineData(penetrableSpline);
         penetratorBuffer.SetData(data);
         splineBuffer.SetData(splineData);
 
         foreach (Renderer target in targetRenderers) {
             target.GetPropertyBlock(propertyBlock);
-            Texture targetTexture = detailOnly ? penetrator.GetDetailMap() : penetrator.GetGirthMap();
+            Texture targetTexture = detailOnly ? penetrationArgs.penetratorData.GetDetailMap() : penetrationArgs.penetratorData.GetGirthMap();
             switch (index) {
                 case 0: propertyBlock.SetTexture(penetratorGirthMapXID, targetTexture); break;
                 case 1: propertyBlock.SetTexture(penetratorGirthMapYID, targetTexture); break;
