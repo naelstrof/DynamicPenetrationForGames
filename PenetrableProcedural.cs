@@ -317,7 +317,7 @@ public class PenetrableProcedural : MonoBehaviour {
             penetrationArgs.penetratorData.GetRawLength(),
             penetrationArgs.penetratorStretchFactor,
             penetrationArgs.penetratorData.GetGirthScaleFactor(),
-            Penetrator.GetPenetratorAngleOffset(penetrationArgs.alongSpline,penetrationArgs.worldPenetratorUp)
+            Penetrator.GetPenetratorAngleOffset(penetrableSpline,penetrationArgs.worldPenetratorUp)
             );
         splineData[index] = new CatmullSplineData(penetrableSpline);
         penetratorBuffer.SetData(data);
