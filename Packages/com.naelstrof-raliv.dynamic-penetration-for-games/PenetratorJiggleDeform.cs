@@ -205,7 +205,7 @@ public class PenetratorJiggleDeform : Penetrator {
                         simulatedPoints[i].position = cachedSpline.GetPositionFromDistance(totalDistance);
                     }
                 }
-                var newResult = pendingPenetration.targetPenetrable.GetPenetrationResult(this, pendingPenetration.penetrationArgs.Value);
+                var newResult = pendingPenetration.targetPenetrable.GetPenetrationResult(pendingPenetration.penetrationArgs.Value);
                 SetPenetrationData(newResult);
                 OnPenetrated(pendingPenetration.targetPenetrable, pendingPenetration.penetrationArgs.Value, newResult);
             } else if (pendingPenetration.lastInsertionLerp >= 1f && pendingPenetration.insertionLerp < 1f) {
@@ -279,7 +279,15 @@ public class PenetratorJiggleDeform : Penetrator {
         var insertionDepth = GetSquashStretchedWorldLength() - baseToPenetrationLength;
 
         insertionLerp = 1f - Mathf.Clamp01(-insertionDepth / 0.2f);
-        return new PenetrationArgs(penetratorData, baseToPenetrationLength, insertionDepth, cachedSpline, 2);
+        return new PenetrationArgs(
+            penetratorData,
+            baseToPenetrationLength,
+            insertionDepth,
+            cachedSpline,
+            2,
+            squashStretch.GetSquashStretch(),
+            GetRootTransform().TransformDirection(GetRootUp()).normalized
+            );
     }
 
     public Penetrable GetLinkedPenetrable() => linkedPenetrable;

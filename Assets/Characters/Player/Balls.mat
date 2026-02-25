@@ -16,6 +16,7 @@ Material:
   - _NORMALMAP
   m_InvalidKeywords:
   - _DISABLE_SSR_TRANSPARENT
+  - _DPG_CURVE_SKINNING
   - _MASKMAP
   - _NORMALMAP_TANGENT_SPACE
   - _SKINNED_ON
@@ -346,6 +347,7 @@ Material:
     - _WorldDickNormal: {r: 0, g: 1, b: 0, a: 0}
     - _WorldDickPosition: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!114 &7891534654503870208
 MonoBehaviour:
   m_ObjectHideFlags: 11
