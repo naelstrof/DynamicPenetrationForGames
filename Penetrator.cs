@@ -68,8 +68,6 @@ public abstract class Penetrator : MonoBehaviour {
         public float penetrationDepth;
         public CatmullSpline alongSpline;
         public int penetrableStartIndex;
-        public float penetratorFinalWorldLength;
-        public float penetratorFinalWorldGirthMultiplier;
         public float penetratorStretchFactor;
         public Vector3 worldPenetratorUp;
 
@@ -79,8 +77,6 @@ public abstract class Penetrator : MonoBehaviour {
             this.baseToPenetrationLength = baseToPenetrationLength;
             this.alongSpline = alongSpline;
             this.penetrableStartIndex = penetrableStartIndex;
-            this.penetratorFinalWorldLength = penetratorData.GetWorldLength() * penetratorStretchFactor;
-            this.penetratorFinalWorldGirthMultiplier = 1f / penetratorStretchFactor;
             this.penetratorStretchFactor = penetratorStretchFactor;
             this.worldPenetratorUp = worldPenetratorUp;
         }
@@ -141,7 +137,7 @@ public abstract class Penetrator : MonoBehaviour {
         return angle;
     }
     public virtual float GetSquashStretchedWorldLength() {
-        return penetratorData.GetWorldLength() * squashAndStretch;
+        return penetratorData.GetRawLength() * squashAndStretch;
     }
 
     public virtual float GetSquashAndStretchRatio() {
@@ -171,7 +167,7 @@ public abstract class Penetrator : MonoBehaviour {
         penetratorData.GetSpline(GetPoints(), ref cachedSpline, out float distanceAlongSpline);
         penetratorRenderers.Update(
             cachedSpline,
-            penetratorData.GetWorldLength(),
+            penetratorData.GetRawLength(),
             squashAndStretch,
             0f,
             distanceAlongSpline,
@@ -279,7 +275,7 @@ public abstract class Penetrator : MonoBehaviour {
 
         Handles.color = Color.blue;
         Handles.DrawWireDisc(
-            globalPenetratorRootPositionOffset+globalPenetratorRootPositionRotation*Vector3.forward * penetratorData.GetWorldLength(),
+            globalPenetratorRootPositionOffset+globalPenetratorRootPositionRotation*Vector3.forward * penetratorData.GetRawLength(),
             globalPenetratorRootPositionRotation*Vector3.forward,
             0.1f
             );
