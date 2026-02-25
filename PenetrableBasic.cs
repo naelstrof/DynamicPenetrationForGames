@@ -125,33 +125,40 @@ public class PenetrableBasic : Penetrable {
         return penetrableDistance;
     }
 
-    public override PenetrationResult SetPenetrated(Penetrator penetrator, Penetrator.PenetrationArgs penetrationArgs ) {
-        base.SetPenetrated(penetrator, penetrationArgs);
+    public override PenetrationResult GetPenetrationResult(Penetrator penetrator, Penetrator.PenetrationArgs penetrationArgs ) {
+        base.GetPenetrationResult(penetrator, penetrationArgs);
         
-        float distanceFromBaseOfPenetrator = -penetrationArgs.penetrationDepth + penetrationArgs.penetratorData.GetWorldLength();
-
         float holeStartDepth = PenetrableNormalizedDistanceSpaceToWorldDistance(holeStartNormalizedDistance, penetrationArgs);
-
+        
         float knotForce = 0f;
         foreach (var knotForceSampleLocation in knotForceSampleLocations) {
-            knotForce += penetrator.GetKnotForce(distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(knotForceSampleLocation.normalizedDistance, penetrationArgs));
+            float worldKnotForceSampleLocationDistance = 
+                PenetrableNormalizedDistanceSpaceToWorldDistance(knotForceSampleLocation.normalizedDistance, penetrationArgs);
+            knotForce += penetrator.GetKnotForce(penetrationArgs.baseToPenetrationLength + worldKnotForceSampleLocationDistance);
         }
 
-        bool isInside = !(shouldClip && clippingRange.allowAllTheWayThrough && penetrationArgs.penetrationDepth > PenetrableNormalizedDistanceSpaceToWorldDistance( clippingRange.endNormalizedDistance, penetrationArgs));
-        
+        bool tipIsInside = !(shouldClip && clippingRange.allowAllTheWayThrough && penetrationArgs.penetrationDepth > PenetrableNormalizedDistanceSpaceToWorldDistance( clippingRange.endNormalizedDistance, penetrationArgs));
+
+        float worldClipStartDistance =
+            PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.startNormalizedDistance, penetrationArgs);
+        float worldClipEndDistance =
+            PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.endNormalizedDistance, penetrationArgs);
+        float worldTruncateDistance =
+            PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, penetrationArgs);
+        float girthAtWorldTruncateDistance = penetrator.GetWorldGirthRadius(penetrationArgs.baseToPenetrationLength + worldTruncateDistance);
         return new PenetrationResult {
             penetrable = this,
             knotForce = knotForce,
             penetrableFriction = penetrableFriction,
             clippingRange = !shouldClip ? null : new ClippingRangeWorld {
-                startDistance = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(clippingRange.startNormalizedDistance, penetrationArgs),
-                endDistance = clippingRange.allowAllTheWayThrough ? distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance( clippingRange.endNormalizedDistance, penetrationArgs) : null,
+                startDistance = penetrationArgs.baseToPenetrationLength + worldClipStartDistance,
+                endDistance = clippingRange.allowAllTheWayThrough ? penetrationArgs.baseToPenetrationLength + worldClipEndDistance : null,
             },
-            tipIsInside = isInside,
+            tipIsInside = tipIsInside,
             holeStartDepth = holeStartDepth,
             truncation = !shouldTruncate ? null : new Truncation {
-                girth = penetrator.GetWorldGirthRadius(distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, penetrationArgs)),
-                length = distanceFromBaseOfPenetrator + PenetrableNormalizedDistanceSpaceToWorldDistance(truncateNormalizedDistance, penetrationArgs),
+                girth = girthAtWorldTruncateDistance,
+                length = penetrationArgs.baseToPenetrationLength + worldTruncateDistance,
             },
         }; // TODO: MAKE THIS USE A CONSTRUCTOR ???
     }

@@ -56,7 +56,7 @@ public abstract class Penetrable : MonoBehaviour {
         public ClippingRangeWorld? clippingRange;
     }
     
-    public virtual PenetrationResult SetPenetrated(Penetrator penetrator, Penetrator.PenetrationArgs penetrationArgs) {
+    public virtual PenetrationResult GetPenetrationResult(Penetrator penetrator, Penetrator.PenetrationArgs penetrationArgs) {
         penetrated?.Invoke(this, penetrator, penetrationArgs);
         return new PenetrationResult();
     }
