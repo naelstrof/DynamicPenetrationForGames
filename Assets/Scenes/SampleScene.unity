@@ -1133,6 +1133,50 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1540766736047681590, guid: 0a91ff44ed1531810a53e3dd98bafe4b, type: 3}
   m_PrefabInstance: {fileID: 781361507}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &854503557
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 854503559}
+  - component: {fileID: 854503558}
+  m_Layer: 0
+  m_Name: PenetrationManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &854503558
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 854503557}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50d0d28b05ee6bc49aaff03f0baf3812, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NaelstrofRaliv.DynamicPenetrationForGames::PenetrationManager
+--- !u!4 &854503559
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 854503557}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &882251531
 GameObject:
   m_ObjectHideFlags: 0
@@ -1927,10 +1971,12 @@ MonoBehaviour:
       renderer: {fileID: 1786496131}
       mask: -3
     penetratorRootTransform: {fileID: 1786496130}
-    penetratorRootPositionOffset: {x: -0.00000002438901, y: 0.11021614, z: 0.010138243}
+    penetratorRootPositionOffset: {x: 0, y: 0.11021614, z: 0.010138243}
     penetratorRootForward: {x: 2.1348203e-12, y: 1, z: 0.0001972914}
     penetratorRootUp: {x: 6.5394423e-10, y: 0.00019729137, z: -0.9999999}
     girthUnwrapShader: {fileID: 4800000, guid: 34d24fe4568f98c4cae4724e139cb644, type: 3}
+    additiveBlitShader: {fileID: 4800000, guid: 4f324e97551aa5019ac267f6375eb535, type: 3}
+    subtractiveBlitShader: {fileID: 4800000, guid: e44d3aa97d9d60198b5b08103eb9abe1, type: 3}
   squashAndStretch: 1
   penetratorRenderers:
     renderers:
@@ -1939,8 +1985,8 @@ MonoBehaviour:
   upDownCurvature: -25
   baseUpDownCurvatureOffset: -0.9
   baseLeftRightCurvatureOffset: 0
-  penetratorLengthFriction: 0.172
-  penetratorLengthElasticity: 0.45
+  penetratorLengthFriction: 0.4
+  penetratorLengthElasticity: 0.84
   knotForce: 2
   linkedPenetrable: {fileID: 2110675131}
   hasSerializedJiggleData: 1
@@ -2524,3 +2570,4 @@ SceneRoots:
   - {fileID: 1046219682}
   - {fileID: 517623550}
   - {fileID: 1077422242}
+  - {fileID: 854503559}

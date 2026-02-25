@@ -132,6 +132,7 @@ public class PenetrableProcedural : MonoBehaviour {
     private bool? setKeyword;
     
     private unsafe struct PenetratorData {
+        float squashStretch;
         float blend;
         float worldDickLength;
         float worldDistance;
@@ -140,6 +141,7 @@ public class PenetrableProcedural : MonoBehaviour {
         fixed float initialRight[3];
         fixed float initialUp[3];
         public PenetratorData(float blend) {
+            squashStretch = 1f;
             this.blend = worldDickLength = worldDistance = girthScaleFactor = angle = blend;
             initialRight[0] = 0;
             initialRight[1] = 0;
@@ -149,6 +151,7 @@ public class PenetrableProcedural : MonoBehaviour {
             initialUp[2] = 0;
         }
         public PenetratorData(CatmullSpline penetrablePath, CatmullSpline penetratorPath, Penetrator penetrator, float worldDistance, float worldDickLength) {
+            squashStretch = penetrator.GetSquashAndStretchRatio();
             this.worldDickLength = worldDickLength;
             blend = worldDistance > worldDickLength ? 0f : 1f;
             this.worldDistance = worldDistance;
@@ -165,7 +168,7 @@ public class PenetrableProcedural : MonoBehaviour {
             initialUp[2] = iUp.z;
         }
         public static int GetSize() {
-            return sizeof(float)*11;
+            return sizeof(float)*12;
         }
     }
 
@@ -270,6 +273,15 @@ public class PenetrableProcedural : MonoBehaviour {
             penetrable.unpenetrated += NotifyUnpenetration;
         }
         SetKeyword(false);
+        foreach (Renderer target in targetRenderers) {
+            target.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetTexture(penetratorGirthMapYID, Texture2D.blackTexture);
+            propertyBlock.SetTexture(penetratorGirthMapZID, Texture2D.blackTexture);
+            propertyBlock.SetTexture(penetratorGirthMapWID, Texture2D.blackTexture);
+            propertyBlock.SetBuffer(splineDataArrayID, splineBuffer);
+            propertyBlock.SetBuffer(penetratorDataArrayID, penetratorBuffer);
+            target.SetPropertyBlock(propertyBlock);
+        }
     }
 
     private void NotifyUnpenetration(Penetrable penetrable, Penetrator penetrator) {
@@ -300,6 +312,7 @@ public class PenetrableProcedural : MonoBehaviour {
         splineData[index] = new CatmullSplineData(penetrableSpline);
         penetratorBuffer.SetData(data);
         splineBuffer.SetData(splineData);
+
         foreach (Renderer target in targetRenderers) {
             target.GetPropertyBlock(propertyBlock);
             Texture targetTexture = detailOnly ? penetrator.GetDetailMap() : penetrator.GetGirthMap();

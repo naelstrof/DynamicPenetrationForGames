@@ -100,10 +100,19 @@ public class PenetratorJiggleDeform : Penetrator {
     private JiggleRig jiggleRig;
     private List<Transform> simulatedPoints;
     private List<Vector3> points = new();
-    private float lastInsertionAmount = 0f;
     private List<Collider> setupColliders = new();
     private Transform jiggleRoot;
     private PenetratorSquashStretch squashStretch;
+
+    private struct PendingPenetration {
+        public Penetrable targetPenetrable;
+        public float insertionLerp;
+        public PenetrationArgs? penetrationArgs;
+        public float distanceAlongSpline;
+        public float lastInsertionLerp;
+    }
+
+    private PendingPenetration pendingPenetration;
 
     protected override void OnEnable() {
         base.OnEnable();
@@ -115,6 +124,19 @@ public class PenetratorJiggleDeform : Penetrator {
             InitializeJiggleRoot();
         }
         SetPoseFromCurvature();
+        penetratorRenderers.Update(
+            cachedSpline,
+            penetratorData.GetWorldLength(),
+            squashAndStretch,
+            penetratorData.GetWorldLength()*100f,
+            pendingPenetration.distanceAlongSpline,
+            GetRootTransform(),
+            GetRootForward(),
+            GetRootRight(),
+            GetRootUp(),
+            null,
+            null
+        );
     }
 
     private void InitializeJiggleRoot() {
@@ -139,15 +161,15 @@ public class PenetratorJiggleDeform : Penetrator {
 
     private bool GetSimulationAvailable() => simulatedPoints != null && simulatedPoints.Count != 0;
 
-    public override void GetFinalizedSpline(ref CatmullSpline finalizedSpline, out float distanceAlongSpline, out float insertionLerp, out PenetrationArgs? penetrationArgs) {
+    public override void GetFinalizedSpline(ref CatmullSpline finalizedSpline, Penetrable penetrable, out float distanceAlongSpline, out float insertionLerp, out PenetrationArgs? penetrationArgs) {
         var jigglePoints = GetPoints();
 
-        if (linkedPenetrable != null) {
-            penetrationArgs = GetPenetrableSplineInfo(out insertionLerp);
+        if (penetrable != null) {
+            penetrationArgs = GetPenetrableSplineInfo(penetrable, out insertionLerp);
             cachedPenetrablePoints.Clear();
             cachedPenetrablePoints.Add(GetBasePointOne());
             cachedPenetrablePoints.Add(GetBasePointTwo());
-            cachedPenetrablePoints.AddRange(linkedPenetrable.GetPoints());
+            cachedPenetrablePoints.AddRange(penetrable.GetPoints());
             LerpPoints(jigglePoints, jigglePoints, cachedPenetrablePoints, insertionLerp);
         } else {
             penetrationArgs = null;
@@ -156,21 +178,77 @@ public class PenetratorJiggleDeform : Penetrator {
 
         penetratorData.GetSpline(jigglePoints, ref finalizedSpline, out distanceAlongSpline);
     }
+    
 
-    //private void OnPenetratorFixedUpdate() {
-    //    if (!IsValid()) {
-    //        return;
-    //    }
-
-    //    GetFinalizedSpline(ref cachedSpline, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
-
-    //}
-
-    protected override void OnPenetratorUpdate() {
+    protected override void OnPenetratorRead() {
         if (!IsValid()) {
             return;
         }
+        GetFinalizedSpline(ref cachedSpline, linkedPenetrable, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
+        pendingPenetration.targetPenetrable = linkedPenetrable;
+        pendingPenetration.insertionLerp = insertionLerp;
+        pendingPenetration.penetrationArgs = penetrationArgs;
+        pendingPenetration.distanceAlongSpline = distanceAlongSpline;
+    }
 
+    protected override void OnPenetratorWrite(float deltaTime) {
+        if (!IsValid()) {
+            return;
+        }
+        
+        if (pendingPenetration.targetPenetrable) {
+            if (pendingPenetration.insertionLerp >= 1f && pendingPenetration.penetrationArgs.HasValue) {
+                if (GetSimulationAvailable()) {
+                    for (int i = 0; i < simulatedPoints.Count; i++) {
+                        float progress = (float)i / (simulatedPoints.Count - 1);
+                        float totalDistance = progress * GetSquashStretchedWorldLength();
+                        simulatedPoints[i].position = cachedSpline.GetPositionFromDistance(totalDistance);
+                    }
+                }
+                var newResult = pendingPenetration.targetPenetrable.SetPenetrated(this, pendingPenetration.penetrationArgs.Value);
+                SetPenetrationData(newResult);
+                OnPenetrated(pendingPenetration.targetPenetrable, pendingPenetration.penetrationArgs.Value, newResult);
+            } else if (pendingPenetration.lastInsertionLerp >= 1f && pendingPenetration.insertionLerp < 1f) {
+                pendingPenetration.targetPenetrable.SetUnpenetrated(this);
+                SetPenetrationData(null);
+                OnUnpenetrated(pendingPenetration.targetPenetrable);
+                SetPoseFromCurvature();
+            }
+        }
+
+        float penetrableDistance = pendingPenetration.insertionLerp < 1f ? GetSquashStretchedWorldLength() + 0.1f : cachedSpline.GetLengthFromSubsection(pendingPenetration.penetrationArgs?.penetrableStartIndex - 1 ?? 1, 1);
+        penetratorRenderers.Update(
+            cachedSpline,
+            penetratorData.GetWorldLength(),
+            squashAndStretch,
+            penetrableDistance + (penetrationResult?.holeStartDepth ?? 0f),
+            pendingPenetration.distanceAlongSpline,
+            GetRootTransform(),
+            GetRootForward(),
+            GetRootRight(),
+            GetRootUp(),
+            penetrationResult?.clippingRange,
+            penetrationResult?.truncation
+        );
+        pendingPenetration.lastInsertionLerp = pendingPenetration.insertionLerp;
+        
+        /*if (deltaTime > 0f) {
+            squashStretch.Tick(
+                pendingPenetration.insertionLerp >= 1f,
+                penetratorData.GetWorldLength(),
+                pendingPenetration.penetrationArgs.HasValue
+                    ? cachedSpline.GetLengthFromSubsection(pendingPenetration.penetrationArgs.Value.penetrableStartIndex)
+                    : 0f,
+                penetrationResult?.penetrableFriction * penetrationResult?.penetrableFriction ?? 0f,
+                penetratorLengthElasticity,
+                penetratorLengthFriction,
+                (penetrationResult?.knotForce ?? 0f) * knotForce * 7f,
+                deltaTime
+            );
+            squashAndStretch = squashStretch.GetSquashStretch();
+        }*/
+
+        
         if (isAnimatedJigglePhysics) {
             jiggleRig.SetInputParameters(jiggleRigData);
             jiggleRig.UpdateParameters();
@@ -179,61 +257,6 @@ public class PenetratorJiggleDeform : Penetrator {
         if (GetSimulationAvailable()) {
             simulatedPoints[0].localScale = Vector3.one * simulatedPoints[0].parent.InverseTransformVector(GetRootTransform().TransformDirection(GetRootForward()) * GetSquashStretchedWorldLength()).magnitude;
         }
-
-        GetFinalizedSpline(ref cachedSpline, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
-
-        if (Time.deltaTime > 0f) {
-            squashStretch.Tick(
-                insertionLerp >= 1f,
-                penetratorData.GetWorldLength(),
-                penetrationArgs.HasValue
-                    ? cachedSpline.GetLengthFromSubsection(penetrationArgs.Value.penetrableStartIndex)
-                    : 0f,
-                penetrationResult?.penetrableFriction * penetrationResult?.penetrableFriction ?? 0f,
-                penetratorLengthElasticity,
-                penetratorLengthFriction,
-                (penetrationResult?.knotForce ?? 0f) * knotForce * 7f,
-                Time.deltaTime
-            );
-            squashAndStretch = squashStretch.GetSquashStretch();
-        }
-
-        if (linkedPenetrable) {
-            if (insertionLerp >= 1f && penetrationArgs.HasValue) {
-                if (GetSimulationAvailable()) {
-                    for (int i = 0; i < simulatedPoints.Count; i++) {
-                        float progress = (float)i / (simulatedPoints.Count - 1);
-                        float totalDistance = progress * GetSquashStretchedWorldLength();
-                        simulatedPoints[i].position = cachedSpline.GetPositionFromDistance(totalDistance);
-                    }
-                }
-                
-                var newResult = linkedPenetrable.SetPenetrated(this, penetrationArgs.Value);
-                SetPenetrationData(newResult);
-                OnPenetrated(linkedPenetrable, penetrationArgs.Value, newResult);
-            } else if (lastInsertionAmount >= 1f) {
-                linkedPenetrable.SetUnpenetrated(this);
-                SetPenetrationData(null);
-                OnUnpenetrated(linkedPenetrable);
-                SetPoseFromCurvature();
-            }
-        }
-
-        float penetrableDistance = insertionLerp < 1f ? GetSquashStretchedWorldLength() + 0.1f : cachedSpline.GetLengthFromSubsection(penetrationArgs?.penetrableStartIndex - 1 ?? 1, 1);
-        penetratorRenderers.Update(
-            cachedSpline,
-            penetratorData.GetWorldLength(),
-            squashAndStretch,
-            penetrableDistance + (penetrationResult?.holeStartDepth ?? 0f),
-            distanceAlongSpline,
-            GetRootTransform(),
-            GetRootForward(),
-            GetRootRight(),
-            GetRootUp(),
-            penetrationResult?.clippingRange,
-            penetrationResult?.truncation
-        );
-        lastInsertionAmount = insertionLerp;
     }
 
     public void SetJiggleSettingsBlend(JiggleTreeInputParameters data) {
@@ -245,12 +268,12 @@ public class PenetratorJiggleDeform : Penetrator {
     }
 
     private List<Vector3> cachedPenetrablePoints;
-    protected virtual PenetrationArgs GetPenetrableSplineInfo(out float insertionAmount) {
+    protected virtual PenetrationArgs GetPenetrableSplineInfo(Penetrable penetrable, out float insertionAmount) {
         cachedPenetrablePoints ??= new List<Vector3>();
         cachedPenetrablePoints.Clear();
         cachedPenetrablePoints.Add(GetBasePointOne());
         cachedPenetrablePoints.Add(GetBasePointTwo());
-        cachedPenetrablePoints.AddRange(linkedPenetrable.GetPoints());
+        cachedPenetrablePoints.AddRange(penetrable.GetPoints());
         penetratorData.GetSpline(cachedPenetrablePoints, ref cachedSpline, out var baseDistanceAlongSpline);
         var proximity = cachedSpline.GetLengthFromSubsection(1, 1);
         var tipProximity = proximity - GetSquashStretchedWorldLength();
@@ -344,7 +367,7 @@ public class PenetratorJiggleDeform : Penetrator {
         jiggleRigData.OnValidate();
         if (!Application.isPlaying) return;
         if (simulatedPoints == null || simulatedPoints.Count <= 1) return;
-        SetPoseFromCurvature();
+        //SetPoseFromCurvature();
         jiggleRig.SetInputParameters(jiggleRigData);
         jiggleRig.UpdateParameters();
     }
