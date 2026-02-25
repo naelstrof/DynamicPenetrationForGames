@@ -119,16 +119,16 @@ public class PenetratorJiggleDeform : Penetrator {
         //PenetrationManager.SubscribeToPenetratorFixedUpdates(OnPenetratorFixedUpdate);
         if (!Application.isPlaying) return;
         
-        squashStretch = new PenetratorSquashStretch(penetratorData.GetWorldLength());
+        squashStretch = new PenetratorSquashStretch(penetratorData.GetRawLength());
         if (jiggleRoot == null) {
             InitializeJiggleRoot();
         }
         SetPoseFromCurvature();
         penetratorRenderers.Update(
             cachedSpline,
-            penetratorData.GetWorldLength(),
+            penetratorData.GetRawLength(),
             squashAndStretch,
-            penetratorData.GetWorldLength()*100f,
+            penetratorData.GetRawLength()*100f,
             pendingPenetration.distanceAlongSpline,
             GetRootTransform(),
             GetRootForward(),
@@ -219,7 +219,7 @@ public class PenetratorJiggleDeform : Penetrator {
         float penetrableDistance = pendingPenetration.insertionLerp < 1f ? GetSquashStretchedWorldLength() + 0.1f : cachedSpline.GetLengthFromSubsection(pendingPenetration.penetrationArgs?.penetrableStartIndex - 1 ?? 1, 1);
         penetratorRenderers.Update(
             cachedSpline,
-            penetratorData.GetWorldLength(),
+            penetratorData.GetRawLength(),
             squashAndStretch,
             penetrableDistance + (penetrationResult?.holeStartDepth ?? 0f),
             pendingPenetration.distanceAlongSpline,
@@ -235,7 +235,7 @@ public class PenetratorJiggleDeform : Penetrator {
         if (deltaTime > 0f) {
             squashStretch.Tick(
                 pendingPenetration.insertionLerp >= 1f,
-                penetratorData.GetWorldLength(),
+                penetratorData.GetRawLength(),
                 pendingPenetration.penetrationArgs.HasValue
                     ? cachedSpline.GetLengthFromSubsection(pendingPenetration.penetrationArgs.Value.penetrableStartIndex)
                     : 0f,

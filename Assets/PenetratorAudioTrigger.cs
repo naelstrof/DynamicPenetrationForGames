@@ -24,7 +24,7 @@ public class PenetratorAudioTrigger : MonoBehaviour {
     private void OnPenetrated(Penetrator penetrator1, Penetrable penetrable, Penetrator.PenetrationArgs penetrationArgs, Penetrable.PenetrationResult result) {
         float triggerDepth = (1f-normalizedDistance) * penetrator1.GetSquashStretchedWorldLength();
         // TODO: Make it louder if the depentration is slow and deliberate, and make it quieter for fast thrusts.
-        if ((lastPenetrationDepth ?? penetrationArgs.penetrationDepth) > triggerDepth && penetrationArgs.penetrationDepth < triggerDepth && penetrator1.GetSquashStretchedWorldLength() > penetrationArgs.penetratorData.GetWorldLength()) {
+        if ((lastPenetrationDepth ?? penetrationArgs.penetrationDepth) > triggerDepth && penetrationArgs.penetrationDepth < triggerDepth && penetrator1.GetSquashStretchedWorldLength() > penetrationArgs.penetratorData.GetRawLength()) {
             AudioSource.PlayClipAtPoint(clip, penetrator1.GetRootTransform().position);
         }
 

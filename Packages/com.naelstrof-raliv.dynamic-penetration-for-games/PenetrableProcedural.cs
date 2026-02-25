@@ -120,7 +120,7 @@ public class PenetrableProcedural : MonoBehaviour {
     
     private ComputeBuffer penetratorBuffer;
     private ComputeBuffer splineBuffer;
-    private NativeArray<PenetratorData> data;
+    private NativeArray<PenetratorRenderData> data;
     private NativeArray<CatmullSplineData> splineData;
     private MaterialPropertyBlock propertyBlock;
     private static readonly int penetratorDataArrayID = Shader.PropertyToID("_PenetratorData");
@@ -131,7 +131,7 @@ public class PenetrableProcedural : MonoBehaviour {
     private static readonly int penetratorGirthMapWID = Shader.PropertyToID("_PenetratorGirthMapW");
     private bool? setKeyword;
     
-    private unsafe struct PenetratorData {
+    private unsafe struct PenetratorRenderData {
         float squashStretch;
         float blend;
         float worldDickLength;
@@ -140,7 +140,7 @@ public class PenetrableProcedural : MonoBehaviour {
         float angle;
         fixed float initialRight[3];
         fixed float initialUp[3];
-        public PenetratorData(float blend) {
+        public PenetratorRenderData(float blend) {
             squashStretch = 1f;
             this.blend = worldDickLength = worldDistance = girthScaleFactor = angle = blend;
             initialRight[0] = 0;
@@ -150,7 +150,7 @@ public class PenetrableProcedural : MonoBehaviour {
             initialUp[1] = 0;
             initialUp[2] = 0;
         }
-        public PenetratorData(CatmullSpline penetrablePath, CatmullSpline penetratorPath, float worldDistance, float worldDickLength, float squashStretch, float girthScaleFactor, float angleOffset) {
+        public PenetratorRenderData(CatmullSpline penetrablePath, CatmullSpline penetratorPath, float worldDistance, float worldDickLength, float squashStretch, float girthScaleFactor, float angleOffset) {
             this.squashStretch = squashStretch;
             this.worldDickLength = worldDickLength;
             blend = worldDistance > worldDickLength ? 0f : 1f;
@@ -249,14 +249,14 @@ public class PenetrableProcedural : MonoBehaviour {
             return;
         }
 
-        penetratorBuffer = new ComputeBuffer(4,PenetratorData.GetSize());
-        data = new NativeArray<PenetratorData>(4, Allocator.Persistent);
+        penetratorBuffer = new ComputeBuffer(4,PenetratorRenderData.GetSize());
+        data = new NativeArray<PenetratorRenderData>(4, Allocator.Persistent);
         splineBuffer = new ComputeBuffer(4,CatmullSplineData.GetSize());
         splineData = new NativeArray<CatmullSplineData>(4, Allocator.Persistent);
         
         CatmullSpline d = new CatmullSpline(new List<Vector3> { Vector3.zero, Vector3.one });
         for (int i=0;i<4;i++) {
-            data[i] = new PenetratorData(0);
+            data[i] = new PenetratorRenderData(0);
             splineData[i] = new CatmullSplineData(d);
         }
         
@@ -306,13 +306,15 @@ public class PenetrableProcedural : MonoBehaviour {
         
         int index = penetrables.IndexOf(penetrable);
 
-        float diff = penetrationArgs.penetratorData.GetWorldLength() - penetrationArgs.penetratorFinalWorldLength;
+        var PenetratorStretchedLength = penetrationArgs.penetratorData.GetRawLength() * penetrationArgs.penetratorStretchFactor;
+
+        float diff = penetrationArgs.penetratorData.GetRawLength() - PenetratorStretchedLength;
         var penetrableSpline = new CatmullSpline(penetrable.GetPoints());
-        data[index] = new PenetratorData(
+        data[index] = new PenetratorRenderData(
             penetrableSpline,
             penetrationArgs.alongSpline,
-            penetrationArgs.penetratorFinalWorldLength-penetrationArgs.penetrationDepth+diff,
-            penetrationArgs.penetratorData.GetWorldLength(),
+            PenetratorStretchedLength-penetrationArgs.penetrationDepth+diff,
+            penetrationArgs.penetratorData.GetRawLength(),
             penetrationArgs.penetratorStretchFactor,
             penetrationArgs.penetratorData.GetGirthScaleFactor(),
             Penetrator.GetPenetratorAngleOffset(penetrationArgs.alongSpline,penetrationArgs.worldPenetratorUp)
