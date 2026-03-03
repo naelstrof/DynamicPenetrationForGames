@@ -101,6 +101,7 @@ public class PenetratorJiggleDeform : Penetrator {
     private List<Vector3> points = new();
     private List<Collider> setupColliders = new();
     private Transform jiggleRoot;
+    private GameObject jiggleInstantiatedPrefab;
     private PenetratorSquashStretch squashStretch;
 
     private struct PendingPenetration {
@@ -141,6 +142,7 @@ public class PenetratorJiggleDeform : Penetrator {
     private void InitializeJiggleRoot() {
         var obj = Instantiate(jigglePrefab, GetRootTransform());
         obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+        jiggleInstantiatedPrefab = obj;
         //obj.hideFlags = HideFlags.HideAndDontSave;
         Assert.IsTrue(obj.transform.childCount == 1, $"Prefab is misconfigured, first transform must be a container for the actual jiggles! Got {obj.transform.childCount} children instead of 1");
             
@@ -297,18 +299,6 @@ public class PenetratorJiggleDeform : Penetrator {
         }
     }
 
-    protected override void OnDisable() {
-        if (Application.isPlaying) {
-            foreach (var t in simulatedPoints) {
-                Destroy(t.gameObject);
-            }
-
-            simulatedPoints = null;
-        }
-
-        base.OnDisable();
-    }
-
     protected override IList<Vector3> GetPoints() {
         points.Clear();
         points.Add(GetBasePointOne());
@@ -360,7 +350,6 @@ public class PenetratorJiggleDeform : Penetrator {
 #if UNITY_EDITOR
         if (jigglePrefab == null) {
             jigglePrefab = AssetDatabase.LoadAssetByGUID<GameObject>(new GUID("bf0f13679933bbb57b506ceb38f2cb75"));
-            Debug.Log(jigglePrefab);
         }
 #endif
         if (!hasSerializedJiggleData) {
