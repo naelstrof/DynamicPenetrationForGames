@@ -359,7 +359,7 @@ public class PenetratorJiggleDeform : Penetrator {
         jiggleRigData.OnValidate();
         if (!Application.isPlaying) return;
         if (simulatedPoints == null || simulatedPoints.Count <= 1) return;
-        //SetPoseFromCurvature();
+        SetPoseFromCurvature();
         jiggleRig.SetInputParameters(jiggleRigData);
         jiggleRig.UpdateParameters();
     }
