@@ -54,7 +54,6 @@ public class PenetratorInspector : Editor {
 
 #endif
 
-[ExecuteAlways]
 public abstract class Penetrator : MonoBehaviour {
     [FormerlySerializedAs("penetrator")]
     [SerializeField] protected PenetratorData penetratorData;
@@ -148,6 +147,26 @@ public abstract class Penetrator : MonoBehaviour {
         return penetratorData.GetWorldGirthRadius(distanceAlongPenetrator/squashAndStretch);
     }
 
+    public virtual bool TryGetTip(out Vector3 position, out Vector3 direction) {
+        if (cachedSpline == null) {
+            position = Vector3.zero;
+            direction = Vector3.forward;
+            return false;
+        }
+        var distanceAlongSpline = cachedSpline.GetLengthFromSubsection(1);
+        var length = distanceAlongSpline + GetSquashStretchedWorldLength();
+        var mat = cachedSpline.GetReferenceFrameFromT(cachedSpline.GetTimeFromDistance(length));
+        var point = cachedSpline.GetPositionFromDistance(length);
+        if (float.IsNaN(point.x)) {
+            position = Vector3.zero;
+            direction = Vector3.forward;
+            return false;
+        }
+        position = point;
+        direction = mat * Vector3.forward;
+        return true;
+    }
+
     protected virtual void SetPenetrationData(Penetrable.PenetrationResult? result) {
         penetrationResult = result;
     }
@@ -239,6 +258,10 @@ public abstract class Penetrator : MonoBehaviour {
     protected virtual void OnDrawGizmosSelected() {
         if (!IsValid() || GetPoints().Count == 0) {
             return;
+        }
+
+        if (cachedSpline == null) {
+            cachedSpline = new CatmullSpline(new Vector3[] { Vector3.zero, Vector3.one });
         }
         GetFinalizedSpline(ref cachedSpline, null, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
         CatmullSpline.GizmosDrawSpline(cachedSpline, Color.red, Color.green);
