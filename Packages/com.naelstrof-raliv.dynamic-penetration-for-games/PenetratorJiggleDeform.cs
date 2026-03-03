@@ -79,7 +79,6 @@ public class PenetratorSquashStretch {
 
 }
 
-[ExecuteAlways]
 public class PenetratorJiggleDeform : Penetrator {
     [SerializeField, Range(-90f, 90f)] private float leftRightCurvature = 0f;
     [SerializeField, Range(-90f, 90f)] private float upDownCurvature = 0f;
@@ -117,9 +116,9 @@ public class PenetratorJiggleDeform : Penetrator {
     protected override void OnEnable() {
         base.OnEnable();
         //PenetrationManager.SubscribeToPenetratorFixedUpdates(OnPenetratorFixedUpdate);
+        squashStretch = new PenetratorSquashStretch(penetratorData.GetRawLength());
         if (!Application.isPlaying) return;
         
-        squashStretch = new PenetratorSquashStretch(penetratorData.GetRawLength());
         if (jiggleRoot == null) {
             InitializeJiggleRoot();
         }
@@ -249,13 +248,9 @@ public class PenetratorJiggleDeform : Penetrator {
         }
 
         
-        if (isAnimatedJigglePhysics) {
+        if (isAnimatedJigglePhysics && Application.isPlaying && jiggleRig) {
             jiggleRig.SetInputParameters(jiggleRigData);
             jiggleRig.UpdateParameters();
-        }
-
-        if (GetSimulationAvailable()) {
-            simulatedPoints[0].localScale = Vector3.one * simulatedPoints[0].parent.InverseTransformVector(GetRootTransform().TransformDirection(GetRootForward()) * GetSquashStretchedWorldLength()).magnitude;
         }
     }
 

@@ -61,6 +61,48 @@ public class PenetratorRenderers {
             output.Add(renderer);
         }
     }
+    
+    private static ComputeBuffer nullCatmullBuffer;
+    private static NativeArray<CatmullSplineData> nullData;
+    
+    [RuntimeInitializeOnLoadMethod]
+    private static void StaticInitialize() {
+        if (!nullData.IsCreated) {
+            nullCatmullBuffer = new ComputeBuffer(1, CatmullSplineData.GetSize());
+            nullData = new NativeArray<CatmullSplineData>(1, Allocator.Persistent);
+            nullData[0] = new CatmullSplineData(new CatmullSpline(new List<Vector3>() { Vector3.zero, Vector3.one }));
+            nullCatmullBuffer.SetData(nullData, 0, 0, 1);
+        }
+    }
+    
+    private static void SetDefaults(Material material) {
+        if (!nullData.IsCreated) {
+            nullCatmullBuffer = new ComputeBuffer(1, CatmullSplineData.GetSize());
+            nullData = new NativeArray<CatmullSplineData>(1, Allocator.Persistent);
+            nullData[0] = new CatmullSplineData(new CatmullSpline(new List<Vector3>() { Vector3.zero, Vector3.one }));
+            nullCatmullBuffer.SetData(nullData, 0, 0, 1);
+        }
+        material.SetFloat(penetratorOffsetLengthID, 0f);
+        material.SetVector(penetratorStartWorldID, Vector3.zero);
+        material.SetFloat(curveBlendID, 1f);
+        material.SetVector(penetratorForwardID, Vector3.zero);
+        material.SetVector(penetratorRightID, Vector3.zero);
+        material.SetVector(penetratorUpID, Vector3.zero);
+        material.SetVector(penetratorRootID, Vector3.zero);
+        material.SetBuffer(catmullSplinesID, nullCatmullBuffer);
+        material.SetFloat(squashStretchCorrectionID, 0f);
+        material.SetFloat(DpgBlend, 0f);
+        material.SetFloat(distanceToHoleID, 0f);
+        material.SetFloat(truncateLengthID, 0f);
+        material.SetFloat(girthRadiusID, 1f);
+        material.SetFloat(startClipID, 0f);
+        material.SetFloat(endClipID, 0f);
+    }
+
+    public static void InitializeMaterial(Material material) {
+        material.EnableKeyword("_DPG_CURVE_SKINNING");
+        SetDefaults(material);
+    }
 
 
     private void SetFlags(Renderer renderer, bool active, bool isUnityValidating) {
@@ -77,7 +119,7 @@ public class PenetratorRenderers {
                     material.DisableKeyword("_DPG_TRUNCATE_SPHERIZE");
                 }
                 if (active) {
-                    SharedMaterialDatabase.GetInstance().AddTrackedMaterial(material);
+                    InitializeMaterial(material);
                 } else {
                     renderer.SetPropertyBlock(null);
                 }

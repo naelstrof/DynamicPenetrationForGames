@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class PenetrationManager : MonoBehaviour {
     static PenetrationManager instance;
-    public static int frame;
 
     [RuntimeInitializeOnLoadMethod]
     public static void Initialize() {
@@ -35,7 +34,6 @@ public class PenetrationManager : MonoBehaviour {
     event Action<float> penetratorWrite;
     
     void LateUpdate() {
-        frame++;
         penetratorRead?.Invoke();
         penetratorWrite?.Invoke(Time.deltaTime);
     }
