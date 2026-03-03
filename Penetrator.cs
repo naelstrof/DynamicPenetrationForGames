@@ -207,7 +207,6 @@ public abstract class Penetrator : MonoBehaviour {
 
     protected virtual void OnValidate() {
         penetratorData?.OnValidate();
-        penetratorRenderers?.OnValidate();
     }
 
     private static CatmullSpline lerpSplineA;

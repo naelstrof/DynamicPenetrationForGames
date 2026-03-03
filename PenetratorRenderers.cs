@@ -64,82 +64,22 @@ public class PenetratorRenderers {
     
     private static ComputeBuffer nullCatmullBuffer;
     private static NativeArray<CatmullSplineData> nullData;
-    
-    [RuntimeInitializeOnLoadMethod]
-    private static void StaticInitialize() {
-        if (!nullData.IsCreated) {
-            nullCatmullBuffer = new ComputeBuffer(1, CatmullSplineData.GetSize());
-            nullData = new NativeArray<CatmullSplineData>(1, Allocator.Persistent);
-            nullData[0] = new CatmullSplineData(new CatmullSpline(new List<Vector3>() { Vector3.zero, Vector3.one }));
-            nullCatmullBuffer.SetData(nullData, 0, 0, 1);
-        }
-    }
-    
-    private static void SetDefaults(Material material) {
-        if (!nullData.IsCreated) {
-            nullCatmullBuffer = new ComputeBuffer(1, CatmullSplineData.GetSize());
-            nullData = new NativeArray<CatmullSplineData>(1, Allocator.Persistent);
-            nullData[0] = new CatmullSplineData(new CatmullSpline(new List<Vector3>() { Vector3.zero, Vector3.one }));
-            nullCatmullBuffer.SetData(nullData, 0, 0, 1);
-        }
-        material.SetFloat(penetratorOffsetLengthID, 0f);
-        material.SetVector(penetratorStartWorldID, Vector3.zero);
-        material.SetFloat(curveBlendID, 1f);
-        material.SetVector(penetratorForwardID, Vector3.zero);
-        material.SetVector(penetratorRightID, Vector3.zero);
-        material.SetVector(penetratorUpID, Vector3.zero);
-        material.SetVector(penetratorRootID, Vector3.zero);
-        material.SetBuffer(catmullSplinesID, nullCatmullBuffer);
-        material.SetFloat(squashStretchCorrectionID, 0f);
-        material.SetFloat(DpgBlend, 0f);
-        material.SetFloat(distanceToHoleID, 0f);
-        material.SetFloat(truncateLengthID, 0f);
-        material.SetFloat(girthRadiusID, 1f);
-        material.SetFloat(startClipID, 0f);
-        material.SetFloat(endClipID, 0f);
-    }
 
-    public static void InitializeMaterial(Material material) {
-        material.EnableKeyword("_DPG_CURVE_SKINNING");
-        SetDefaults(material);
-    }
-
-
-    private void SetFlags(Renderer renderer, bool active, bool isUnityValidating) {
-#if UNITY_EDITOR
-        if (!Application.isPlaying && renderer == null) {
-            return;
-        }
-#endif
-        if (Application.isEditor && (!Application.isPlaying || isUnityValidating)) {
-            foreach (var material in renderer.sharedMaterials) {
-                if (hasTruncateKeyword && active) {
-                    material.EnableKeyword("_DPG_TRUNCATE_SPHERIZE");
-                } else {
-                    material.DisableKeyword("_DPG_TRUNCATE_SPHERIZE");
-                }
-                if (active) {
-                    InitializeMaterial(material);
-                } else {
-                    renderer.SetPropertyBlock(null);
-                }
+    private void SetFlags(Renderer renderer, bool active) {
+        foreach (var material in renderer.materials) {
+            if (hasTruncateKeyword && active) {
+                material.EnableKeyword("_DPG_TRUNCATE_SPHERIZE");
+            } else {
+                material.DisableKeyword("_DPG_TRUNCATE_SPHERIZE");
             }
-        } else if (!isUnityValidating) {
-            foreach (var material in renderer.materials) {
-                if (hasTruncateKeyword && active) {
-                    material.EnableKeyword("_DPG_TRUNCATE_SPHERIZE");
-                } else {
-                    material.DisableKeyword("_DPG_TRUNCATE_SPHERIZE");
-                }
 
-                if (active) {
-                    material.EnableKeyword("_DPG_CURVE_SKINNING");
-                } else {
-                    material.DisableKeyword("_DPG_CURVE_SKINNING");
-                    renderer.GetPropertyBlock(propertyBlock);
-                    propertyBlock.SetFloat(DpgBlend, 0f);
-                    renderer.SetPropertyBlock(propertyBlock);
-                }
+            if (active) {
+                material.EnableKeyword("_DPG_CURVE_SKINNING");
+            } else {
+                material.DisableKeyword("_DPG_CURVE_SKINNING");
+                renderer.GetPropertyBlock(propertyBlock);
+                propertyBlock.SetFloat(DpgBlend, 0f);
+                renderer.SetPropertyBlock(propertyBlock);
             }
         }
     }
@@ -149,11 +89,11 @@ public class PenetratorRenderers {
             return;
         }
         renderers.Add(renderer);
-        SetFlags(renderer, true, false);
+        SetFlags(renderer, true);
     }
     
     public void RemoveRenderer(Renderer renderer) {
-        SetFlags(renderer, false, false);
+        SetFlags(renderer, false);
         if (renderers.Contains(renderer)) {
             renderers.Remove(renderer);
         }
@@ -166,7 +106,7 @@ public class PenetratorRenderers {
         hasTruncateKeyword = newHasTruncate;
         
         foreach (var renderer in renderers) {
-            SetFlags(renderer, true, isUnityValidating);
+            SetFlags(renderer, true);
         }
     }
 
@@ -214,34 +154,13 @@ public class PenetratorRenderers {
         }
     }
 
-    public void OnValidate() {
-        if (renderers == null) {
-            return;
-        }
-
-        previousRenderers ??= new List<Renderer>();
-        foreach (var renderer in renderers) {
-            if (!previousRenderers.Contains(renderer)) {
-                // new renderer
-                SetFlags(renderer, true, true);
-            }
-        }
-        foreach (var renderer in previousRenderers) {
-            if (!renderers.Contains(renderer)) {
-                // removed renderer
-                SetFlags(renderer, false, true);
-            }
-        }
-        previousRenderers = new List<Renderer>(renderers);
-    }
-
     public void OnEnable() {
         Initialize();
         if (renderers == null) {
             return;
         }
         foreach (var renderer in renderers) {
-            SetFlags(renderer, true, false);
+            SetFlags(renderer, true);
         }
         previousRenderers = new List<Renderer>(renderers);
     }
@@ -249,7 +168,7 @@ public class PenetratorRenderers {
     public void OnDisable() {
         if (previousRenderers != null) {
             foreach (var renderer in previousRenderers) {
-                SetFlags(renderer, false, false);
+                SetFlags(renderer, false);
             }
 
             previousRenderers = null;
