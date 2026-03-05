@@ -279,6 +279,8 @@ public class PenetratorJiggleDeform : Penetrator {
             );
             squashAndStretch = squashStretch.GetSquashStretch(Time.timeAsDouble);
         }
+        // For debugging squash and stretch.
+        //squashAndStretch = 1f + (Mathf.Sin(Time.time))/2f;
         
         if (isAnimatedJigglePhysics && Application.isPlaying && jiggleRig) {
             jiggleRig.SetInputParameters(jiggleRigData);
