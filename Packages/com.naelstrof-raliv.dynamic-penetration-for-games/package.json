@@ -1,7 +1,7 @@
 {
   "name": "com.naelstrof-raliv.dynamic-penetration-for-games",
   "displayName": "Dynamic Penetration for Games",
-  "version": "4.0.3",
+  "version": "4.0.4",
   "dependencies": {
     "com.naelstrof.splines": "2.0.5",
     "com.gator-dragon-games.jigglephysics": "15.0.5"

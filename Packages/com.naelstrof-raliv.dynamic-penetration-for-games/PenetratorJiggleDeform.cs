@@ -158,6 +158,7 @@ public class PenetratorJiggleDeform : Penetrator {
             simulatedPoints.Add(transformCrawl);
             transformCrawl = transformCrawl.GetChild(0);
         }
+        simulatedPoints.Add(transformCrawl);
     }
 
     private bool GetSimulationAvailable() => simulatedPoints != null && simulatedPoints.Count != 0;
@@ -199,11 +200,13 @@ public class PenetratorJiggleDeform : Penetrator {
         
         if (pendingPenetration.targetPenetrable) {
             if (pendingPenetration.insertionLerp >= 1f && pendingPenetration.penetrationArgs.HasValue) {
+                float firstSegment = cachedSpline.GetLengthFromSubsection(1);
                 if (GetSimulationAvailable()) {
                     for (int i = 0; i < simulatedPoints.Count; i++) {
                         float progress = (float)i / (simulatedPoints.Count - 1);
-                        float totalDistance = progress * GetSquashStretchedWorldLength();
+                        float totalDistance = firstSegment + progress * GetSquashStretchedWorldLength();
                         simulatedPoints[i].position = cachedSpline.GetPositionFromDistance(totalDistance);
+                        simulatedPoints[i].rotation = Quaternion.LookRotation(cachedSpline.GetVelocityFromDistance(totalDistance), Vector3.up);
                     }
                 }
                 var newResult = pendingPenetration.targetPenetrable.GetPenetrationResult(pendingPenetration.penetrationArgs.Value);
@@ -248,7 +251,6 @@ public class PenetratorJiggleDeform : Penetrator {
             );
             squashAndStretch = squashStretch.GetSquashStretch();
         }
-
         
         if (isAnimatedJigglePhysics && Application.isPlaying && jiggleRig) {
             jiggleRig.SetInputParameters(jiggleRigData);
@@ -282,7 +284,7 @@ public class PenetratorJiggleDeform : Penetrator {
             insertionDepth,
             cachedSpline,
             2,
-            squashStretch.GetSquashStretch(),
+            squashAndStretch,
             GetRootTransform().TransformDirection(GetRootUp()).normalized
             );
     }
@@ -329,15 +331,14 @@ public class PenetratorJiggleDeform : Penetrator {
         float segmentCurvatureY = upDownCurvature / segments;
         
         simulatedPoints[0].localScale = Vector3.one;
-        simulatedPoints[0].transform.rotation =
+        simulatedPoints[0].rotation =
             Quaternion.LookRotation(GetRootTransform().TransformDirection(GetRootForward()),
                 GetRootTransform().TransformDirection(GetRootUp())) *
             Quaternion.Euler(segmentCurvatureY+baseUpDownCurvatureOffset, segmentCurvatureX+baseLeftRightCurvatureOffset, 0f);
         simulatedPoints[0].transform.position = GetRootTransform().TransformPoint(GetRootPositionOffset());
         
         for (int i = 1; i < simulatedPoints.Count; i++) {
-            simulatedPoints[i].transform.localRotation =
-                Quaternion.Euler(segmentCurvatureY, segmentCurvatureX, 0f);
+            simulatedPoints[i].transform.localRotation = Quaternion.Euler(segmentCurvatureY, segmentCurvatureX, 0f);
             float moveAmount = 1f / (simulatedPoints.Count - 1);
             simulatedPoints[i].transform.localPosition = Vector3.forward * moveAmount;
         }
