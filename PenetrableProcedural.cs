@@ -306,19 +306,16 @@ public class PenetrableProcedural : MonoBehaviour {
         
         int index = penetrables.IndexOf(penetrable);
 
-        var PenetratorStretchedLength = penetrationArgs.penetratorData.GetRawLength() * penetrationArgs.penetratorStretchFactor;
-
-        float diff = penetrationArgs.penetratorData.GetRawLength() - PenetratorStretchedLength;
         var penetrableSpline = new CatmullSpline(penetrable.GetPoints());
         data[index] = new PenetratorRenderData(
             penetrableSpline,
             penetrationArgs.alongSpline,
-            PenetratorStretchedLength-penetrationArgs.penetrationDepth+diff,
+            penetrationArgs.alongSpline.GetLengthFromSubsection(1,1),
             penetrationArgs.penetratorData.GetRawLength(),
             penetrationArgs.penetratorStretchFactor,
             penetrationArgs.penetratorData.GetGirthScaleFactor(),
             Penetrator.GetPenetratorAngleOffset(penetrableSpline,penetrationArgs.worldPenetratorUp)
-            );
+        );
         splineData[index] = new CatmullSplineData(penetrableSpline);
         penetratorBuffer.SetData(data);
         splineBuffer.SetData(splineData);

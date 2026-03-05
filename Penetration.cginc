@@ -252,9 +252,8 @@ void GetDeformationFromPenetrator(inout float3 worldPosition, float holeNormaliz
     float diffDistance = length(diff);
 
     float dist = TimeToDistance(curveIndex, holeT)+data.worldDistance;
-    float2 girthSampleUV = float2(dist/data.worldPenetratorLength, (-holeAngle+data.angle)/6.28318530718);
-
-    girthSampleUV.y *= data.squashStretch;
+    float2 girthSampleUV = float2(dist/(data.worldPenetratorLength*data.squashStretch), (-holeAngle+data.angle)/6.28318530718);
+    
     float texSample = tex2Dlod(girthMap,float4(girthSampleUV.xy,0,diffDistance*smoothness*smoothness)).r;
     texSample *= 1-pow(2,-20*saturate(1-girthSampleUV.x));
     float girthSample = texSample*(data.girthScaleFactor/data.squashStretch);
