@@ -163,7 +163,7 @@ public class PenetratorJiggleDeform : Penetrator {
 
     private bool GetSimulationAvailable() => simulatedPoints != null && simulatedPoints.Count != 0;
 
-    public override void GetFinalizedSpline(ref CatmullSpline finalizedSpline, Penetrable penetrable, out float distanceAlongSpline, out float insertionLerp, out PenetrationArgs? penetrationArgs) {
+    protected override void GetFinalizedSpline(ref CatmullSpline finalizedSpline, Penetrable penetrable, out float distanceAlongSpline, out float insertionLerp, out PenetrationArgs? penetrationArgs) {
         var jigglePoints = GetPoints();
 
         if (penetrable != null) {
@@ -186,7 +186,7 @@ public class PenetratorJiggleDeform : Penetrator {
         if (!IsValid()) {
             return;
         }
-        GetFinalizedSpline(ref cachedSpline, linkedPenetrable, out var distanceAlongSpline, out var insertionLerp, out var penetrationArgs);
+        GetFinalizedSpline(ref cachedSpline, linkedPenetrable, out var distanceAlongSpline, out var insertionLerp, out penetrationArgs);
         pendingPenetration.targetPenetrable = linkedPenetrable;
         pendingPenetration.insertionLerp = insertionLerp;
         pendingPenetration.penetrationArgs = penetrationArgs;

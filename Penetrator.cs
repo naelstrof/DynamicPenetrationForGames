@@ -87,8 +87,10 @@ public abstract class Penetrator : MonoBehaviour {
     public event UnpenetrateAction unpenetrated;
     
     protected CatmullSpline cachedSpline;
+    public CatmullSpline GetSpline() => cachedSpline;
 
     protected Penetrable.PenetrationResult? penetrationResult = null;
+    protected PenetrationArgs? penetrationArgs;
 
     protected abstract IList<Vector3> GetPoints();
 
@@ -248,7 +250,7 @@ public abstract class Penetrator : MonoBehaviour {
         }
     }
 
-    public virtual void GetFinalizedSpline(ref CatmullSpline finalizedSpline, Penetrable targetPenetrable, out float distanceAlongSpline, out float insertionLerp, out PenetrationArgs? penetrationArgs) {
+    protected virtual void GetFinalizedSpline(ref CatmullSpline finalizedSpline, Penetrable targetPenetrable, out float distanceAlongSpline, out float insertionLerp, out PenetrationArgs? penetrationArgs) {
         penetratorData.GetSpline(GetPoints(), ref finalizedSpline, out distanceAlongSpline);
         penetrationArgs = null;
         insertionLerp = 0f;
