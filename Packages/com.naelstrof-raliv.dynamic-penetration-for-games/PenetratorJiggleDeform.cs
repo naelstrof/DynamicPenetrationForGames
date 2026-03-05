@@ -38,13 +38,36 @@ public class PenetratorSquashStretch {
     private float desiredLength;
     private float desiredLengthVelocity;
     private float? lastPenetrablePosition;
-    float squashStretch;
     float timeSinceLastTick;
 
-    public float GetSquashStretch() => squashStretch;
+    private struct SquashStretchSnapshot {
+        public double time;
+        public float squashStretch;
+    }
+
+    private SquashStretchSnapshot prevSnapshot;
+    private SquashStretchSnapshot curSnapshot;
+
+    public float GetSquashStretch(double currentTime) {
+        var diff = curSnapshot.time - prevSnapshot.time;
+        if (diff == 0) {
+            return curSnapshot.squashStretch;
+        }
+
+        var t = (currentTime - TICKRATE - prevSnapshot.time) / diff;
+        var inter= Mathf.Lerp(prevSnapshot.squashStretch, curSnapshot.squashStretch, (float)t);
+        
+        return inter;
+    }
 
     public PenetratorSquashStretch(float initialLength) {
         desiredLength = initialLength;
+        prevSnapshot = new SquashStretchSnapshot() {
+            time = Time.timeAsDouble - TICKRATE,
+            squashStretch = initialLength
+        };
+        curSnapshot = prevSnapshot;
+        curSnapshot.time += TICKRATE;
     }
 
     public void Tick(bool inserted, float penetratorLength, float newPenetrablePosition, float penetrableFriction, float lengthElasticity, float lengthFriction, float knotForce, float deltaTime) {
@@ -65,7 +88,7 @@ public class PenetratorSquashStretch {
         }
 
         float elasticityCalc = lengthElasticity >= 1f ? 6000f : 10f / ((1f - lengthElasticity) * (1f - lengthElasticity));
-        float squashAndStretchedWorldLength = penetratorLength * squashStretch;
+        float squashAndStretchedWorldLength = penetratorLength * curSnapshot.squashStretch;
         float elasticForce = (penetratorLength - squashAndStretchedWorldLength) * TICKRATE * elasticityCalc;
 
         desiredLengthVelocity += elasticForce;
@@ -73,8 +96,13 @@ public class PenetratorSquashStretch {
         desiredLength += desiredLengthVelocity * TICKRATE;
         float desiredSquashAndStretch = desiredLength / penetratorLength;
 
-        squashStretch = Mathf.Clamp(desiredSquashAndStretch, 0f, 2f);
+        var newSnap = new SquashStretchSnapshot() {
+            time = Time.timeAsDouble,
+            squashStretch = Mathf.Clamp(desiredSquashAndStretch, 0f, 2f),
+        };
         while(timeSinceLastTick>TICKRATE) timeSinceLastTick -= TICKRATE;
+        prevSnapshot = curSnapshot;
+        curSnapshot = newSnap;
     }
 
 }
@@ -249,7 +277,7 @@ public class PenetratorJiggleDeform : Penetrator {
                 (penetrationResult?.knotForce ?? 0f) * knotForce * 7f,
                 deltaTime
             );
-            squashAndStretch = squashStretch.GetSquashStretch();
+            squashAndStretch = squashStretch.GetSquashStretch(Time.timeAsDouble);
         }
         
         if (isAnimatedJigglePhysics && Application.isPlaying && jiggleRig) {

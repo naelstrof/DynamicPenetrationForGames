@@ -177,6 +177,24 @@ public abstract class Penetrator : MonoBehaviour {
         return penetrationResult;
     }
 
+    public virtual bool TryGetPenetrableHoleDistanceAlongSpline(out float distance) {
+        if (!penetrationResult.HasValue) {
+            distance = 0f;
+            return false;
+        }
+
+        if (cachedSpline == null) {
+            distance = 0f;
+            return false;
+        }
+
+        var result = penetrationResult.Value;
+        float holeDistance = result.holeStartDepth;
+        float distToStartOfPenetrableSpline = cachedSpline.GetLengthFromSubsection(2);
+        distance = distToStartOfPenetrableSpline+holeDistance;
+        return true;
+    }
+
     protected virtual void OnPenetratorWrite(float deltaTime) {
         
     }
