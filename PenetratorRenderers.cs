@@ -146,9 +146,9 @@ public class PenetratorRenderers {
             propertyBlock.SetFloat(DpgBlend, 1f);
             propertyBlock.SetFloat(distanceToHoleID, distanceToHole);
             // FIXME: For an unknown reason, gotta multiply in the squash and stretch here.
-            propertyBlock.SetFloat(truncateLengthID, truncation?.length * squashAndStretch ?? soFarItCantBeReached);
+            propertyBlock.SetFloat(truncateLengthID, truncation?.length ?? soFarItCantBeReached);
             propertyBlock.SetFloat(girthRadiusID, truncation?.girth ?? 1f);
-            propertyBlock.SetFloat(startClipID, clippingRange?.startDistance * squashAndStretch ?? soFarItCantBeReached);
+            propertyBlock.SetFloat(startClipID, clippingRange?.startDistance ?? soFarItCantBeReached);
             propertyBlock.SetFloat(endClipID, clippingRange.HasValue ? clippingRange.Value.endDistance * squashAndStretch ?? soFarItCantBeReached : 0f);
             renderer.SetPropertyBlock(propertyBlock);
         }
