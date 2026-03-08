@@ -14,9 +14,6 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
-using System.Linq;
-
 namespace DPG {
 
 using System.Collections.Generic;
@@ -229,7 +226,7 @@ public class GirthData {
         }
     }
 
-    private static float GetMaxGirth(RendererSubMeshMask rendererMask, Transform penetratorRoot, Transform[] extraTransforms, Vector3 rendererLocalPenetratorForward, Vector3 rendererLocalPenetratorRoot) {
+    private static float GetMaxGirth(RendererSubMeshMask rendererMask, Transform penetratorRoot, Vector3 rendererLocalPenetratorForward, Vector3 rendererLocalPenetratorRoot) {
         float maxGirth = 0f;
         staticVertices.Clear();
         var mesh = rendererMask.GetMesh();
@@ -248,7 +245,7 @@ public class GirthData {
                 var bones = meshRenderer.bones;
                 HashSet<int> validBones = new HashSet<int>();
                 for (int i = 0; i < bones.Length; i++) {
-                    if (bones[i].IsChildOf(penetratorRoot) || extraTransforms.Contains(bones[i])) {
+                    if (bones[i].IsChildOf(penetratorRoot)) {
                         validBones.Add(i);
                     }
                 }
@@ -282,10 +279,7 @@ public class GirthData {
         return maxGirth;
     }
 
-    public GirthData(RendererSubMeshMask rendererWithMask, Shader girthUnwrapShader, Shader subtractiveShader, Shader additiveShader, Transform root, Transform[] extraTransforms, Vector3 rootLocalPenetratorRoot, Vector3 rootPenetratorForward, Vector3 rootPenetratorUp, Vector3 rootPenetratorRight) {
-        if (extraTransforms == null) {
-            extraTransforms = Array.Empty<Transform>();
-        }
+    public GirthData(RendererSubMeshMask rendererWithMask, Shader girthUnwrapShader, Shader subtractiveShader, Shader additiveShader, Transform root, Vector3 rootLocalPenetratorRoot, Vector3 rootPenetratorForward, Vector3 rootPenetratorUp, Vector3 rootPenetratorRight) {
         rendererMask = rendererWithMask;
         penetratorRoot = root;
         this.additiveShader = additiveShader;
@@ -327,12 +321,12 @@ public class GirthData {
             poseMatrix = Matrix4x4.identity;
         }
 
-        maxGirth = GetMaxGirth(rendererMask, penetratorRoot, extraTransforms, rendererLocalPenetratorForward, rendererLocalPenetratorRoot);
-        baseGirthFrame = new GirthFrame(rendererMask, penetratorRoot, extraTransforms, rendererLocalPenetratorRoot, rendererLocalPenetratorForward, rendererLocalPenetratorUp, rendererLocalPenetratorRight,  -1, maxGirth, girthUnwrapShader);
+        maxGirth = GetMaxGirth(rendererMask, penetratorRoot, rendererLocalPenetratorForward, rendererLocalPenetratorRoot);
+        baseGirthFrame = new GirthFrame(rendererMask, penetratorRoot, rendererLocalPenetratorRoot, rendererLocalPenetratorForward, rendererLocalPenetratorUp, rendererLocalPenetratorRight,  -1, maxGirth, girthUnwrapShader);
         // Do a quick pass to figure out how girthy and lengthy we are
         girthDeltaFrames = new List<GirthFrame>();
         for (int i = 0; i < rendererMask.GetMesh().blendShapeCount; i++) {
-            var girthDelta = new GirthFrame(rendererMask, penetratorRoot, extraTransforms, rendererLocalPenetratorRoot, rendererLocalPenetratorForward, rendererLocalPenetratorUp, rendererLocalPenetratorRight, i, maxGirth, girthUnwrapShader);
+            var girthDelta = new GirthFrame(rendererMask, penetratorRoot, rendererLocalPenetratorRoot, rendererLocalPenetratorForward, rendererLocalPenetratorUp, rendererLocalPenetratorRight, i, maxGirth, girthUnwrapShader);
             girthDelta.ConvertToBlendshape(baseGirthFrame, subtractiveShader);
             girthDeltaFrames.Add(girthDelta);
         }
