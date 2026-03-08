@@ -31,6 +31,7 @@ public class PenetratorDataPropertyDrawer : PropertyDrawer {
         EditorGUI.BeginProperty(position, label, property);
         float startPos = position.y;
         var rect = new Rect(position.x, position.y, position.width, 20);
+        
         foldout = EditorGUI.BeginFoldoutHeaderGroup(rect, foldout, "Penetrator Data");
         if (foldout) {
             rect.y += 20;
@@ -68,6 +69,9 @@ public class PenetratorDataPropertyDrawer : PropertyDrawer {
         }
         float endPos = rect.y+rect.height;
         EditorGUI.EndFoldoutHeaderGroup();
+        
+        EditorGUILayout.PropertyField(property.FindPropertyRelative("penetratorExtraTransforms"), new GUIContent("Optional Extra Penetrator Transforms"));
+        
         EditorGUI.EndProperty();
         height = endPos - startPos;
     }
@@ -84,6 +88,7 @@ public class PenetratorData {
     [SerializeField] private RendererSubMeshMask mask;
     
     [SerializeField] private Transform penetratorRootTransform;
+    [SerializeField] private Transform[] penetratorExtraTransforms;
     [SerializeField] private Vector3 penetratorRootPositionOffset;
     [SerializeField] private Vector3 penetratorRootForward = Vector3.up;
     [SerializeField] private Vector3 penetratorRootUp = Vector3.back;
@@ -153,7 +158,7 @@ public class PenetratorData {
         if (penetratorRootTransform == null || mask.renderer == null) {
             return;
         }
-        girthData = new GirthData(mask, girthUnwrapShader, subtractiveBlitShader, additiveBlitShader, penetratorRootTransform, penetratorRootPositionOffset, penetratorRootForward, penetratorRootUp, GetRootRight());
+        girthData = new GirthData(mask, girthUnwrapShader, subtractiveBlitShader, additiveBlitShader, penetratorRootTransform, penetratorExtraTransforms, penetratorRootPositionOffset, penetratorRootForward, penetratorRootUp, GetRootRight());
     }
     
     public void GetSpline(IList<Vector3> inputPoints, ref CatmullSpline spline, out float baseDistanceAlongSpline) {
