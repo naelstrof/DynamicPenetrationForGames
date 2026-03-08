@@ -15,6 +15,7 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -55,7 +56,7 @@ public class GirthFrame {
 
     private NativeArray<byte> nativeArray;
 
-    public GirthFrame(RendererSubMeshMask rendererMask, Transform penetratorRoot, Vector3 rendererLocalPenetratorRoot,
+    public GirthFrame(RendererSubMeshMask rendererMask, Transform penetratorRoot, Transform[] extraTransforms, Vector3 rendererLocalPenetratorRoot,
         Vector3 rendererLocalPenetratorForward,
         Vector3 rendererLocalPenetratorUp,
         Vector3 rendererLocalPenetratorRight,
@@ -103,7 +104,7 @@ public class GirthFrame {
 
             HashSet<int> validBones = new HashSet<int>();
             for (int i = 0; i < bones.Length; i++) {
-                if (bones[i].IsChildOf(penetratorRoot)) {
+                if (bones[i].IsChildOf(penetratorRoot) || extraTransforms.Contains(bones[i])) {
                     validBones.Add(i);
                 }
             }
