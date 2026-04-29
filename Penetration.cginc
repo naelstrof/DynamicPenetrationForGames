@@ -100,6 +100,18 @@ float3 RotateAroundAxisPenetration(float3 original, float3 axis, float angle ) {
     float3x3 finalMatrix = float3x3( m00, m01, m02, m10, m11, m12, m20, m21, m22 );
     return mul( finalMatrix, original );
 }
+
+void Orthonormalize(inout float3 normal, inout float3 tangent, inout float3 binormal) {
+    float3 N = normalize(normal);
+    float3 T = tangent - N * dot(tangent, N);
+    T = normalize(T);
+    float3 B = normalize(cross(N, T));
+    T = cross(B, N); 
+    normal = N;
+    tangent = T;
+    binormal = B;
+}
+
 float3 SampleCurveSegmentPosition(int curveIndex, int curveSegmentIndex, float t) {
     int index = curveSegmentIndex*4*4;
     const float4x4 mat = float4x4(
@@ -141,11 +153,14 @@ void ToCatmullRomSpace_float(float3 worldPenetratorRootPos, float3 worldPosition
     float3 catRight = GetBinormalFromT(0,t);
     // We can just figure out our normal with a cross product.
     float3 catUp = normalize(cross(catForward,catRight));
+    
+    Orthonormalize(catForward, catRight, catUp);
 
     float3 initialRight = GetBinormalFromT(0,0);
     float3 initialForward = normalize(SampleCurveSegmentVelocity(0,0,0));
     float3 initialUp = normalize(cross(initialForward, initialRight));
-
+    
+    Orthonormalize(initialForward, initialRight, initialUp);
 
     // Change of basis https://math.stackexchange.com/questions/3540973/change-of-coordinates-and-change-of-basis-matrices
     // It also shows up here: https://docs.unity3d.com/ScriptReference/Vector3.OrthoNormalize.html
