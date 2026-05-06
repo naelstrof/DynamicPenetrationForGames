@@ -35,20 +35,9 @@ public class GirthFrame {
     //[SerializeField] private float maxLocalGirthRadius;
     public float maxGirthRadius;
 
-    [SerializeField] public AnimationCurve localGirthRadiusCurve = new() {
-        postWrapMode = WrapMode.ClampForever,
-        preWrapMode = WrapMode.ClampForever
-    };
-
-    [SerializeField] public AnimationCurve localXOffsetCurve = new() {
-        postWrapMode = WrapMode.ClampForever,
-        preWrapMode = WrapMode.ClampForever
-    };
-
-    [SerializeField] public AnimationCurve localYOffsetCurve = new() {
-        postWrapMode = WrapMode.ClampForever,
-        preWrapMode = WrapMode.ClampForever
-    };
+    public AnimationCurveFast localGirthRadiusCurve;
+    public AnimationCurveFast localXOffsetCurve;
+    public AnimationCurveFast localYOffsetCurve;
 
     [SerializeField] public RenderTexture girthMap;
     [SerializeField] public Texture2D detailMap;
@@ -262,10 +251,10 @@ public class GirthFrame {
                 float yPosition = Mathf.Cos(rad - Mathf.PI / 2f) * distFromCore;
                 Vector2 position = new Vector2(xPosition, yPosition);
                 float distFromRoot = ((float)x / (float)width) * maxLocalLength;
-                Vector2 offsetSample = new Vector2(localXOffsetCurve.Evaluate(distFromRoot),
-                    localYOffsetCurve.Evaluate(distFromRoot));
+                Vector2 offsetSample = new Vector2(localXOffsetCurve.Sample(distFromRoot),
+                    localYOffsetCurve.Sample(distFromRoot));
                 Vector2 newOffset = position - offsetSample;
-                float newRadius = (newOffset.magnitude - localGirthRadiusCurve.Evaluate(distFromRoot)) / maxGirthRadius;
+                float newRadius = (newOffset.magnitude - localGirthRadiusCurve.Sample(distFromRoot)) / maxGirthRadius;
                 pixelData[x + y * width] = (byte)Mathf.RoundToInt(Mathf.Clamp01(newRadius + 0.5f) * 255f);
             }
         }
@@ -286,6 +275,8 @@ public class GirthFrame {
     }
 
     private void PopulateOffsetCurves(NativeArray<byte> bytes, int width, int height) {
+        localXOffsetCurve = new AnimationCurveFast(width, maxLocalLength);
+        localYOffsetCurve = new AnimationCurveFast(width, maxLocalLength);
         for (int x = 0; x < width; x++) {
             Vector2 positionSum = Vector2.zero;
             for (int y = 0; y < height / 2; y++) {
@@ -313,16 +304,15 @@ public class GirthFrame {
                 //Debug.DrawLine(objectToWorld.MultiplyPoint(point),objectToWorld.MultiplyPoint(oppositeOtherPoint), Color.blue, 10f);
             }
 
-            float distFromRoot = ((float)x / (float)width) * maxLocalLength;
             Vector2 positionAverage = positionSum / (float)(height / 2);
             positionAverage *= 2;
 
-            localXOffsetCurve.AddKey(distFromRoot, positionAverage.x);
-            localYOffsetCurve.AddKey(distFromRoot, positionAverage.y);
+            localXOffsetCurve.AddSample(x, positionAverage.x);
+            localYOffsetCurve.AddSample(x, positionAverage.y);
         }
 
-        localXOffsetCurve.AddKey(maxLocalLength, 0f);
-        localYOffsetCurve.AddKey(maxLocalLength, 0f);
+        localXOffsetCurve.AddSample(width-1, 0f);
+        localYOffsetCurve.AddSample(width-1, 0f);
     }
 
     private float GetEasing(float x) {
@@ -330,10 +320,11 @@ public class GirthFrame {
     }
 
     private void PopulateGirthCurve(NativeArray<byte> bytes, int width, int height) {
+        localGirthRadiusCurve = new AnimationCurveFast(width, maxLocalLength);
         for (int x = 0; x < width; x++) {
             float averageRadius = 0f;
-            Vector2 offset = new Vector2(localXOffsetCurve.Evaluate((float)x / (float)width * maxLocalLength),
-                localYOffsetCurve.Evaluate((float)x / (float)width * maxLocalLength));
+            Vector2 offset = new Vector2(localXOffsetCurve.Sample((float)x / (float)width * maxLocalLength),
+                localYOffsetCurve.Sample((float)x / (float)width * maxLocalLength));
             for (int y = 0; y < height; y++) {
                 float color = (float)bytes[x + y * width] / 255f; //cpuTex.GetPixel(x,y).r;
                 float rad = ((float)y / (float)height) * Mathf.PI * 2f;
@@ -349,15 +340,14 @@ public class GirthFrame {
             int taperEndCount = Mathf.Max(width / 10, 3);
             if (x > width - taperEndCount) {
                 float multiplier = (float)(width - x) / (taperEndCount - 1);
-                localGirthRadiusCurve.AddKey((float)x / (float)width * maxLocalLength,
-                    averageRadius * multiplier * multiplier);
+                localGirthRadiusCurve.AddSample(x, averageRadius * multiplier * multiplier);
             }
             else {
-                localGirthRadiusCurve.AddKey((float)x / (float)width * maxLocalLength, averageRadius);
+                localGirthRadiusCurve.AddSample(x, averageRadius);
             }
         }
 
-        localGirthRadiusCurve.AddKey(maxLocalLength, 0f);
+        localGirthRadiusCurve.AddSample(width-1, 0f);
     }
 
     public void Release() {
