@@ -112,6 +112,7 @@ public class PenetratorJiggleDeform : Penetrator {
     [SerializeField, Range(-90f, 90f)] private float upDownCurvature = 0f;
     [SerializeField, Range(-90f, 90f)] private float baseUpDownCurvatureOffset = 0f;
     [SerializeField, Range(-90f, 90f)] private float baseLeftRightCurvatureOffset = 0f;
+    private int lastCurvatureHash;
     [SerializeField, Range(0f, 1f)] private float penetratorLengthFriction = 0.5f;
     [SerializeField, Range(0f, 0.95f)] private float penetratorLengthElasticity = 0.7f;
     [SerializeField, Range(0f, 2f)] private float knotForce = 1f;
@@ -131,6 +132,7 @@ public class PenetratorJiggleDeform : Penetrator {
     private Transform jiggleRoot;
     private GameObject jiggleInstantiatedPrefab;
     private PenetratorSquashStretch squashStretch;
+    
 
     private struct PendingPenetration {
         public Penetrable targetPenetrable;
@@ -224,6 +226,12 @@ public class PenetratorJiggleDeform : Penetrator {
     protected override void OnPenetratorWrite(float deltaTime) {
         if (!IsValid()) {
             return;
+        }
+        
+        var newHash = baseLeftRightCurvatureOffset.GetHashCode() ^ baseUpDownCurvatureOffset.GetHashCode() ^ leftRightCurvature.GetHashCode() ^ upDownCurvature.GetHashCode();
+        if (lastCurvatureHash != newHash) {
+            SetPoseFromCurvature();
+            lastCurvatureHash = newHash;
         }
         
         if (pendingPenetration.targetPenetrable) {
