@@ -35,9 +35,9 @@ public class GirthFrame {
     //[SerializeField] private float maxLocalGirthRadius;
     public float maxGirthRadius;
 
-    public AnimationCurveFast localGirthRadiusCurve;
-    public AnimationCurveFast localXOffsetCurve;
-    public AnimationCurveFast localYOffsetCurve;
+    public AnimationCurveFast localGirthRadiusCurve = new AnimationCurveFast(2, 1f);
+    public AnimationCurveFast localXOffsetCurve = new AnimationCurveFast(2, 1f);
+    public AnimationCurveFast localYOffsetCurve = new AnimationCurveFast(2, 1f);
 
     [SerializeField] public RenderTexture girthMap;
     [SerializeField] public Texture2D detailMap;
