@@ -35,9 +35,9 @@ public class GirthFrame {
     //[SerializeField] private float maxLocalGirthRadius;
     public float maxGirthRadius;
 
-    public AnimationCurveFast localGirthRadiusCurve = new AnimationCurveFast(2, 1f);
-    public AnimationCurveFast localXOffsetCurve = new AnimationCurveFast(2, 1f);
-    public AnimationCurveFast localYOffsetCurve = new AnimationCurveFast(2, 1f);
+    public AnimationCurveFast localGirthRadiusCurve;
+    public AnimationCurveFast localXOffsetCurve;
+    public AnimationCurveFast localYOffsetCurve;
 
     [SerializeField] public RenderTexture girthMap;
     [SerializeField] public Texture2D detailMap;
@@ -49,6 +49,10 @@ public class GirthFrame {
         Vector3 rendererLocalPenetratorUp,
         Vector3 rendererLocalPenetratorRight,
         int blendshapeIndex, float maxGirth, Shader girthUnwrapShader) {
+        
+        localGirthRadiusCurve = new AnimationCurveFast(2, 1f);
+        localXOffsetCurve = new AnimationCurveFast(2, 1f);
+        localYOffsetCurve = new AnimationCurveFast(2, 1f);
 
         var mesh = rendererMask.GetMesh();
         girthMap = new RenderTexture(64, 64, 0, RenderTextureFormat.R8, RenderTextureReadWrite.Linear) {
