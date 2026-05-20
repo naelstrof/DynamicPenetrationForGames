@@ -4,19 +4,22 @@ using UnityEngine;
 public class PenetrationManager : MonoBehaviour {
     static PenetrationManager instance;
 
-    [RuntimeInitializeOnLoadMethod]
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     public static void Initialize() {
         instance = null;
     }
     
-    public static void SubscribeToPenetratorUpdates(Action read, Action<float> write) {
-        Instance.penetratorRead += read;
-        Instance.penetratorWrite += write;
+    public delegate void PenetratorReadAction();
+    public delegate void PenetratorWriteAction(float dt);
+    
+    public static void SubscribeToPenetratorUpdates(PenetratorReadAction readAction, PenetratorWriteAction writeAction) {
+        Instance.penetratorRead += readAction;
+        Instance.penetratorWrite += writeAction;
     }
-    public static void UnsubscribeToPenetratorUpdates(Action read, Action<float> write) {
+    public static void UnsubscribeToPenetratorUpdates(PenetratorReadAction readAction, PenetratorWriteAction writeAction) {
         if (!instance) return;
-        instance.penetratorRead -= read;
-        instance.penetratorWrite -= write;
+        instance.penetratorRead -= readAction;
+        instance.penetratorWrite -= writeAction;
     }
     
     public static PenetrationManager Instance {
@@ -30,8 +33,8 @@ public class PenetrationManager : MonoBehaviour {
         }
     }
 
-    event Action penetratorRead;
-    event Action<float> penetratorWrite;
+    event PenetratorReadAction penetratorRead;
+    event PenetratorWriteAction penetratorWrite;
     
     void LateUpdate() {
         penetratorRead?.Invoke();

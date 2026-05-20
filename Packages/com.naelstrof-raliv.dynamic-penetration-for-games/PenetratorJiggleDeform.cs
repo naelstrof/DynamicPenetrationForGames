@@ -210,7 +210,15 @@ public class PenetratorJiggleDeform : Penetrator {
 
         penetratorData.GetSpline(jigglePoints, ref finalizedSpline, out distanceAlongSpline);
     }
-    
+
+    protected override void OnDisable() {
+        if (linkedPenetrable != null) {
+            linkedPenetrable.SetUnpenetrated(this);
+        }
+        penetrationArgs = null;
+        base.OnDisable();
+    }
+
 
     protected override void OnPenetratorRead() {
         if (!IsValid()) {
