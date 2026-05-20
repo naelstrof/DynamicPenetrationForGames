@@ -124,7 +124,7 @@ public class PenetrableProcedural : MonoBehaviour {
     private NativeArray<CatmullSplineData> splineData;
     private MaterialPropertyBlock propertyBlock;
     private static readonly int penetratorDataArrayID = Shader.PropertyToID("_PenetratorData");
-    private static readonly int splineDataArrayID = Shader.PropertyToID("_CatmullSplines");
+    private static readonly int splineDataArrayID = Shader.PropertyToID("_PenetrableSplines");
     private static readonly int penetratorGirthMapXID = Shader.PropertyToID("_PenetratorGirthMapX");
     private static readonly int penetratorGirthMapYID = Shader.PropertyToID("_PenetratorGirthMapY");
     private static readonly int penetratorGirthMapZID = Shader.PropertyToID("_PenetratorGirthMapZ");

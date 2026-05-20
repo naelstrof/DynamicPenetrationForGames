@@ -32,7 +32,7 @@ public class PenetratorRenderers {
 
     private List<Renderer> previousRenderers;
     
-    private static readonly int catmullSplinesID = Shader.PropertyToID("_CatmullSplines");
+    private static readonly int catmullSplinesID = Shader.PropertyToID("_PenetratorSpline");
     private static readonly int penetratorForwardID = Shader.PropertyToID("_PenetratorForwardWorld");
     private static readonly int penetratorRightID = Shader.PropertyToID("_PenetratorRightWorld");
     private static readonly int penetratorUpID = Shader.PropertyToID("_PenetratorUpWorld");
