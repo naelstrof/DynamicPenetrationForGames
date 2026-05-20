@@ -1,14 +1,14 @@
-// Made with Amplify Shader Editor v1.9.3.2
+// Made with Amplify Shader Editor v1.9.9.8
 // Available at the Unity Asset Store - http://u3d.as/y3X 
 Shader "PenetrableShader"
 {
 	Properties
 	{
-		[Toggle(_PENETRATION_DEFORMATION_DETAIL_ON)] _PENETRATION_DEFORMATION_DETAIL("_PENETRATION_DEFORMATION_DETAIL", Float) = 0
-		[Toggle(_PENETRATION_DEFORMATION_ON)] _PENETRATION_DEFORMATION("_PENETRATION_DEFORMATION", Float) = 0
-		_CompressibleDistance("CompressibleDistance", Range( 0 , 10)) = 1
-		_BaseColor("BaseColor", Color) = (1,1,1,1)
-		_Smoothness("Smoothness", Range( 0 , 10)) = 4
+		[Toggle( _PENETRATION_DEFORMATION_DETAIL_ON )] _PENETRATION_DEFORMATION_DETAIL( "_PENETRATION_DEFORMATION_DETAIL", Float ) = 0
+		[Toggle( _PENETRATION_DEFORMATION_ON )] _PENETRATION_DEFORMATION( "_PENETRATION_DEFORMATION", Float ) = 0
+		_CompressibleDistance( "CompressibleDistance", Range( 0, 10 ) ) = 1
+		_BaseColor( "BaseColor", Color ) = ( 1, 1, 1, 1 )
+		_Smoothness( "Smoothness", Range( 0, 10 ) ) = 4
 		[HideInInspector] __dirty( "", Int ) = 1
 	}
 
@@ -22,7 +22,10 @@ Shader "PenetrableShader"
 		#pragma target 3.0
 		#pragma shader_feature_local _PENETRATION_DEFORMATION_DETAIL_ON
 		#pragma multi_compile_local __ _PENETRATION_DEFORMATION_ON
-		#include "Packages/com.naelstrof-raliv.dynamic-penetration-for-games/Penetration.cginc"
+		#define ASE_VERSION 19908
+		#include "Packages/com.naelstrof-raliv.dynamic-penetration-for-games/Penetrable.cginc"
+		#undef TRANSFORM_TEX
+		#define TRANSFORM_TEX(tex,name) float4(tex.xy * name##_ST.xy + name##_ST.zw, tex.z, tex.w)
 		struct Input
 		{
 			half filler;
@@ -35,8 +38,8 @@ Shader "PenetrableShader"
 		void vertexDataFunc( inout appdata_full v, out Input o )
 		{
 			UNITY_INITIALIZE_OUTPUT( Input, o );
-			float3 ase_vertex3Pos = v.vertex.xyz;
-			float3 temp_output_10_0_g7 = ase_vertex3Pos;
+			float3 ase_positionOS = v.vertex.xyz;
+			float3 temp_output_10_0_g7 = ase_positionOS;
 			float localGetDeformationFromPenetrators_float8_g7 = ( 0.0 );
 			float4 appendResult17_g7 = (float4(temp_output_10_0_g7 , 1.0));
 			float4 transform16_g7 = mul(unity_ObjectToWorld,appendResult17_g7);
@@ -55,7 +58,7 @@ Shader "PenetrableShader"
 			#else
 				float3 staticSwitch24_g7 = temp_output_10_0_g7;
 			#endif
-			float3 lerpResult55 = lerp( ase_vertex3Pos , staticSwitch24_g7 , v.color.r);
+			float3 lerpResult55 = lerp( ase_positionOS , staticSwitch24_g7 , v.color.r);
 			v.vertex.xyz = lerpResult55;
 			v.vertex.w = 1;
 		}
@@ -138,20 +141,20 @@ Shader "PenetrableShader"
 			ENDCG
 		}
 	}
-	Fallback "Diffuse"
-	CustomEditor "ASEMaterialInspector"
+	Fallback Off
+	CustomEditor "AmplifyShaderEditor.MaterialInspector"
 }
 /*ASEBEGIN
-Version=19302
-Node;AmplifyShaderEditor.RangedFloatNode;51;-959.2499,612.3;Inherit;False;Property;_CompressibleDistance;CompressibleDistance;3;0;Create;True;0;0;0;False;0;False;1;1.81;0;10;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode;52;-992.2499,729.3;Inherit;False;Property;_Smoothness;Smoothness;5;0;Create;True;0;0;0;False;0;False;4;4.07;0;10;0;1;FLOAT;0
-Node;AmplifyShaderEditor.FunctionNode;53;-588.2499,514.3;Inherit;False;PenetrableDeformation;0;;7;7ff1b70ed2c7b9e43aecbec8a912cc8c;0;4;10;FLOAT3;0,0,0;False;11;FLOAT4;0,0,0,0;False;12;FLOAT;0;False;13;FLOAT;0;False;1;FLOAT3;0
-Node;AmplifyShaderEditor.PosVertexDataNode;56;-649.7416,199.2038;Inherit;False;0;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.VertexColorNode;57;-671.4126,357.4;Inherit;False;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.ColorNode;54;-531.6357,-83.59955;Inherit;False;Property;_BaseColor;BaseColor;4;0;Create;True;0;0;0;False;0;False;1,1,1,1;0.3988175,0.004716992,1,0.5372549;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.LerpOp;55;-339.8501,270.717;Inherit;False;3;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT;0;False;1;FLOAT3;0
-Node;AmplifyShaderEditor.RangedFloatNode;58;-409.1961,129.8573;Inherit;False;Constant;_SurfaceSmoothness;SurfaceSmoothness;4;0;Create;True;0;0;0;False;0;False;0.81;0;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;0,0;Float;False;True;-1;2;ASEMaterialInspector;0;0;Standard;PenetrableShader;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Transparent;0;True;True;0;False;Transparent;;Transparent;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;2;5;False;;10;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Absolute;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
+Version=19908
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;51;-959.2499,612.3;Inherit;False;Property;_CompressibleDistance;CompressibleDistance;3;0;Create;True;0;0;0;False;0;False;1;1.81;0;10;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;52;-992.2499,729.3;Inherit;False;Property;_Smoothness;Smoothness;5;0;Create;True;0;0;0;False;0;False;4;4.07;0;10;0;1;FLOAT;0
+Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;53;-588.2499,514.3;Inherit;False;PenetrableDeformation;0;;7;7ff1b70ed2c7b9e43aecbec8a912cc8c;0;4;10;FLOAT3;0,0,0;False;11;FLOAT4;0,0,0,0;False;12;FLOAT;0;False;13;FLOAT;0;False;1;FLOAT3;0
+Node;AmplifyShaderEditor.PosVertexDataNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;56;-649.7416,199.2038;Inherit;False;0;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.VertexColorNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;57;-671.4126,357.4;Inherit;False;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.ColorNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;54;-531.6357,-83.59955;Inherit;False;Property;_BaseColor;BaseColor;4;0;Create;True;0;0;0;False;0;False;1,1,1,1;0.3988175,0.004716992,1,0.5372549;True;True;0;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
+Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;55;-339.8501,270.717;Inherit;False;3;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT;0;False;1;FLOAT3;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;58;-409.1961,129.8573;Inherit;False;Constant;_SurfaceSmoothness;SurfaceSmoothness;4;0;Create;True;0;0;0;False;0;False;0.81;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.StandardSurfaceOutputNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;0;0,0;Float;False;True;-1;2;AmplifyShaderEditor.MaterialInspector;0;0;Standard;PenetrableShader;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;0;False;;0;Transparent;0;True;True;0;False;Transparent;;Transparent;All;14;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;2;5;False;;10;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Absolute;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;53;12;51;0
 WireConnection;53;13;52;0
 WireConnection;55;0;56;0
@@ -162,4 +165,4 @@ WireConnection;0;4;58;0
 WireConnection;0;9;54;4
 WireConnection;0;11;55;0
 ASEEND*/
-//CHKSM=AF8626AC9C23C088BB7CC460F45A7DF972757806
+//CHKSM=A45B4DF7638ABDE34DCF3BF16CBDD12AEFA9734A
