@@ -220,7 +220,7 @@ public abstract class Penetrator : MonoBehaviour {
     }
 
     protected virtual void OnDisable() {
-        penetratorData.Release();
+        penetratorData?.Release();
         penetratorRenderers?.OnDisable();
         PenetrationManager.UnsubscribeToPenetratorUpdates(OnPenetratorRead, OnPenetratorWrite);
     }
