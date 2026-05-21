@@ -112,7 +112,6 @@ public class PenetratorJiggleDeform : Penetrator {
     [SerializeField, Range(-90f, 90f)] private float upDownCurvature = 0f;
     [SerializeField, Range(-90f, 90f)] private float baseUpDownCurvatureOffset = 0f;
     [SerializeField, Range(-90f, 90f)] private float baseLeftRightCurvatureOffset = 0f;
-    private int lastCurvatureHash;
     [SerializeField, Range(0f, 1f)] private float penetratorLengthFriction = 0.5f;
     [SerializeField, Range(0f, 0.95f)] private float penetratorLengthElasticity = 0.7f;
     [SerializeField, Range(0f, 2f)] private float knotForce = 1f;
@@ -235,13 +234,8 @@ public class PenetratorJiggleDeform : Penetrator {
         if (!IsValid()) {
             return;
         }
-        
-        var newHash = baseLeftRightCurvatureOffset.GetHashCode() ^ baseUpDownCurvatureOffset.GetHashCode() ^ leftRightCurvature.GetHashCode() ^ upDownCurvature.GetHashCode();
-        if (lastCurvatureHash != newHash) {
-            SetPoseFromCurvature();
-            lastCurvatureHash = newHash;
-        }
-        
+
+        bool penetrating = false;
         if (pendingPenetration.targetPenetrable) {
             if (pendingPenetration.insertionLerp >= 1f && pendingPenetration.penetrationArgs.HasValue) {
                 float firstSegment = cachedSpline.GetLengthFromSubsection(1);
@@ -256,12 +250,18 @@ public class PenetratorJiggleDeform : Penetrator {
                 var newResult = pendingPenetration.targetPenetrable.GetPenetrationResult(pendingPenetration.penetrationArgs.Value);
                 SetPenetrationData(newResult);
                 OnPenetrated(pendingPenetration.targetPenetrable, pendingPenetration.penetrationArgs.Value, newResult);
+                if (newResult.tipIsInside) {
+                    penetrating = true;
+                }
             } else if (pendingPenetration.lastInsertionLerp >= 1f && pendingPenetration.insertionLerp < 1f) {
                 pendingPenetration.targetPenetrable.SetUnpenetrated(this);
                 SetPenetrationData(null);
                 OnUnpenetrated(pendingPenetration.targetPenetrable);
-                SetPoseFromCurvature();
             }
+        }
+
+        if (!penetrating) {
+            SetPoseFromCurvature();
         }
 
         float penetrableDistance = pendingPenetration.insertionLerp < 1f ? GetSquashStretchedWorldLength() + 0.1f : cachedSpline.GetLengthFromSubsection(pendingPenetration.penetrationArgs?.penetrableStartIndex - 1 ?? 1, 1);
