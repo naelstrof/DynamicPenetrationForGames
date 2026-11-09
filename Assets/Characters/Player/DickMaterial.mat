@@ -16,6 +16,19 @@ MonoBehaviour:
   hdPluginSubTargetMaterialVersions:
     m_Keys: []
     m_Values: 
+--- !u!114 &-6402993847480576624
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
+  version: -1
 --- !u!21 &2100000
 Material:
   serializedVersion: 8
@@ -24,15 +37,16 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: DickMaterial
-  m_Shader: {fileID: 4800000, guid: 60fccf0152c5d3d4b913581e9e4ccfe0, type: 3}
+  m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _DPG_CURVE_SKINNING
+  - _METALLICSPECGLOSSMAP
+  - _NORMALMAP
   m_InvalidKeywords:
   - _DISABLE_SSR_TRANSPARENT
+  - _DPG_CURVE_SKINNING
   - _METALLICGLOSSMAP
-  - _NORMALMAP
   - _NORMALMAP_TANGENT_SPACE
   - _TRUNCATESPHERIZE_ON
   m_LightmapFlags: 4
@@ -41,6 +55,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap:
     MotionVector: User
+    RenderType: Opaque
   disabledShaderPasses:
   - TransparentDepthPrepass
   - TransparentDepthPostpass
@@ -56,6 +71,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseColorMap:
+        m_Texture: {fileID: 2800000, guid: f9c4c3b88bc300c4ca69f83d9e36bf9b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseMap:
         m_Texture: {fileID: 2800000, guid: f9c4c3b88bc300c4ca69f83d9e36bf9b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -143,6 +162,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SpecGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SpecularColorMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -190,6 +213,7 @@ Material:
     - _ATDistance: 1
     - _AddPrecomputedVelocity: 0
     - _AlbedoAffectEmissive: 0
+    - _AlphaClip: 0
     - _AlphaCutoff: 0.5
     - _AlphaCutoffEnable: 0
     - _AlphaCutoffPostpass: 0.5
@@ -201,13 +225,18 @@ Material:
     - _AlphaToMaskInspectorValue: 0
     - _Angle: 3.1
     - _Anisotropy: 0
+    - _Blend: 0
     - _BlendMode: 0
+    - _BlendModePreserveSpecular: 1
     - _BulgeBlend: 0.3
     - _BulgeProgress: 3
     - _BulgeRadius: 0.9
     - _BumpScale: 1
+    - _ClearCoatMask: 0
+    - _ClearCoatSmoothness: 0
     - _CoatMask: 0
     - _CockVoreSquishEnabled: 0
+    - _Cull: 2
     - _CullMode: 2
     - _CullModeForward: 2
     - _Cutoff: 0.5
@@ -215,6 +244,7 @@ Material:
     - _DPG_CURVE_SKINNING: 0
     - _DPG_TRUNCATE_SPHERIZE: 0
     - _DepthOffsetEnable: 0
+    - _DetailAlbedoMapScale: 1
     - _DetailAlbedoScale: 1
     - _DetailNormalMapScale: 1
     - _DetailNormalScale: 1
@@ -230,6 +260,7 @@ Material:
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 1
     - _DstBlend: 0
+    - _DstBlendAlpha: 0
     - _EmissiveColorMode: 1
     - _EmissiveExposureWeight: 1
     - _EmissiveIntensity: 1
@@ -239,6 +270,7 @@ Material:
     - _EnableGeometricSpecularAA: 0
     - _EndClip: 0
     - _EnergyConservingSpecularColor: 1
+    - _EnvironmentReflections: 1
     - _GirthRadius: 1
     - _GlossMapScale: 1
     - _Glossiness: 0.5
@@ -274,13 +306,15 @@ Material:
     - _Parallax: 0.02
     - _PenetratorOffsetLength: 0
     - _PenetratorWorldLength: 1
+    - _QueueOffset: 0
     - _RayTracing: 0
+    - _ReceiveShadows: 1
     - _ReceivesSSR: 1
     - _ReceivesSSRTransparent: 0
     - _RefractionModel: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
-    - _Smoothness: 0.676
+    - _Smoothness: 1
     - _SmoothnessRemapMax: 1
     - _SmoothnessRemapMin: 0
     - _SmoothnessTextureChannel: 0
@@ -290,6 +324,7 @@ Material:
     - _SpecularOcclusionMode: 1
     - _SquashStretchCorrection: 0
     - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
     - _StartClip: 0
     - _StencilRef: 0
     - _StencilRefDepth: 8
@@ -303,6 +338,7 @@ Material:
     - _StencilWriteMaskMV: 41
     - _SubsurfaceMask: 1
     - _SupportDecals: 1
+    - _Surface: 0
     - _SurfaceType: 0
     - _TexWorldScale: 1
     - _TexWorldScaleEmissive: 1
@@ -324,13 +360,15 @@ Material:
     - _UVSec: 0
     - _UseEmissiveIntensity: 0
     - _UseShadowThreshold: 0
+    - _WorkflowMode: 1
+    - _XRMotionVectorsPass: 1
     - _ZTestDepthEqualForOpaque: 3
     - _ZTestGBuffer: 4
     - _ZTestTransparent: 4
     - _ZWrite: 1
     - __dirty: 0
     m_Colors:
-    - _BaseColor: {r: 0.41509432, g: 0.41509432, b: 0.41509432, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BaseColorMap_MipInfo: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _DickForward: {r: 0, g: 0.4, b: 0.6, a: 0}
@@ -351,6 +389,7 @@ Material:
     - _PenetratorRootWorld: {r: 0, g: 0, b: 0, a: 0}
     - _PenetratorStartWorld: {r: 0, g: 0, b: 0, a: 0}
     - _PenetratorUpWorld: {r: 0, g: 0, b: 0, a: 0}
+    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
     - _ThicknessRemap: {r: 0, g: 1, b: 0, a: 0}
     - _TransmittanceColor: {r: 1, g: 1, b: 1, a: 1}

@@ -457,11 +457,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8865364443468854248, guid: 7794307f6b7753658bc0816f4115af2d, type: 3}
   m_PrefabInstance: {fileID: 302663062}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &331355921 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 9044806412961212599, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
-  m_PrefabInstance: {fileID: 1046219682}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &438301393 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7471099529150999052, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
@@ -773,11 +768,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!137 &523684436 stripped
-SkinnedMeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 851357541228092353, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
-  m_PrefabInstance: {fileID: 2110675128}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &658976709
 GameObject:
   m_ObjectHideFlags: 0
@@ -1415,10 +1405,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1938375035}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1402580999}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
 --- !u!1001 &1077422242
 PrefabInstance:
@@ -1720,36 +1707,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2110675130}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1402580998 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
-  m_PrefabInstance: {fileID: 1046219682}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1402580999
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1402580998}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b5e019e89c3f044688cff9641915de0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  transforms:
-  - {fileID: 331355921}
-  - {fileID: 934645904}
-  shouldTruncate: 1
-  truncateNormalizedDistance: 0
-  holeStartNormalizedDistance: 0
-  shouldClip: 1
-  clippingRange:
-    startNormalizedDistance: 0
-    allowAllTheWayThrough: 0
-    endNormalizedDistance: 0
-  penetrableFriction: 0.5
-  knotForceSampleLocations: []
 --- !u!4 &1402581000 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
@@ -1829,6 +1786,22 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: -5703274605956999957, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.006450488
+      objectReference: {fileID: 0}
+    - target: {fileID: -5703274605956999957, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.010751935
+      objectReference: {fileID: 0}
+    - target: {fileID: -3973449252987934942, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.006450486
+      objectReference: {fileID: 0}
+    - target: {fileID: -3973449252987934942, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.010751935
+      objectReference: {fileID: 0}
     - target: {fileID: -3019428014052059092, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_LocalScale.y
       value: 1
@@ -1897,6 +1870,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bunny
       objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: f20810c20472a4dd39264c434e56d3ff, type: 2}
     - target: {fileID: 9172721482089580321, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       propertyPath: m_IsActive
       value: 1
@@ -1928,297 +1905,13 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -3019428014052059092, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
       insertIndex: -1
       addedObject: {fileID: 171877513}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1786496132}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1786496136}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1786496137}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
---- !u!1 &1786496129 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
-  m_PrefabInstance: {fileID: 1786496128}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1786496130 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -3019428014052059092, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
   m_PrefabInstance: {fileID: 1786496128}
   m_PrefabAsset: {fileID: 0}
---- !u!137 &1786496131 stripped
-SkinnedMeshRenderer:
-  m_CorrespondingSourceObject: {fileID: -2619749422985145952, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
-  m_PrefabInstance: {fileID: 1786496128}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1786496132
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1786496129}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 743b11c141364134d9671bbc4c861731, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  penetratorData:
-    mask:
-      renderer: {fileID: 1786496131}
-      mask: -3
-    penetratorRootTransform: {fileID: 1786496130}
-    penetratorRootPositionOffset: {x: 0, y: 0.11021614, z: 0.010138243}
-    penetratorRootForward: {x: 2.1348203e-12, y: 1, z: 0.0001972914}
-    penetratorRootUp: {x: 6.5394423e-10, y: 0.00019729137, z: -0.9999999}
-    girthUnwrapShader: {fileID: 4800000, guid: 34d24fe4568f98c4cae4724e139cb644, type: 3}
-    additiveBlitShader: {fileID: 4800000, guid: 4f324e97551aa5019ac267f6375eb535, type: 3}
-    subtractiveBlitShader: {fileID: 4800000, guid: e44d3aa97d9d60198b5b08103eb9abe1, type: 3}
-  squashAndStretch: 1
-  penetratorRenderers:
-    renderers:
-    - {fileID: 1786496131}
-  leftRightCurvature: 0
-  upDownCurvature: -25
-  baseUpDownCurvatureOffset: -0.9
-  baseLeftRightCurvatureOffset: 0
-  penetratorLengthFriction: 0.4
-  penetratorLengthElasticity: 0.84
-  knotForce: 2
-  linkedPenetrable: {fileID: 2110675131}
-  hasSerializedJiggleData: 1
-  jiggleRigData:
-    advancedToggle: 1
-    collisionToggle: 1
-    angleLimitToggle: 0
-    stiffness:
-      value: 0.517
-      curveEnabled: 0
-      curve:
-        serializedVersion: 2
-        m_Curve:
-        - serializedVersion: 3
-          time: 0
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        - serializedVersion: 3
-          time: 1
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-    soften: 0
-    angleLimit:
-      value: 0.5
-      curveEnabled: 0
-      curve:
-        serializedVersion: 2
-        m_Curve:
-        - serializedVersion: 3
-          time: 0
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        - serializedVersion: 3
-          time: 1
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-    angleLimitSoften: 0
-    rootStretch: 0
-    ignoreRootMotion: 0
-    stretch:
-      value: 0.03
-      curveEnabled: 0
-      curve:
-        serializedVersion: 2
-        m_Curve:
-        - serializedVersion: 3
-          time: 0
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        - serializedVersion: 3
-          time: 1
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-    drag:
-      value: 0.047
-      curveEnabled: 0
-      curve:
-        serializedVersion: 2
-        m_Curve:
-        - serializedVersion: 3
-          time: 0
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        - serializedVersion: 3
-          time: 1
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-    airDrag:
-      value: 0
-      curveEnabled: 0
-      curve:
-        serializedVersion: 2
-        m_Curve:
-        - serializedVersion: 3
-          time: 0
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        - serializedVersion: 3
-          time: 1
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-    gravity:
-      value: 1
-      curveEnabled: 0
-      curve:
-        serializedVersion: 2
-        m_Curve:
-        - serializedVersion: 3
-          time: 0
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        - serializedVersion: 3
-          time: 1
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-    collisionRadius:
-      value: 0.1
-      curveEnabled: 0
-      curve:
-        serializedVersion: 2
-        m_Curve:
-        - serializedVersion: 3
-          time: 0
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        - serializedVersion: 3
-          time: 1
-          value: 1
-          inSlope: 0
-          outSlope: 0
-          tangentMode: 0
-          weightedMode: 0
-          inWeight: 0
-          outWeight: 0
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-    blend: 1
-  isAnimatedJigglePhysics: 0
-  jigglePrefab: {fileID: 3113096555280707000, guid: bf0f13679933bbb57b506ceb38f2cb75, type: 3}
---- !u!114 &1786496136
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1786496129}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2bca58cbf166ce84a94e251a8841e33c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  penetrator: {fileID: 1786496132}
-  clip: {fileID: 8300000, guid: 148add37ba310464cb746417d479e796, type: 3}
---- !u!114 &1786496137
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1786496129}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00fc97737ba820a418b1f23dfd19e4cf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  penetrator: {fileID: 1786496132}
-  clip: {fileID: 8300000, guid: 948ec457eaaaaba4b8fef3efadaae1eb, type: 3}
-  normalizedDistance: 0.884
 --- !u!4 &1786496139 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 169fe2109c5a780459d0d9d302163283, type: 3}
@@ -2492,73 +2185,13 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1391545968}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2110675131}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2110675133}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
---- !u!1 &2110675129 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
-  m_PrefabInstance: {fileID: 2110675128}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2110675130 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
   m_PrefabInstance: {fileID: 2110675128}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2110675131
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2110675129}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b5e019e89c3f044688cff9641915de0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  transforms:
-  - {fileID: 2110675132}
-  - {fileID: 882251532}
-  shouldTruncate: 0
-  truncateNormalizedDistance: 0.082
-  holeStartNormalizedDistance: 0.082
-  shouldClip: 0
-  clippingRange:
-    startNormalizedDistance: 0.169
-    allowAllTheWayThrough: 0
-    endNormalizedDistance: 0.337
-  penetrableFriction: 0.52
-  knotForceSampleLocations:
-  - normalizedDistance: 0.078
-  - normalizedDistance: 0.863
---- !u!4 &2110675132 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 9044806412961212599, guid: 2ba8a187db8c07c479aa1c1efcba5e8b, type: 3}
-  m_PrefabInstance: {fileID: 2110675128}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &2110675133
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2110675129}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 770cf13d3e4a66c46bd39efaa51e1f24, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  penetrables:
-  - {fileID: 2110675131}
-  targetRenderers:
-  - {fileID: 523684436}
-  detailOnly: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
