@@ -19,6 +19,12 @@
         "com.gator-dragon-games.jigglephysics": "15.0.5"
       }
     },
+    "com.naelstrof.spherecast": {
+      "version": "file:com.naelstrof.spherecast",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.naelstrof.splines": {
       "version": "https://github.com/naelstrof/com.naelstrof.splines.git",
       "depth": 0,
