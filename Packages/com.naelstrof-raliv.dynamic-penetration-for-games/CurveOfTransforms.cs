@@ -17,7 +17,7 @@ public class CurveOfTransforms : MonoBehaviour {
         for (int i = 0; i < transforms.Length; i++) {
             points[i] = transforms[i].position;
         }
-        return spline.SetFromCentripetalCatmull(points, 0.5f);
+        return spline.SetFromCatmull(points, false);
     }
 
     public void GetSplineWithPrependedTransforms(Transform[] prependedTransforms, Spline spline) {
@@ -33,7 +33,7 @@ public class CurveOfTransforms : MonoBehaviour {
             index++;
         }
 
-        spline.SetFromCentripetalCatmull(points, 0.5f);
+        spline.SetFromCatmull(points, false);
     }
 
 #if UNITY_EDITOR
