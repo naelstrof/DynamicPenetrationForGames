@@ -10,17 +10,24 @@ namespace GatorDragonGames {
 public class CurveOfTransforms : MonoBehaviour {
 
     [SerializeField] private Transform[] transforms;
+    [SerializeField] private Transform startHandle;
+    [SerializeField] private Transform endHandle;
     private Spline spline = new Spline();
 
     public Spline GetSpline() {
+        spline ??= new Spline();
+        if (startHandle == null || endHandle == null) return spline;
+        if (transforms == null || transforms.Length < 2) return spline;
+        if (startHandle == null || endHandle == null) return spline;
         Vector3[] points = new Vector3[transforms.Length];
         for (int i = 0; i < transforms.Length; i++) {
             points[i] = transforms[i].position;
         }
-        return spline.SetFromCatmull(points, false);
+        return spline.SetFromCatmullPositions(points, startHandle.position, endHandle.position);
     }
 
-    public void GetSplineWithPrependedTransforms(Transform[] prependedTransforms, Spline spline) {
+    public void GetSplineWithPrependedTransforms(Transform[] prependedTransforms, Vector3 prependedStartHandle, Spline spline) {
+        if (endHandle == null) return;
         var points = new Vector3[prependedTransforms.Length + transforms.Length];
         var index = 0;
         for (int i = 0; i < prependedTransforms.Length; i++) {
@@ -33,7 +40,7 @@ public class CurveOfTransforms : MonoBehaviour {
             index++;
         }
 
-        spline.SetFromCatmull(points, false);
+        spline.SetFromCatmullPositions(points, prependedStartHandle, endHandle.position);
     }
 
 #if UNITY_EDITOR

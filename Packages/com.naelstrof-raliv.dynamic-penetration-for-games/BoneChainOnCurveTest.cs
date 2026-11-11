@@ -18,7 +18,8 @@ public class BoneChainOnCurveTest : MonoBehaviour {
     }
 
     private void LateUpdate() {
-        curveOfTransforms.GetSplineWithPrependedTransforms(new[] { bones[0] }, spline);
+        var backProjectedHandle = bones[0].position + (bones[0].position - bones[1].position) * 1f;
+        curveOfTransforms.GetSplineWithPrependedTransforms(new[] { bones[0] }, backProjectedHandle, spline);
         var orificeDist = spline.GetLengthFromSubsection(1, 0);
         _boneChainCompression.Tick(orificeDist);
         var aimDist = _boneChainCompression.GetTipPosition();

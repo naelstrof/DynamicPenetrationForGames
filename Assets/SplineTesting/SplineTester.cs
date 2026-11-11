@@ -4,16 +4,18 @@ using UnityEngine;
 
 public class SplineTester : MonoBehaviour {
     private enum SplineType {
-        CatmullRom,
+        CatmullRomLoop,
         Bezier,
         Hermite,
-        BSpline,
-        Cardinal,
+        BSplineLoop,
+        CardinalLoop,
+        CatmullRomWithExplicitHandles,
+        BSplineWithExplicitHandles,
+        CardinalWithExplicitHandles
     }
     
-    [SerializeField] private SplineType splineType = SplineType.CatmullRom;
+    [SerializeField] private SplineType splineType = SplineType.CatmullRomLoop;
     [SerializeField, Range(-1f,1f)] private float tension = 0f;
-    [SerializeField] private bool loop = false;
 
     [System.Serializable]
     private struct SplineKnot {
@@ -39,20 +41,29 @@ public class SplineTester : MonoBehaviour {
             if (knot.backHandle == null) return;
         }
         switch(splineType) {
-            case SplineType.CatmullRom:
-                spline.SetFromCatmull(Array.ConvertAll(knots, t => t.knot.position), loop);
+            case SplineType.CatmullRomLoop:
+                spline.SetFromCatmullPositionsLooped(Array.ConvertAll(knots, t => t.knot.position));
                 break;
             case SplineType.Bezier:
-                spline.SetFromSplineKnotsBezier(Array.ConvertAll(knots, t => new Spline.BezierKnot() { position = t.knot.position, frontHandle = t.frontHandle.position, backHandle = t.backHandle.position }));
+                spline.SetFromBezierKnots(Array.ConvertAll(knots, t => new Spline.BezierKnot() { position = t.knot.position, frontHandle = t.frontHandle.position, backHandle = t.backHandle.position }));
                 break;
             case SplineType.Hermite:
-                spline.SetFromSplineKnotsHermite(Array.ConvertAll(knots, t => new Spline.HermiteKnot() { position = t.knot.position, velocity = t.frontHandle.position - t.knot.position }));
+                spline.SetFromHermiteKnots(Array.ConvertAll(knots, t => new Spline.HermiteKnot() { position = t.knot.position, velocity = t.frontHandle.position - t.knot.position }));
                 break;
-            case SplineType.BSpline:
-                spline.SetFromBSpline(Array.ConvertAll(knots, t => t.knot.position), loop);
+            case SplineType.BSplineLoop:
+                spline.SetFromBSplinePositionsLooped(Array.ConvertAll(knots, t => t.knot.position));
                 break;
-            case SplineType.Cardinal:
-                spline.SetFromCardinal(Array.ConvertAll(knots, t => t.knot.position), loop, tension);
+            case SplineType.CardinalLoop:
+                spline.SetFromCardinalPositionsLooped(Array.ConvertAll(knots, t => t.knot.position), tension);
+                break;
+            case SplineType.CatmullRomWithExplicitHandles:
+                spline.SetFromCatmullPositions(Array.ConvertAll(knots, t => t.knot.position), knots[0].backHandle.position, knots[^1].frontHandle.position);
+                break;
+            case SplineType.BSplineWithExplicitHandles:
+                spline.SetFromBSplinePositions(Array.ConvertAll(knots, t => t.knot.position), knots[0].backHandle.position, knots[^1].frontHandle.position);
+                break;
+            case SplineType.CardinalWithExplicitHandles:
+                spline.SetFromCardinalPositions(Array.ConvertAll(knots, t => t.knot.position), knots[0].backHandle.position, knots[^1].frontHandle.position, tension);
                 break;
         }
     }

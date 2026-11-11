@@ -707,7 +707,7 @@ Transform:
   m_GameObject: {fileID: 352504927}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.14, y: 0, z: 4.71}
+  m_LocalPosition: {x: -5.74, y: 0, z: 5.91}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -816,7 +816,7 @@ Transform:
   m_GameObject: {fileID: 446390695}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.014855923, z: -0, w: 0.99988973}
-  m_LocalPosition: {x: -3.41, y: 0, z: -31.66}
+  m_LocalPosition: {x: -0.74, y: 0, z: -29.85}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -850,7 +850,7 @@ Transform:
   m_GameObject: {fileID: 461481070}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.13, y: 0, z: -8.37}
+  m_LocalPosition: {x: 2.77, y: 0, z: -6.78}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -996,7 +996,7 @@ Transform:
   m_GameObject: {fileID: 739647065}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.055172604, z: -0, w: 0.99847686}
-  m_LocalPosition: {x: 5.24, y: -0.15, z: -36.71}
+  m_LocalPosition: {x: 6.05, y: -0.15, z: -36.64}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1159,7 +1159,7 @@ Transform:
   m_GameObject: {fileID: 1176498083}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.09, y: 0, z: -3.64}
+  m_LocalPosition: {x: 7.96, y: 0, z: -1.21}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1739,9 +1739,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 924ef02da2b036b4b8121054880dd087, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SplineTester
-  splineType: 0
-  tension: -0.252
-  loop: 0
+  splineType: 5
+  tension: 0
   knots:
   - backHandle: {fileID: 352504928}
     knot: {fileID: 233808292}
