@@ -32,6 +32,7 @@ public class SplineTester : MonoBehaviour {
 
     private void UpdateSpline() {
         if (knots == null || knots.Length < 2) return;
+        spline ??= new Spline();
         foreach(var knot in knots) {
             if (knot.knot == null) return;
             if (knot.frontHandle == null) return;
@@ -42,10 +43,10 @@ public class SplineTester : MonoBehaviour {
                 spline.SetFromCatmull(Array.ConvertAll(knots, t => t.knot.position), loop);
                 break;
             case SplineType.Bezier:
-                spline.SetFromSplineKnotsBezier(Array.ConvertAll(knots, t => new Spline.SplineKnot() { position = t.knot.position, frontHandle = t.frontHandle.position, backHandle = t.backHandle.position }));
+                spline.SetFromSplineKnotsBezier(Array.ConvertAll(knots, t => new Spline.BezierKnot() { position = t.knot.position, frontHandle = t.frontHandle.position, backHandle = t.backHandle.position }));
                 break;
             case SplineType.Hermite:
-                spline.SetFromSplineKnotsHermite(Array.ConvertAll(knots, t => new Spline.SplineKnot() { position = t.knot.position, frontHandle = t.frontHandle.position, backHandle = t.backHandle.position }));
+                spline.SetFromSplineKnotsHermite(Array.ConvertAll(knots, t => new Spline.HermiteKnot() { position = t.knot.position, velocity = t.frontHandle.position - t.knot.position }));
                 break;
             case SplineType.BSpline:
                 spline.SetFromBSpline(Array.ConvertAll(knots, t => t.knot.position), loop);
