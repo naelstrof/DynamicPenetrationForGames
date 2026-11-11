@@ -26,11 +26,10 @@
       "dependencies": {}
     },
     "com.naelstrof.splines": {
-      "version": "https://github.com/naelstrof/com.naelstrof.splines.git",
+      "version": "file:com.naelstrof.splines",
       "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "536755b5f26ae71d2abcb0605c0c67f3aece1972"
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.unity.animation.rigging": {
       "version": "1.4.1",

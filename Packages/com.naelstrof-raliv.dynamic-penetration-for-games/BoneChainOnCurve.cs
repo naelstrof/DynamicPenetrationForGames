@@ -1,5 +1,6 @@
-
 using UnityEngine;
+
+namespace GatorDragonGames {
 
 public class BoneChainOnCurve {
     
@@ -41,7 +42,7 @@ public class BoneChainOnCurve {
         }
     }
 
-    public void AlignToSpline(CatmullSpline targetSpline, float lengthMultiplier = 1f) {
+    public void AlignToSpline(Spline targetSpline, float lengthMultiplier = 1f) {
         PoseBonesToRestPose();
         var totalLength = 0f;
         var previousSplinePosition = Vector3.zero;
@@ -88,4 +89,6 @@ public class BoneChainOnCurve {
         }
     }
     
+}
+
 }

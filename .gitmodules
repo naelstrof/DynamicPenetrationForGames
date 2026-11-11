@@ -1,0 +1,3 @@
+[submodule "Packages/com.naelstrof.splines"]
+	path = Packages/com.naelstrof.splines
+	url = https://github.com/naelstrof/com.naelstrof.splines.git
