@@ -119,11 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!137 &57732974 stripped
-SkinnedMeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 4925945681876676389, guid: 670ea756daaf2ec42b96dc78334c3d1e, type: 3}
-  m_PrefabInstance: {fileID: 1935999887}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &219214563
 GameObject:
   m_ObjectHideFlags: 0
@@ -164,7 +159,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 220017760}
-  - component: {fileID: 220017759}
   m_Layer: 0
   m_Name: SphereCaster
   m_TagString: Untagged
@@ -172,63 +166,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &220017759
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 220017758}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5744dc2553e85784bb3f1686271ba998, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SphereCaster
-  sphereCasts:
-  - transform: {fileID: 219214564}
-    factor: 0.15
-    backfaceCull: 1
-    X: 1
-    Y: 1
-    Z: 1
-  - transform: {fileID: 1860766203}
-    factor: 0.15
-    backfaceCull: 1
-    X: 1
-    Y: 1
-    Z: 1
-  - transform: {fileID: 2144654801}
-    factor: 0.15
-    backfaceCull: 1
-    X: 1
-    Y: 1
-    Z: 1
-  - transform: {fileID: 1802514310}
-    factor: 0.15
-    backfaceCull: 1
-    X: 1
-    Y: 1
-    Z: 1
-  - transform: {fileID: 1939815253}
-    factor: 0.15
-    backfaceCull: 1
-    X: 1
-    Y: 1
-    Z: 1
-  - transform: {fileID: 487692224}
-    factor: 0.15
-    backfaceCull: 1
-    X: 1
-    Y: 1
-    Z: 1
-  - transform: {fileID: 2056052847}
-    factor: 0.15
-    backfaceCull: 1
-    X: 1
-    Y: 1
-    Z: 1
-  targetRenderers:
-  - {fileID: 57732974}
 --- !u!4 &220017760
 Transform:
   m_ObjectHideFlags: 0
@@ -1705,13 +1642,33 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -8338292152176972381, guid: 670ea756daaf2ec42b96dc78334c3d1e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1935999890}
   m_SourcePrefab: {fileID: 100100000, guid: 670ea756daaf2ec42b96dc78334c3d1e, type: 3}
 --- !u!4 &1935999888 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 670ea756daaf2ec42b96dc78334c3d1e, type: 3}
   m_PrefabInstance: {fileID: 1935999887}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1935999889 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -8338292152176972381, guid: 670ea756daaf2ec42b96dc78334c3d1e, type: 3}
+  m_PrefabInstance: {fileID: 1935999887}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1935999890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1935999889}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5744dc2553e85784bb3f1686271ba998, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: com.naelstrof.spherecast::SphereCasterRenderer
 --- !u!1 &1939815252
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -12,6 +10,7 @@ public class CurveOfTransforms : MonoBehaviour {
     [SerializeField] private Transform[] transforms;
     [SerializeField] private Transform startHandle;
     [SerializeField] private Transform endHandle;
+    [SerializeField] private SphereCasterRenderer[] sphereCasterRenderers;
     private Spline spline = new Spline();
 
     public Spline GetSpline() {
