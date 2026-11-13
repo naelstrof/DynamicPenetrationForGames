@@ -14,9 +14,16 @@ public class SphereCasterRenderer : MonoBehaviour {
         public float factor;
         public float backfaceCull;
         public Vector3 axis;
+        
+        public SphereCast(Matrix4x4 mat, float factor, float backfaceCull, bool X, bool Y, bool Z) {
+            this.mat = mat;
+            matInv = mat.inverse;
+            this.factor = Mathf.Clamp01(factor);
+            axis = new Vector3(X ? 1f : 0f, Y ? 1f : 0f, Z ? 1f : 0f);
+            this.backfaceCull = backfaceCull;
+        }
 
-        public SphereCast(Vector3 point, Vector3 scale, Quaternion rotation, float factor, float backfaceCull, bool X,
-            bool Y, bool Z) {
+        public SphereCast(Vector3 point, Vector3 scale, Quaternion rotation, float factor, float backfaceCull, bool X, bool Y, bool Z) {
             mat = Matrix4x4.TRS(point, rotation, scale);
             matInv = mat.inverse;
             this.factor = Mathf.Clamp01(factor);
@@ -45,6 +52,7 @@ public class SphereCasterRenderer : MonoBehaviour {
     private int sphereCastCount = 0;
 
     private void OnEnable() {
+        targetRenderer = GetComponent<Renderer>();
         sphereCasts = new SphereCast[maxSphereCasts];
     }
 
@@ -114,6 +122,7 @@ public class SphereCasterRenderer : MonoBehaviour {
         if (!sphereCastData.IsCreated) {
             sphereCastBuffer = new ComputeBuffer(maxSphereCasts, Marshal.SizeOf(typeof(SphereCast)));
             sphereCastData = new NativeArray<SphereCast>(maxSphereCasts, Allocator.Persistent);
+            sphereCastData.CopyFrom(sphereCasts);
             propertyBlock = new MaterialPropertyBlock();
         }
     }
@@ -137,6 +146,7 @@ public class SphereCasterRenderer : MonoBehaviour {
         sphereCasts[sphereCastCount] = sphereCast;
         sphereCastCount++;
     }
+    
     public void AddSphereCasts(SphereCast[] newSphereCasts) {
         var addCount = Mathf.Min(maxSphereCasts - sphereCastCount, newSphereCasts.Length);
         Array.Copy(newSphereCasts, 0, sphereCasts, sphereCastCount, addCount);

@@ -656,6 +656,8 @@ MonoBehaviour:
   - {fileID: 230480070}
   startHandle: {fileID: 617579241}
   endHandle: {fileID: 604376301}
+  sphereCasterRenderers:
+  - {fileID: 1935999890}
 --- !u!4 &438834077
 Transform:
   m_ObjectHideFlags: 0

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -40,6 +41,12 @@ public class CurveOfTransforms : MonoBehaviour {
         }
 
         spline.SetFromCatmullPositions(points, prependedStartHandle, endHandle.position);
+    }
+    
+    public void AddSphereCasts(SphereCasterRenderer.SphereCast[] newSphereCasts) {
+        foreach(var sphereCasterRenderer in sphereCasterRenderers) {
+            sphereCasterRenderer.AddSphereCasts(newSphereCasts);
+        }
     }
 
 #if UNITY_EDITOR
