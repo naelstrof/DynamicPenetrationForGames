@@ -235,6 +235,51 @@ MonoBehaviour:
   - {fileID: 1566842572}
   curveOfTransforms: {fileID: 438834076}
   skinnedMeshRenderer: {fileID: 1855424068}
+  _penetratorCollisionSpheres:
+  - transform: {fileID: 1566842572}
+    localPosition: {x: -4.879974e-14, y: 0.13606603, z: -0.08189772}
+    localRotation: {x: 0, y: 0, z: 0, w: 1}
+    localScale: {x: 0.17779885, y: 0.12465558, z: 0.13889042}
+  - transform: {fileID: 1566842572}
+    localPosition: {x: -2.4413162e-14, y: 0.094676435, z: 0.12151808}
+    localRotation: {x: 0, y: 0, z: 0, w: 1}
+    localScale: {x: 0.124708414, y: 0.12465558, z: 0.13889042}
+  - transform: {fileID: 1566842573}
+    localPosition: {x: -2.826667e-14, y: 0.07133348, z: 0.029536778}
+    localRotation: {x: 0, y: 0, z: 0, w: 1}
+    localScale: {x: 0.16559055, y: 0.22588813, z: 0.19157833}
+  - transform: {fileID: 1566842572}
+    localPosition: {x: -9.893993e-15, y: 0.04190891, z: -0.023198402}
+    localRotation: {x: -0.14091177, y: -1.5439203e-14, z: -3.2584443e-14, w: 0.9900228}
+    localScale: {x: 0.2310816, y: 0.118117884, z: 0.26655293}
+  - transform: {fileID: 1566842574}
+    localPosition: {x: 3.9423408e-15, y: -0.0016431009, z: 0.02897921}
+    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
+    localScale: {x: 0.19266368, y: 0.23019661, z: 0.20135266}
+  - transform: {fileID: 1566842574}
+    localPosition: {x: 5.2963645e-14, y: 0.14730597, z: 0.028979285}
+    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
+    localScale: {x: 0.17547639, y: 0.23019661, z: 0.20135266}
+  - transform: {fileID: 1566842575}
+    localPosition: {x: -6.215389e-14, y: -0.00000003167008, z: 0.017591193}
+    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
+    localScale: {x: 0.20435993, y: 0.24443927, z: 0.2138107}
+  - transform: {fileID: 1566842575}
+    localPosition: {x: -5.314166e-14, y: 0.13252838, z: 0.017591199}
+    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
+    localScale: {x: 0.19553356, y: 0.24443927, z: 0.2138107}
+  - transform: {fileID: 1566842576}
+    localPosition: {x: -2.1071022e-14, y: -0.030238166, z: 0.014638188}
+    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
+    localScale: {x: 0.19553356, y: 0.24443927, z: 0.2138107}
+  - transform: {fileID: 1566842577}
+    localPosition: {x: -2.1071022e-14, y: -0.030238166, z: 0.014638188}
+    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
+    localScale: {x: 0.19553356, y: 0.24443927, z: 0.2138107}
+  - transform: {fileID: 1566842578}
+    localPosition: {x: -2.1071022e-14, y: -0.030238166, z: 0.014638188}
+    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
+    localScale: {x: 0.19553356, y: 0.24443927, z: 0.2138107}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0

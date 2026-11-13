@@ -1,86 +1,108 @@
 using System;
-using Unity.Mathematics;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace GatorDragonGames {
 
+#if UNITY_EDITOR
+[CustomEditor(typeof(BoneChainOnCurveTest))]
+class BoneChainOnCurveTestEditor : Editor {
+    private void OnSceneGUI() {
+        var targetScript = (BoneChainOnCurveTest)target;
+        targetScript.DrawSphereHandles();
+    }
+}
+#endif
+
 public class BoneChainOnCurveTest : MonoBehaviour {
+    [Serializable]
+    private struct PenetratorCollisionSphere {
+        public Transform transform;
+        public Vector3 localPosition;
+        public Quaternion localRotation;
+        public Vector3 localScale;
+
+        public Matrix4x4 GetWorldMatrix(float offsetScale) {
+            var output =  transform.localToWorldMatrix * Matrix4x4.TRS(localPosition, localRotation, localScale);
+            var pos = output.GetPosition();
+            var rot = output.rotation;
+            var scale = output.lossyScale;
+            scale += new Vector3(offsetScale, offsetScale, offsetScale);
+            return Matrix4x4.TRS(pos, rot, scale);
+        }
+
+        public bool RaycastIntersection(Ray ray) {
+            var worldMatrix = GetWorldMatrix(0f);
+            var sphereCenter = worldMatrix.GetPosition();
+            var sphereRadius = worldMatrix.lossyScale.x * 0.5f;
+            var oc = ray.origin - sphereCenter;
+            var a = Vector3.Dot(ray.direction, ray.direction);
+            var b = 2.0f * Vector3.Dot(oc, ray.direction);
+            var c = Vector3.Dot(oc, oc) - sphereRadius * sphereRadius;
+            var discriminant = b * b - 4f * a * c;
+            return discriminant > 0;
+        }
+
+        #if UNITY_EDITOR
+        public void DrawHandles(BoneChainOnCurveTest boneChainOnCurveTest) {
+            var tool = Tools.current;
+            if (tool == Tool.Move) {
+                EditorGUI.BeginChangeCheck();
+                var newPos = Handles.PositionHandle(transform.position + transform.rotation * localPosition, transform.rotation);
+                if (EditorGUI.EndChangeCheck()) {
+                    Undo.RecordObject(boneChainOnCurveTest, "Move Collision Sphere");
+                    localPosition = Quaternion.Inverse(transform.rotation) * (newPos - transform.position);
+                    EditorUtility.SetDirty(boneChainOnCurveTest);
+                }
+            } else if (tool == Tool.Rotate) {
+                EditorGUI.BeginChangeCheck();
+                var newRot = Handles.RotationHandle(transform.rotation * localRotation, transform.position + transform.rotation * localPosition);
+                if (EditorGUI.EndChangeCheck()) {
+                    Undo.RecordObject(boneChainOnCurveTest, "Rotate Collision Sphere");
+                    localRotation = Quaternion.Inverse(transform.rotation) * newRot;
+                    EditorUtility.SetDirty(boneChainOnCurveTest);
+                }
+            } else if (tool == Tool.Scale) {
+                EditorGUI.BeginChangeCheck();
+                var newScale = Handles.ScaleHandle(localScale, transform.position + transform.rotation * localPosition,
+                    transform.rotation * localRotation,
+                    HandleUtility.GetHandleSize(transform.position + transform.rotation * localPosition));
+                if (EditorGUI.EndChangeCheck()) {
+                    Undo.RecordObject(boneChainOnCurveTest, "Scale Collision Sphere");
+                    localScale = newScale;
+                    EditorUtility.SetDirty(boneChainOnCurveTest);
+                }
+            }
+        }
+        #endif
+    }
 
     [SerializeField] private Transform[] bones;
     [SerializeField] private CurveOfTransforms curveOfTransforms;
     [SerializeField] private SkinnedMeshRenderer skinnedMeshRenderer;
-
+    [SerializeField] private PenetratorCollisionSphere[] _penetratorCollisionSpheres;
     private Spline spline = new Spline();
     private BoneChainOnCurve _boneChainOnCurve;
     private BoneChainCompression _boneChainCompression;
-    private PenetratorApproximationSphere[] _penetratorApproximationSpheres;
     private SphereCasterRenderer.SphereCast[] _sphereCasts;
-    
-    private struct PenetratorApproximationSphere {
-        public Transform transform;
-        public Matrix4x4 matrix;
-
-        public Matrix4x4 GetWorldMatrix(float offset) {
-            var output =  transform.localToWorldMatrix * matrix;
-            var pos = output.GetPosition();
-            var rot = output.rotation;
-            var scale = output.lossyScale;
-            scale += new Vector3(offset, offset, offset);
-            return Matrix4x4.TRS(pos, rot, scale);
-        }
-    }
+    private const float sphereCastInflation = 0.1f;
 
     private void OnEnable() {
         _boneChainOnCurve = new BoneChainOnCurve(bones);
         _boneChainCompression = new BoneChainCompression(_boneChainOnCurve.GetTotalLength());
-        _penetratorApproximationSpheres = GeneratePenetratorApproximationSpheres(bones);
-        _sphereCasts = new SphereCasterRenderer.SphereCast[_penetratorApproximationSpheres.Length];
+        _sphereCasts = new SphereCasterRenderer.SphereCast[_penetratorCollisionSpheres.Length];
+        var dickDir = (bones[^1].position - bones[0].position).normalized;
+        Array.Sort(_penetratorCollisionSpheres, (a, b) => {
+            var aPos = a.GetWorldMatrix(0f).GetPosition();
+            var bPos = b.GetWorldMatrix(0f).GetPosition();
+            var aDist = Vector3.Dot(aPos - bones[0].position, dickDir);
+            var bDist = Vector3.Dot(bPos - bones[0].position, dickDir);
+            return aDist.CompareTo(bDist);
+        });
     }
     
-    private PenetratorApproximationSphere[] GeneratePenetratorApproximationSpheres(Transform[] bones) {
-        var spheres = new PenetratorApproximationSphere[bones.Length];
-        var mesh = skinnedMeshRenderer.sharedMesh;
-        var vertices = mesh.vertices;
-        var boneWeights = mesh.boneWeights;
-        var skinnedMeshBones = skinnedMeshRenderer.bones;
-        
-        for (int b = 0; b < bones.Length; b++) {
-            var targetBone = bones[b];
-            var index = Array.IndexOf(skinnedMeshBones, targetBone);
-            const float threshold = 0.05f;
-            float3 min = new float3(float.MaxValue);
-            float3 max = new float3(float.MinValue);
-            bool found = false;
-            for (int i=0;i<vertices.Length;i++) {
-                var boneWeight = boneWeights[i];
-                if (boneWeight.boneIndex0 == index || boneWeight.boneIndex1 == index || boneWeight.boneIndex2 == index || boneWeight.boneIndex3 == index) {
-                    var weight = boneWeights[i];
-                    if ((weight.boneIndex0 == index && weight.weight0 > threshold) ||
-                        (weight.boneIndex1 == index && weight.weight1 > threshold) ||
-                        (weight.boneIndex2 == index && weight.weight2 > threshold) ||
-                        (weight.boneIndex3 == index && weight.weight3 > threshold)) {
-                        var armatureVertex = vertices[i];
-                        var worldVertex = skinnedMeshRenderer.transform.TransformPoint(armatureVertex);
-                        var localVertex = targetBone.InverseTransformPoint(worldVertex);
-                        min = math.min(min, localVertex);
-                        max = math.max(max, localVertex);
-                        found = true;
-                    }
-                }
-            }
-
-            if (found) {
-                var extents = (max - min) * 0.5f;
-                var center = (max + min) * 0.5f;
-                var sphereMatrix = Matrix4x4.TRS(center, Quaternion.identity, extents);
-                spheres[b] = new PenetratorApproximationSphere() { transform = targetBone, matrix = sphereMatrix };
-            } else {
-                spheres[b] = new PenetratorApproximationSphere() { transform = targetBone, matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.zero) };
-            }
-        }
-
-        return spheres;
-    }
 
     private void LateUpdate() {
         var backProjectedHandle = bones[0].position + (bones[0].position - bones[1].position) * 1f;
@@ -110,28 +132,59 @@ public class BoneChainOnCurveTest : MonoBehaviour {
         blendShapeIndex = skinnedMeshRenderer.sharedMesh.GetBlendShapeIndex("Throb");
         skinnedMeshRenderer.SetBlendShapeWeight(blendShapeIndex, (1f / lengthMultiplier * 100f - 100f) * 2f);
         
-        for (int i=0; i < _penetratorApproximationSpheres.Length; i++) {
-            var sphere = _penetratorApproximationSpheres[i];
-            _sphereCasts[i] = new SphereCasterRenderer.SphereCast(sphere.GetWorldMatrix(0.25f), 0.5f, 0f, true, true, true);
+        if (_sphereCasts.Length != _penetratorCollisionSpheres.Length) {
+            _sphereCasts = new SphereCasterRenderer.SphereCast[_penetratorCollisionSpheres.Length];
+        }
+        for (int i=0; i < _penetratorCollisionSpheres.Length; i++) {
+            var sphere = _penetratorCollisionSpheres[i];
+            _sphereCasts[i] = new SphereCasterRenderer.SphereCast(sphere.GetWorldMatrix(sphereCastInflation), 0.5f, 0f, true, true, true);
         }
         curveOfTransforms.AddSphereCasts(_sphereCasts);
     }
 
     private void OnDrawGizmosSelected() {
-        if (_penetratorApproximationSpheres == null) return;
-        foreach (var sphere in _penetratorApproximationSpheres) {
+        if (_penetratorCollisionSpheres == null) return;
+        foreach (var sphere in _penetratorCollisionSpheres) {
             if (sphere.transform == null) continue;
-            Gizmos.matrix = sphere.GetWorldMatrix(0.25f);
+            Gizmos.matrix = sphere.GetWorldMatrix(Application.isPlaying ? sphereCastInflation : 0f);
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(Vector3.zero, 1f);
         }
     }
 
     private void OnValidate() {
-        if (bones == null) return;
-        _penetratorApproximationSpheres = GeneratePenetratorApproximationSpheres(bones);
-        _sphereCasts = new SphereCasterRenderer.SphereCast[_penetratorApproximationSpheres.Length];
+        if (_penetratorCollisionSpheres == null) return;
+        for(int i=0; i < _penetratorCollisionSpheres.Length; i++) {
+            if (_penetratorCollisionSpheres[i].localRotation is { x: 0, y: 0, z: 0, w: 0 }) {
+                _penetratorCollisionSpheres[i].localRotation = Quaternion.identity;
+            }
+            if (_penetratorCollisionSpheres[i].localScale is { x: 0, y: 0, z: 0 }) {
+                _penetratorCollisionSpheres[i].localScale = Vector3.one*0.01f;
+            }
+
+            if (_penetratorCollisionSpheres[i].localScale.x < 0f) {
+                _penetratorCollisionSpheres[i].localScale.x = 0.01f;
+            }
+            if (_penetratorCollisionSpheres[i].localScale.y < 0f) {
+                _penetratorCollisionSpheres[i].localScale.y = 0.01f;
+            }
+            if (_penetratorCollisionSpheres[i].localScale.z < 0f) {
+                _penetratorCollisionSpheres[i].localScale.z = 0.01f;
+            }
+        }
     }
+
+#if UNITY_EDITOR
+    public void DrawSphereHandles() {
+        if (Application.isPlaying) return;
+        if (_penetratorCollisionSpheres == null) return;
+        for (int i=0;i<_penetratorCollisionSpheres.Length;i++) {
+            if (_penetratorCollisionSpheres[i].transform == null) continue;
+            _penetratorCollisionSpheres[i].DrawHandles(this);
+        }
+    }
+#endif
 }
+
 
 }
