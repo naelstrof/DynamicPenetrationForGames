@@ -1,5 +1,10 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
+using Matrix4x4 = UnityEngine.Matrix4x4;
+using Quaternion = UnityEngine.Quaternion;
+using Vector3 = UnityEngine.Vector3;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -7,16 +12,16 @@ using UnityEditor;
 namespace GatorDragonGames {
 
 #if UNITY_EDITOR
-[CustomEditor(typeof(BoneChainOnCurveTest))]
-class BoneChainOnCurveTestEditor : Editor {
+[CustomEditor(typeof(PenetratorBehavior))]
+class PenetratorBehaviorEditor : Editor {
     private void OnSceneGUI() {
-        var targetScript = (BoneChainOnCurveTest)target;
+        var targetScript = (PenetratorBehavior)target;
         targetScript.DrawSphereHandles();
     }
 }
 #endif
 
-public class BoneChainOnCurveTest : MonoBehaviour {
+public class PenetratorBehavior : MonoBehaviour {
     [Serializable]
     private struct PenetratorCollisionSphere {
         public Transform transform;
@@ -46,23 +51,23 @@ public class BoneChainOnCurveTest : MonoBehaviour {
         }
 
         #if UNITY_EDITOR
-        public void DrawHandles(BoneChainOnCurveTest boneChainOnCurveTest) {
+        public void DrawHandles(PenetratorBehavior penetratorBehavior) {
             var tool = Tools.current;
             if (tool == Tool.Move) {
                 EditorGUI.BeginChangeCheck();
                 var newPos = Handles.PositionHandle(transform.position + transform.rotation * localPosition, transform.rotation);
                 if (EditorGUI.EndChangeCheck()) {
-                    Undo.RecordObject(boneChainOnCurveTest, "Move Collision Sphere");
+                    Undo.RecordObject(penetratorBehavior, "Move Collision Sphere");
                     localPosition = Quaternion.Inverse(transform.rotation) * (newPos - transform.position);
-                    EditorUtility.SetDirty(boneChainOnCurveTest);
+                    EditorUtility.SetDirty(penetratorBehavior);
                 }
             } else if (tool == Tool.Rotate) {
                 EditorGUI.BeginChangeCheck();
                 var newRot = Handles.RotationHandle(transform.rotation * localRotation, transform.position + transform.rotation * localPosition);
                 if (EditorGUI.EndChangeCheck()) {
-                    Undo.RecordObject(boneChainOnCurveTest, "Rotate Collision Sphere");
+                    Undo.RecordObject(penetratorBehavior, "Rotate Collision Sphere");
                     localRotation = Quaternion.Inverse(transform.rotation) * newRot;
-                    EditorUtility.SetDirty(boneChainOnCurveTest);
+                    EditorUtility.SetDirty(penetratorBehavior);
                 }
             } else if (tool == Tool.Scale) {
                 EditorGUI.BeginChangeCheck();
@@ -70,9 +75,9 @@ public class BoneChainOnCurveTest : MonoBehaviour {
                     transform.rotation * localRotation,
                     HandleUtility.GetHandleSize(transform.position + transform.rotation * localPosition));
                 if (EditorGUI.EndChangeCheck()) {
-                    Undo.RecordObject(boneChainOnCurveTest, "Scale Collision Sphere");
+                    Undo.RecordObject(penetratorBehavior, "Scale Collision Sphere");
                     localScale = newScale;
-                    EditorUtility.SetDirty(boneChainOnCurveTest);
+                    EditorUtility.SetDirty(penetratorBehavior);
                 }
             }
         }
@@ -80,14 +85,14 @@ public class BoneChainOnCurveTest : MonoBehaviour {
     }
 
     [SerializeField] private Transform[] bones;
-    [SerializeField] private CurveOfTransforms curveOfTransforms;
+    [SerializeField] private PenetrableBehavior penetrableBehavior;
     [SerializeField] private SkinnedMeshRenderer skinnedMeshRenderer;
     [SerializeField] private PenetratorCollisionSphere[] _penetratorCollisionSpheres;
-    private Spline spline = new Spline();
     private BoneChainOnCurve _boneChainOnCurve;
     private BoneChainCompression _boneChainCompression;
     private SphereCasterRenderer.SphereCast[] _sphereCasts;
     private const float sphereCastInflation = 0.1f;
+    private List<Vector3> cachedPoints = new List<Vector3>();
 
     private void OnEnable() {
         _boneChainOnCurve = new BoneChainOnCurve(bones);
@@ -105,21 +110,27 @@ public class BoneChainOnCurveTest : MonoBehaviour {
     
 
     private void LateUpdate() {
-        var backProjectedHandle = bones[0].position + (bones[0].position - bones[1].position) * 1f;
-        curveOfTransforms.GetSplineWithPrependedTransforms(new[] { bones[0] }, backProjectedHandle, spline);
-        var orificeDist = spline.GetLengthFromSubsection(1, 0);
+        Penetrator penetrator = new Penetrator() {
+            position = bones[0].position,
+            direction = (bones[1].position - bones[0].position).normalized,
+            penetratorLength = _boneChainOnCurve.GetTotalLength()
+        };
+        var penetrable = penetrableBehavior.GetPenetrable();
+        var penetration = new Penetration(penetrator, penetrable, cachedPoints);
+            
+        var orificeDist = penetration.spline.GetDistanceFromTime(penetration.penetrableT);
         _boneChainCompression.Tick(orificeDist);
         var aimDist = _boneChainCompression.GetTipPosition();
-        var aimPoint = spline.GetPositionFromDistance(aimDist);
+        var aimPoint = penetration.spline.GetPositionFromDistance(aimDist);
         Debug.DrawLine(aimPoint - Vector3.up * 0.1f, aimPoint + Vector3.up * 0.1f, Color.red);
         Debug.DrawLine(aimPoint - Vector3.left * 0.1f, aimPoint + Vector3.left * 0.1f, Color.red);
         Debug.DrawLine(aimPoint - Vector3.forward * 0.1f, aimPoint + Vector3.forward * 0.1f, Color.red);
-        aimPoint = spline.GetPositionFromDistance(orificeDist);
+        aimPoint = penetration.spline.GetPositionFromDistance(orificeDist);
         Debug.DrawLine(aimPoint - Vector3.up * 0.1f, aimPoint + Vector3.up * 0.1f, Color.red);
         Debug.DrawLine(aimPoint - Vector3.left * 0.1f, aimPoint + Vector3.left * 0.1f, Color.red);
         Debug.DrawLine(aimPoint - Vector3.forward * 0.1f, aimPoint + Vector3.forward * 0.1f, Color.red);
         var lengthMultiplier = _boneChainCompression.GetTipPosition() / _boneChainOnCurve.GetRestLength();
-        _boneChainOnCurve.AlignToSpline(spline, lengthMultiplier);
+        penetration.Render(_boneChainOnCurve, lengthMultiplier);
         // get blend shape index by name
         var blendShapeIndex = skinnedMeshRenderer.sharedMesh.GetBlendShapeIndex("Throb.002");
         skinnedMeshRenderer.SetBlendShapeWeight(blendShapeIndex, (1f / lengthMultiplier * 100f - 100f) * 2f);
@@ -139,7 +150,7 @@ public class BoneChainOnCurveTest : MonoBehaviour {
             var sphere = _penetratorCollisionSpheres[i];
             _sphereCasts[i] = new SphereCasterRenderer.SphereCast(sphere.GetWorldMatrix(sphereCastInflation), 0.5f, 0f, true, true, true);
         }
-        curveOfTransforms.AddSphereCasts(_sphereCasts);
+        penetrableBehavior.AddSphereCasts(_sphereCasts);
     }
 
     private void OnDrawGizmosSelected() {

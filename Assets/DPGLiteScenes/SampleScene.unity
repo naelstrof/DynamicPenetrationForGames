@@ -233,7 +233,7 @@ MonoBehaviour:
   - {fileID: 1566842574}
   - {fileID: 1566842573}
   - {fileID: 1566842572}
-  curveOfTransforms: {fileID: 438834076}
+  penetrableBehavior: {fileID: 438834076}
   skinnedMeshRenderer: {fileID: 1855424068}
   _penetratorCollisionSpheres:
   - transform: {fileID: 1566842572}
@@ -699,10 +699,8 @@ MonoBehaviour:
   - {fileID: 331918982}
   - {fileID: 452233326}
   - {fileID: 230480070}
-  startHandle: {fileID: 617579241}
-  endHandle: {fileID: 604376301}
-  sphereCasterRenderers:
-  - {fileID: 1935999890}
+  renderers:
+  - {fileID: 1935999892}
 --- !u!4 &438834077
 Transform:
   m_ObjectHideFlags: 0
@@ -1716,6 +1714,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5744dc2553e85784bb3f1686271ba998, type: 3}
   m_Name: 
   m_EditorClassIdentifier: com.naelstrof.spherecast::SphereCasterRenderer
+--- !u!137 &1935999892 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 4925945681876676389, guid: 670ea756daaf2ec42b96dc78334c3d1e, type: 3}
+  m_PrefabInstance: {fileID: 1935999887}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1939815252
 GameObject:
   m_ObjectHideFlags: 0
