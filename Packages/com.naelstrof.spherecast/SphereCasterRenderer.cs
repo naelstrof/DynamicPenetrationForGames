@@ -7,6 +7,14 @@ namespace GatorDragonGames {
 
 [RequireComponent(typeof(Renderer)), DisallowMultipleComponent]
 public class SphereCasterRenderer : MonoBehaviour {
+    public static void Render(Renderer targetRenderer, SphereCast[] sphereCasts) {
+        if (!targetRenderer.TryGetComponent(out SphereCasterRenderer sphereCasterRenderer)) {
+            sphereCasterRenderer = targetRenderer.gameObject.AddComponent<SphereCasterRenderer>();
+            sphereCasterRenderer.AddSphereCasts(sphereCasts);
+        } else {
+            sphereCasterRenderer.AddSphereCasts(sphereCasts);
+        }
+    }
     [StructLayout(LayoutKind.Sequential)]
     public struct SphereCast {
         public Matrix4x4 mat;

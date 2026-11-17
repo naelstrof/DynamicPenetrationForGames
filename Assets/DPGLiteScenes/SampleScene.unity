@@ -235,51 +235,56 @@ MonoBehaviour:
   - {fileID: 1566842572}
   penetrableBehavior: {fileID: 438834076}
   skinnedMeshRenderer: {fileID: 1855424068}
-  _penetratorCollisionSpheres:
-  - transform: {fileID: 1566842572}
-    localPosition: {x: -4.879974e-14, y: 0.13606603, z: -0.08189772}
-    localRotation: {x: 0, y: 0, z: 0, w: 1}
-    localScale: {x: 0.17779885, y: 0.12465558, z: 0.13889042}
-  - transform: {fileID: 1566842572}
-    localPosition: {x: -2.4413162e-14, y: 0.094676435, z: 0.12151808}
-    localRotation: {x: 0, y: 0, z: 0, w: 1}
-    localScale: {x: 0.124708414, y: 0.12465558, z: 0.13889042}
-  - transform: {fileID: 1566842573}
-    localPosition: {x: -2.826667e-14, y: 0.07133348, z: 0.029536778}
-    localRotation: {x: 0, y: 0, z: 0, w: 1}
-    localScale: {x: 0.16559055, y: 0.22588813, z: 0.19157833}
-  - transform: {fileID: 1566842572}
-    localPosition: {x: -9.893993e-15, y: 0.04190891, z: -0.023198402}
-    localRotation: {x: -0.14091177, y: -1.5439203e-14, z: -3.2584443e-14, w: 0.9900228}
-    localScale: {x: 0.2310816, y: 0.118117884, z: 0.26655293}
-  - transform: {fileID: 1566842574}
-    localPosition: {x: 3.9423408e-15, y: -0.0016431009, z: 0.02897921}
-    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
-    localScale: {x: 0.19266368, y: 0.23019661, z: 0.20135266}
-  - transform: {fileID: 1566842574}
-    localPosition: {x: 5.2963645e-14, y: 0.14730597, z: 0.028979285}
-    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
-    localScale: {x: 0.17547639, y: 0.23019661, z: 0.20135266}
-  - transform: {fileID: 1566842575}
-    localPosition: {x: -6.215389e-14, y: -0.00000003167008, z: 0.017591193}
-    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
-    localScale: {x: 0.20435993, y: 0.24443927, z: 0.2138107}
-  - transform: {fileID: 1566842575}
-    localPosition: {x: -5.314166e-14, y: 0.13252838, z: 0.017591199}
-    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
-    localScale: {x: 0.19553356, y: 0.24443927, z: 0.2138107}
-  - transform: {fileID: 1566842576}
-    localPosition: {x: -2.1071022e-14, y: -0.030238166, z: 0.014638188}
-    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
-    localScale: {x: 0.19553356, y: 0.24443927, z: 0.2138107}
-  - transform: {fileID: 1566842577}
-    localPosition: {x: -2.1071022e-14, y: -0.030238166, z: 0.014638188}
-    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
-    localScale: {x: 0.19553356, y: 0.24443927, z: 0.2138107}
-  - transform: {fileID: 1566842578}
-    localPosition: {x: -2.1071022e-14, y: -0.030238166, z: 0.014638188}
-    localRotation: {x: 0.004368033, y: -1.2033499e-14, z: 7.332006e-14, w: 0.9999913}
-    localScale: {x: 0.19553356, y: 0.24443927, z: 0.2138107}
+  penetratorCollisionSpheres:
+    _penetratorCollisionSpheres:
+    - transform: {fileID: 1566842572}
+      localPosition: {x: 3.0604808e-15, y: 0.056027908, z: -0.0070264926}
+      localRotation: {x: -0.122976415, y: -8.135978e-16, z: -1.2189215e-14, w: 0.9924099}
+      localScale: {x: 0.25606042, y: 0.13753593, z: 0.26785663}
+    - transform: {fileID: 1566842572}
+      localPosition: {x: -3.3080418e-12, y: 0.095757075, z: -0.06082771}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+      localScale: {x: 0.1674892, y: 0.1674892, z: 0.1674892}
+    - transform: {fileID: 1566842573}
+      localPosition: {x: -7.202095e-14, y: 0.000000025319798, z: 0.025322955}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+      localScale: {x: 0.19999112, y: 0.19999112, z: 0.19999112}
+    - transform: {fileID: 1566842573}
+      localPosition: {x: -6.232533e-14, y: 0.10936067, z: 0.022406455}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+      localScale: {x: 0.19999112, y: 0.19999112, z: 0.19999112}
+    - transform: {fileID: 1566842574}
+      localPosition: {x: -9.874832e-15, y: 0.11712288, z: 0.029136537}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+      localScale: {x: 0.18969063, y: 0.21236496, z: 0.21236496}
+    - transform: {fileID: 1566842574}
+      localPosition: {x: -2.2075444e-14, y: -0.000000027368893, z: 0.029136525}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+      localScale: {x: 0.18969063, y: 0.21236496, z: 0.21236496}
+    - transform: {fileID: 1566842575}
+      localPosition: {x: 6.667492e-15, y: 0.0074373866, z: 0.017873222}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+      localScale: {x: 0.18969063, y: 0.21236496, z: 0.21236496}
+    - transform: {fileID: 1566842575}
+      localPosition: {x: 2.7660952e-14, y: 0.119620204, z: 0.017873244}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+      localScale: {x: 0.18969063, y: 0.21236496, z: 0.21236496}
+    - transform: {fileID: 1566842576}
+      localPosition: {x: -9.799506e-14, y: -0.0772112, z: 0.010984182}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+      localScale: {x: 0.21651693, y: 0.10820181, z: 0.24315119}
+    - transform: {fileID: 1566842576}
+      localPosition: {x: 2.3062484e-15, y: 0.053932343, z: 0.0109842755}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+      localScale: {x: 0.2103656, y: 0.16706116, z: 0.21206687}
+    - transform: {fileID: 1566842577}
+      localPosition: {x: 4.234182e-14, y: 0.0000001133718, z: 0.0077339946}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+      localScale: {x: 0.20762655, y: 0.21293157, z: 0.21581575}
+    - transform: {fileID: 1566842578}
+      localPosition: {x: 0, y: 0, z: 0}
+      localRotation: {x: 0, y: 0, z: 0, w: 1}
+      localScale: {x: 0.20762655, y: 0.21293157, z: 0.21581575}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -1687,33 +1692,13 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: -8338292152176972381, guid: 670ea756daaf2ec42b96dc78334c3d1e, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1935999890}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 670ea756daaf2ec42b96dc78334c3d1e, type: 3}
 --- !u!4 &1935999888 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 670ea756daaf2ec42b96dc78334c3d1e, type: 3}
   m_PrefabInstance: {fileID: 1935999887}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1935999889 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -8338292152176972381, guid: 670ea756daaf2ec42b96dc78334c3d1e, type: 3}
-  m_PrefabInstance: {fileID: 1935999887}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1935999890
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1935999889}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5744dc2553e85784bb3f1686271ba998, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: com.naelstrof.spherecast::SphereCasterRenderer
 --- !u!137 &1935999892 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 4925945681876676389, guid: 670ea756daaf2ec42b96dc78334c3d1e, type: 3}
