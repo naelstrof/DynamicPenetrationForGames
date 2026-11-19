@@ -73,7 +73,7 @@ public class RendererSubMeshMaskDrawer : PropertyDrawer {
 [System.Serializable]
 public class RendererSubMeshMask : ISerializationCallbackReceiver {
     [SerializeField]
-    public Renderer renderer;
+    public SkinnedMeshRenderer renderer;
     [SerializeField]
     public int mask = ~0;
 

@@ -105,57 +105,43 @@ public struct GirthFrame {
         bool freemesh = false;
 
         // If we're a skinned mesh renderer, we mask by bone weights.
-        if (rendererMask.renderer is SkinnedMeshRenderer meshRenderer) {
-            var bones = meshRenderer.bones;
-            freemesh = true;
-            blitMesh = new Mesh();
-            blitMesh.SetVertices(staticVertices);
-            blitMesh.subMeshCount = mesh.subMeshCount;
-            for (int i = 0; i < mesh.subMeshCount; i++) {
-                if (rendererMask.ShouldDrawSubmesh(i)) {
-                    staticTriangles.Clear();
-                    mesh.GetTriangles(staticTriangles, i);
-                    blitMesh.SetTriangles(staticTriangles, i);
-                }
-            }
-
-            HashSet<int> validBones = new HashSet<int>();
-            for (int i = 0; i < bones.Length; i++) {
-                if (bones[i].IsChildOf(penetratorRoot)) {
-                    validBones.Add(i);
-                }
-            }
-
-            var weights = mesh.GetAllBoneWeights();
-            var bonesPerVertex = mesh.GetBonesPerVertex();
-            int vt = 0;
-            int wt = 0;
-            for (int o = 0; o < bonesPerVertex.Length; o++) {
-                for (int p = 0; p < bonesPerVertex[o]; p++) {
-                    BoneWeight1 weight = weights[wt];
-                    if (validBones.Contains(weight.boneIndex) && weight.weight > 0.1f) {
-                        Vector3 pos = staticVertices[vt];
-                        float length = Vector3.Dot(rendererLocalPenetratorForward, pos - rendererLocalPenetratorRoot);
-                        girthFrame.maxLocalLength = Mathf.Max(length, girthFrame.maxLocalLength);
-                    }
-
-                    wt++;
-                }
-
-                vt++;
+        var bones = rendererMask.renderer.bones;
+        freemesh = true;
+        blitMesh = new Mesh();
+        blitMesh.SetVertices(staticVertices);
+        blitMesh.subMeshCount = mesh.subMeshCount;
+        for (int i = 0; i < mesh.subMeshCount; i++) {
+            if (rendererMask.ShouldDrawSubmesh(i)) {
+                staticTriangles.Clear();
+                mesh.GetTriangles(staticTriangles, i);
+                blitMesh.SetTriangles(staticTriangles, i);
             }
         }
-        else {
-            // Otherwise we can just use every vert.
-            foreach (Vector3 vertexPosition in staticVertices) {
-                //Vector3 dickSpacePosition = changeOfBasis.MultiplyPoint(vertexPosition);
-                float length = Vector3.Dot(rendererLocalPenetratorForward,
-                    vertexPosition - rendererLocalPenetratorRoot);
-                girthFrame.maxLocalLength = Mathf.Max(length, girthFrame.maxLocalLength);
+
+        HashSet<int> validBones = new HashSet<int>();
+        for (int i = 0; i < bones.Length; i++) {
+            if (bones[i].IsChildOf(penetratorRoot)) {
+                validBones.Add(i);
+            }
+        }
+
+        var weights = mesh.GetAllBoneWeights();
+        var bonesPerVertex = mesh.GetBonesPerVertex();
+        int vt = 0;
+        int wt = 0;
+        for (int o = 0; o < bonesPerVertex.Length; o++) {
+            for (int p = 0; p < bonesPerVertex[o]; p++) {
+                BoneWeight1 weight = weights[wt];
+                if (validBones.Contains(weight.boneIndex) && weight.weight > 0.1f) {
+                    Vector3 pos = staticVertices[vt];
+                    float length = Vector3.Dot(rendererLocalPenetratorForward, pos - rendererLocalPenetratorRoot);
+                    girthFrame.maxLocalLength = Mathf.Max(length, girthFrame.maxLocalLength);
+                }
+
+                wt++;
             }
 
-            blitMesh = mesh;
-            freemesh = false;
+            vt++;
         }
 
         if (staticMaterialA == null) {

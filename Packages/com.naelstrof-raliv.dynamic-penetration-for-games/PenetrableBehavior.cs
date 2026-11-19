@@ -30,12 +30,12 @@ public class PenetrableBehavior : MonoBehaviour {
     public Renderer[] GetRenderers() => renderers;
 
 #if UNITY_EDITOR
-    private Spline debugSpline = new Spline();
+    private Spline3D _debugSpline3D = new Spline3D();
     private void OnDrawGizmos() {
         if (transforms == null || transforms.Length < 2) return;
-        debugSpline ??= new Spline();
-        debugSpline.SetFromCatmullPositions(GetPenetrable().points);
-        debugSpline.GizmoDraw(Color.green, Color.yellow);
+        _debugSpline3D ??= new Spline3D();
+        _debugSpline3D.SetFromCatmullPositions(GetPenetrable().points);
+        _debugSpline3D.GizmoDraw(Color.green, Color.yellow);
     }
 #endif
 

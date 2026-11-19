@@ -14,7 +14,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
 using System.Threading.Tasks;
+using GatorDragonGames;
 
 namespace DPG {
 
@@ -29,17 +31,44 @@ public struct GirthLookup {
     [SerializeField] public GirthFrame baseGirth;
     [SerializeField] public GirthFrame[] girthDeltas;
     [SerializeField] public float[] boneTimes;
+    [SerializeField] public float lengthPastTip;
+    private Spline boneSpaceSpline;
 
-    public void DrawGizmos(Transform transform, SkinnedMeshRenderer renderer, Matrix4x4 dickBasis, int sampleCount = 32) {
-        var length = GetLength(renderer);
+    public void DrawGizmos(Transform[] bones, SkinnedMeshRenderer renderer, Matrix4x4 dickBasis, int sampleCount = 64) {
         Gizmos.matrix = Matrix4x4.identity;
         Gizmos.color = Color.green;
+        
+        List<Vector3> staticVertices = new List<Vector3>(Array.ConvertAll(bones, t => t.position)) { bones[^1].position + (bones[^1].position-bones[^2].position).normalized*2f };
+        Spline3D pretendSpline = new Spline3D().SetFromCardinalPositions(staticVertices, 0.75f);
+        
+        pretendSpline.GizmoDraw(Color.green, Color.yellow, 128);
+        
+        float[] worldBoneTimes = new float[bones.Length+1];
+        var sum = 0f;
+        var prevPosition = bones[0].position;
+        for(int i=0; i<bones.Length; i++) {
+            sum += Vector3.Distance(prevPosition, bones[i].position);
+            worldBoneTimes[i] = sum;
+            prevPosition = bones[i].position;
+        }
+        sum += lengthPastTip;
+        worldBoneTimes[^1] = sum;
+        
+        var length = GetLength(renderer);
+        Spline worldBoneSpline = new Spline().SetFromCatmullPositions(worldBoneTimes);
+        boneSpaceSpline ??= new Spline();
+        boneSpaceSpline.SetFromCatmullPositions(boneTimes);
+
         for (int i = 0; i < sampleCount; i++) {
-            float sampleAlpha = (float)i / (float)sampleCount;
-            float girthRadius = SampleGirth(renderer, sampleAlpha);
-            Vector3 offset = SampleOffset(renderer, sampleAlpha);
-            var position = transform.TransformPoint(dickBasis.MultiplyVector(offset+Vector3.forward * sampleAlpha*length));
-            DrawCircle(position, transform.TransformDirection(dickBasis.MultiplyVector(Vector3.forward)), girthRadius);
+            float sampleAlpha = ((float)i / (float)sampleCount);
+            float worldSampleDistance = worldBoneSpline.GetPositionFromT(sampleAlpha);
+            float poseSampleTime = boneSpaceSpline.GetPositionFromT(worldSampleDistance/sum);
+            
+            float girthRadius = SampleGirth(renderer, poseSampleTime);
+            Vector3 offset = SampleOffset(renderer, poseSampleTime);
+            var refFrame = pretendSpline.GetReferenceFrameFromT(pretendSpline.GetTimeFromDistance(worldSampleDistance));
+            var position = refFrame.MultiplyPoint(dickBasis.MultiplyVector(offset));
+            DrawCircle(position, refFrame.MultiplyVector(Vector3.forward), girthRadius);
         }
     }
 
@@ -54,8 +83,7 @@ public struct GirthLookup {
     private float SampleGirth(SkinnedMeshRenderer renderer, float alpha) {
         var b = baseGirth.SampleGirth(alpha);
         for(int i=0; i<girthDeltas.Length; i++) {
-            float factor = baseGirth.maxLocalLength / girthDeltas[i].maxLocalLength;
-            b += girthDeltas[i].SampleGirth(alpha*factor) * renderer.GetBlendShapeWeight(i)*0.01f;
+            b += girthDeltas[i].SampleGirth(alpha) * renderer.GetBlendShapeWeight(i)*0.01f;
         }
         return b;
     }
@@ -63,8 +91,7 @@ public struct GirthLookup {
     private Vector2 SampleOffset(SkinnedMeshRenderer renderer, float alpha) {
         var b = baseGirth.SampleOffset(alpha);
         for(int i=0; i<girthDeltas.Length; i++) {
-            float factor = baseGirth.maxLocalLength / girthDeltas[i].maxLocalLength;
-            b += girthDeltas[i].SampleOffset(alpha*factor) * renderer.GetBlendShapeWeight(i)*0.01f;
+            b += girthDeltas[i].SampleOffset(alpha) * renderer.GetBlendShapeWeight(i)*0.01f;
         }
         return b;
     }
@@ -161,39 +188,36 @@ public struct GirthLookup {
         }
         return maxGirth;
     }
-    public static async Task<GirthLookup> GenerateGirthLookup(RendererSubMeshMask rendererWithMask, Shader girthUnwrapShader, Transform penetratorRoot, Vector3 rootLocalPenetratorRoot, Vector3 rootLocalPenetratorForward, Vector3 rootLocalPenetratorUp, Vector3 rootLocalPenetratorRight) {
+    private static bool TryGetBoneIndex(Transform[] bones, Transform bone, out int index) {
+        for (int i = 0; i < bones.Length; i++) {
+            if (bones[i] == bone) {
+                index = i;
+                return true;
+            }
+        }
+        index = -1;
+        return false;
+    }
+    
+    public static async Task<GirthLookup> GenerateGirthLookup(RendererSubMeshMask rendererWithMask, Shader girthUnwrapShader, Transform[] bones, Vector3 rootLocalPenetratorRoot, Vector3 rootLocalPenetratorForward, Vector3 rootLocalPenetratorUp, Vector3 rootLocalPenetratorRight) {
         Vector3 rendererLocalPenetratorForward = Vector3.zero;
         Vector3 rendererLocalPenetratorUp = Vector3.zero;
         Vector3 rendererLocalPenetratorRight = Vector3.zero;
         Vector3 rendererLocalPenetratorRoot = Vector3.zero;
         Matrix4x4 poseMatrix = Matrix4x4.identity;
-        if (rendererWithMask.renderer is SkinnedMeshRenderer skinnedMeshRenderer) {
-            int rootBoneID = -1;
-            for (int i = 0; i < skinnedMeshRenderer.bones.Length; i++) {
-                if (skinnedMeshRenderer.bones[i] == penetratorRoot) {
-                    rootBoneID = i;
-                }
-            }
-
-            if (rootBoneID == -1) {
-                throw new UnityException("You must choose a bone on the armature...");
-            }
-
-            Mesh skinnedMesh = skinnedMeshRenderer.sharedMesh;
-            GetBindPoseBoneLocalPositionRotation(skinnedMesh.bindposes[rootBoneID], out Vector3 posePosition, out Quaternion poseRotation, out float scale);
-            rendererLocalPenetratorForward = (poseRotation * rootLocalPenetratorForward).normalized;
-            rendererLocalPenetratorUp = (poseRotation * rootLocalPenetratorUp).normalized;
-            rendererLocalPenetratorRight = (poseRotation * rootLocalPenetratorRight).normalized;
-            rendererLocalPenetratorRoot = posePosition+(poseRotation*rootLocalPenetratorRoot*scale);
-            poseMatrix = skinnedMeshRenderer.sharedMesh.bindposes[rootBoneID];
-        } else {
-            var worldToRenderer = rendererWithMask.renderer.worldToLocalMatrix;
-            rendererLocalPenetratorForward = worldToRenderer.MultiplyVector(penetratorRoot.TransformDirection(rootLocalPenetratorForward)).normalized;
-            rendererLocalPenetratorUp = worldToRenderer.MultiplyVector(penetratorRoot.TransformDirection(rootLocalPenetratorUp)).normalized;
-            rendererLocalPenetratorRight = worldToRenderer.MultiplyVector(penetratorRoot.TransformDirection(rootLocalPenetratorRight)).normalized;
-            rendererLocalPenetratorRoot = worldToRenderer.MultiplyPoint(penetratorRoot.TransformPoint(rootLocalPenetratorRoot));
-            poseMatrix = Matrix4x4.identity;
+        var penetratorRoot = bones[0];
+        var skinnedMeshRenderer = rendererWithMask.renderer;
+        if (!TryGetBoneIndex(skinnedMeshRenderer.bones, penetratorRoot, out int rootBoneID)) {
+            throw new UnityException("You must choose a bone on the armature...");
         }
+
+        Mesh skinnedMesh = skinnedMeshRenderer.sharedMesh;
+        GetBindPoseBoneLocalPositionRotation(skinnedMesh.bindposes[rootBoneID], out Vector3 posePosition, out Quaternion poseRotation, out float scale);
+        rendererLocalPenetratorForward = (poseRotation * rootLocalPenetratorForward).normalized;
+        rendererLocalPenetratorUp = (poseRotation * rootLocalPenetratorUp).normalized;
+        rendererLocalPenetratorRight = (poseRotation * rootLocalPenetratorRight).normalized;
+        rendererLocalPenetratorRoot = posePosition+(poseRotation*rootLocalPenetratorRoot*scale);
+        poseMatrix = skinnedMeshRenderer.sharedMesh.bindposes[rootBoneID];
 
         var staticVertices = new List<Vector3>();
         var maxGirth = GetMaxGirth(rendererWithMask, penetratorRoot, rendererLocalPenetratorForward, rendererLocalPenetratorRoot, staticVertices);
@@ -206,12 +230,29 @@ public struct GirthLookup {
             blendshapeGirth.ConvertToBlendshape(baseGirth);
             blendshapeGirths[i] = blendshapeGirth;
         }
-
-        return new GirthLookup() {
+        var girthLookup = new GirthLookup() {
             baseGirth = baseGirth,
             girthDeltas = blendshapeGirths,
             maxGirth = maxGirth,
         };
+        var fullLength = baseGirth.maxLocalLength;
+        var boneCount = bones.Length;
+        var boneTimes = new float[boneCount+1];
+        for (int i = 0; i < boneCount; i++) {
+            var bone = bones[i];
+            if (!TryGetBoneIndex(skinnedMeshRenderer.bones, bone, out int boneID)) {
+                throw new UnityException("You must choose a bones on the armature...");
+            }
+            GetBindPoseBoneLocalPositionRotation(skinnedMeshRenderer.sharedMesh.bindposes[boneID], out Vector3 bonePosition, out Quaternion boneRotation, out float boneScale);
+            var boneDistance = Vector3.Dot(rendererLocalPenetratorForward, bonePosition - rendererLocalPenetratorRoot);
+            var boneTime = Mathf.Clamp01(boneDistance / fullLength);
+            boneTimes[i] = boneTime;
+        }
+        boneTimes[boneCount] = 1f;
+        girthLookup.boneTimes = boneTimes;
+        girthLookup.lengthPastTip = fullLength - (boneTimes[^2]*fullLength);
+        girthLookup.boneSpaceSpline = new Spline().SetFromCatmullPositions(boneTimes);
+        return girthLookup;
     }
 }
 

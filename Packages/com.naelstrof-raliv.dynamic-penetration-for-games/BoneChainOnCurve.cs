@@ -42,7 +42,7 @@ public class BoneChainOnCurve {
         }
     }
 
-    public void AlignToSpline(Spline targetSpline, float lengthMultiplier = 1f) {
+    public void AlignToSpline(Spline3D targetSpline3D, float lengthMultiplier = 1f) {
         PoseBonesToRestPose();
         var totalLength = 0f;
         var previousSplinePosition = Vector3.zero;
@@ -58,7 +58,7 @@ public class BoneChainOnCurve {
             }
             totalLength += currentBoneLength;
             if (index!=0) bone.position = previousSplinePosition;
-            var aimPoint = targetSpline.GetPositionFromDistance(totalLength);
+            var aimPoint = targetSpline3D.GetPositionFromDistance(totalLength);
             //Debug.DrawLine(aimPoint - Vector3.up * 0.1f, aimPoint + Vector3.up * 0.1f, Color.red);
             //Debug.DrawLine(aimPoint - Vector3.left * 0.1f, aimPoint + Vector3.left * 0.1f, Color.red);
             //Debug.DrawLine(aimPoint - Vector3.forward * 0.1f, aimPoint + Vector3.forward * 0.1f, Color.red);

@@ -23,7 +23,7 @@ public class PenetratorBehavior : MonoBehaviour {
     [ContextMenu("Generate Girth Lookup")]
     private void GenerateGirthLookup() {
         var girthUnwrapShader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath("34d24fe4568f98c4cae4724e139cb644"));
-        var girthLookupTask = GirthLookup.GenerateGirthLookup(skinnedMeshRendererMask, girthUnwrapShader, bones[0], Vector3.zero, Vector3.up, -Vector3.forward, Vector3.right);
+        var girthLookupTask = GirthLookup.GenerateGirthLookup(skinnedMeshRendererMask, girthUnwrapShader, bones, Vector3.zero, Vector3.up, -Vector3.forward, Vector3.right);
         Debug.Log("Attempting to generate lookups...");
         girthLookupTask.ContinueWith(task => {
             if (task.IsCompletedSuccessfully) {
@@ -57,14 +57,14 @@ public class PenetratorBehavior : MonoBehaviour {
         var penetrable = penetrableBehavior.GetPenetrable();
         var penetration = new Penetration(penetrator, penetrable, cachedPoints);
             
-        var orificeDist = penetration.spline.GetDistanceFromTime(penetration.penetrableT);
+        var orificeDist = penetration.spline3D.GetDistanceFromTime(penetration.penetrableT);
         _boneChainCompression.Tick(orificeDist);
         var aimDist = _boneChainCompression.GetTipPosition();
-        var aimPoint = penetration.spline.GetPositionFromDistance(aimDist);
+        var aimPoint = penetration.spline3D.GetPositionFromDistance(aimDist);
         Debug.DrawLine(aimPoint - Vector3.up * 0.1f, aimPoint + Vector3.up * 0.1f, Color.red);
         Debug.DrawLine(aimPoint - Vector3.left * 0.1f, aimPoint + Vector3.left * 0.1f, Color.red);
         Debug.DrawLine(aimPoint - Vector3.forward * 0.1f, aimPoint + Vector3.forward * 0.1f, Color.red);
-        aimPoint = penetration.spline.GetPositionFromDistance(orificeDist);
+        aimPoint = penetration.spline3D.GetPositionFromDistance(orificeDist);
         Debug.DrawLine(aimPoint - Vector3.up * 0.1f, aimPoint + Vector3.up * 0.1f, Color.red);
         Debug.DrawLine(aimPoint - Vector3.left * 0.1f, aimPoint + Vector3.left * 0.1f, Color.red);
         Debug.DrawLine(aimPoint - Vector3.forward * 0.1f, aimPoint + Vector3.forward * 0.1f, Color.red);
@@ -99,7 +99,7 @@ public class PenetratorBehavior : MonoBehaviour {
         basis.SetRow(1, -Vector3.forward);
         basis.SetRow(2, Vector3.up);
         basis[3, 3] = 1f;
-        girthLookup.DrawGizmos(bones[0], skinnedMeshRenderer, basis.inverse);
+        girthLookup.DrawGizmos(bones, skinnedMeshRenderer, basis.inverse);
     }
 
     private void OnValidate() {
