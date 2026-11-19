@@ -15,6 +15,7 @@
  */
 
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -22,50 +23,74 @@ using UnityEngine.Rendering;
 namespace DPG {
 
 [System.Serializable]
-public class GirthFrame {
-    private static List<Vector3> staticVertices = new List<Vector3>();
-    private static List<int> staticTriangles = new List<int>();
-    private static Material staticMaterialA;
-    private static Material staticMaterialB;
-
-    private static Material subtractBlit;
-
-    [SerializeField] public float maxLocalLength;
-
-    //[SerializeField] private float maxLocalGirthRadius;
+public struct GirthFrame {
     public float maxGirthRadius;
-
+    public float maxLocalLength;
     public AnimationCurveFast localGirthRadiusCurve;
     public AnimationCurveFast localXOffsetCurve;
     public AnimationCurveFast localYOffsetCurve;
 
-    [SerializeField] public RenderTexture girthMap;
-    [SerializeField] public Texture2D detailMap;
+    public float SampleGirth(float dist) {
+        return localGirthRadiusCurve.Sample(dist);
+    }
+    public Vector2 SampleOffset(float dist) {
+        return new Vector2(localXOffsetCurve.Sample(dist), localYOffsetCurve.Sample(dist));
+    }
+    
+    public GirthFrame(int sampleCount, float fullLength, float maxGirth) {
+        maxGirthRadius = maxGirth;
+        maxLocalLength = fullLength;
+        localGirthRadiusCurve = new AnimationCurveFast(sampleCount);
+        localXOffsetCurve = new AnimationCurveFast(sampleCount);
+        localYOffsetCurve = new AnimationCurveFast(sampleCount);
+    }
+    
+    public void ConvertToBlendshape(GirthFrame baseShape) {
+        var samples = localGirthRadiusCurve.GetSampleCount();
+        var blendshapeGirthRadius = new AnimationCurveFast(samples);
+        var blendshapeXOffset = new AnimationCurveFast(samples);
+        var blendshapeYOffset = new AnimationCurveFast(samples);
+        for (int i = 0; i < samples-1; i++) {
+            var sampleDistance = (float)i / (float)samples;
+            float baseGirth = baseShape.localGirthRadiusCurve.Sample(sampleDistance);
+            float baseXOffset = baseShape.localXOffsetCurve.Sample(sampleDistance);
+            float baseYOffset = baseShape.localYOffsetCurve.Sample(sampleDistance);
+            float girthDelta = localGirthRadiusCurve.Sample(sampleDistance) - baseGirth;
+            float xOffsetDelta = localXOffsetCurve.Sample(sampleDistance) - baseXOffset;
+            float yOffsetDelta = localYOffsetCurve.Sample(sampleDistance) - baseYOffset;
+            blendshapeGirthRadius.SetSample(i, girthDelta);
+            blendshapeXOffset.SetSample(i, xOffsetDelta);
+            blendshapeYOffset.SetSample(i, yOffsetDelta);
+        }
+        blendshapeGirthRadius.SetSample(samples-1, 0f);
+        blendshapeXOffset.SetSample(samples-1, 0f);
+        blendshapeYOffset.SetSample(samples-1, 0f);
+        localGirthRadiusCurve = blendshapeGirthRadius;
+        localXOffsetCurve = blendshapeXOffset;
+        localYOffsetCurve = blendshapeYOffset;
+        maxLocalLength -= baseShape.maxLocalLength;
+        maxGirthRadius -= baseShape.maxGirthRadius;
+    }
 
-    private NativeArray<byte> nativeArray;
-
-    public GirthFrame(RendererSubMeshMask rendererMask, Transform penetratorRoot, Vector3 rendererLocalPenetratorRoot,
+    private static List<Vector3> staticVertices = new List<Vector3>();
+    private static List<int> staticTriangles = new List<int>();
+    private static Material staticMaterialA;
+    private static Material staticMaterialB;
+    private static Material subtractBlit;
+    public static async Task<GirthFrame> GenerateGirthFrame(RendererSubMeshMask rendererMask, Transform penetratorRoot, Vector3 rendererLocalPenetratorRoot,
         Vector3 rendererLocalPenetratorForward,
         Vector3 rendererLocalPenetratorUp,
         Vector3 rendererLocalPenetratorRight,
         int blendshapeIndex, float maxGirth, Shader girthUnwrapShader) {
         
-        localGirthRadiusCurve = new AnimationCurveFast(2, 1f);
-        localXOffsetCurve = new AnimationCurveFast(2, 1f);
-        localYOffsetCurve = new AnimationCurveFast(2, 1f);
-
-        var mesh = rendererMask.GetMesh();
-        girthMap = new RenderTexture(64, 64, 0, RenderTextureFormat.R8, RenderTextureReadWrite.Linear) {
+        GirthFrame girthFrame = new GirthFrame(2,1, maxGirth);
+        var girthMap = new RenderTexture(64, 64, 0, RenderTextureFormat.R8, RenderTextureReadWrite.Linear) {
             useMipMap = true,
             autoGenerateMips = false,
             wrapModeU = TextureWrapMode.Clamp,
             wrapModeV = TextureWrapMode.Repeat
         };
-        detailMap = new Texture2D(64, 64, TextureFormat.R8, Texture.GenerateAllMips, true) {
-            wrapModeU = TextureWrapMode.Clamp,
-            wrapModeV = TextureWrapMode.Repeat
-        };
-        maxGirthRadius = maxGirth;
+        var mesh = rendererMask.GetMesh();
         staticVertices.Clear();
         mesh.GetVertices(staticVertices);
         if (blendshapeIndex != -1) {
@@ -111,7 +136,7 @@ public class GirthFrame {
                     if (validBones.Contains(weight.boneIndex) && weight.weight > 0.1f) {
                         Vector3 pos = staticVertices[vt];
                         float length = Vector3.Dot(rendererLocalPenetratorForward, pos - rendererLocalPenetratorRoot);
-                        maxLocalLength = Mathf.Max(length, maxLocalLength);
+                        girthFrame.maxLocalLength = Mathf.Max(length, girthFrame.maxLocalLength);
                     }
 
                     wt++;
@@ -126,7 +151,7 @@ public class GirthFrame {
                 //Vector3 dickSpacePosition = changeOfBasis.MultiplyPoint(vertexPosition);
                 float length = Vector3.Dot(rendererLocalPenetratorForward,
                     vertexPosition - rendererLocalPenetratorRoot);
-                maxLocalLength = Mathf.Max(length, maxLocalLength);
+                girthFrame.maxLocalLength = Mathf.Max(length, girthFrame.maxLocalLength);
             }
 
             blitMesh = mesh;
@@ -146,15 +171,15 @@ public class GirthFrame {
         staticMaterialA.SetVector("_PenetratorForward", rendererLocalPenetratorForward);
         staticMaterialA.SetVector("_PenetratorUp", rendererLocalPenetratorUp);
         staticMaterialA.SetVector("_PenetratorRight", rendererLocalPenetratorRight);
-        staticMaterialA.SetFloat("_MaxLength", maxLocalLength);
-        staticMaterialA.SetFloat("_MaxGirth", maxGirth);
+        staticMaterialA.SetFloat("_MaxLength", girthFrame.maxLocalLength);
+        staticMaterialA.SetFloat("_MaxGirth", girthFrame.maxGirthRadius);
         staticMaterialB.SetFloat("_AngleOffset", -Mathf.PI / 2f);
         staticMaterialB.SetVector("_PenetratorOrigin", rendererLocalPenetratorRoot);
         staticMaterialB.SetVector("_PenetratorForward", rendererLocalPenetratorForward);
         staticMaterialB.SetVector("_PenetratorUp", rendererLocalPenetratorUp);
         staticMaterialB.SetVector("_PenetratorRight", rendererLocalPenetratorRight);
-        staticMaterialB.SetFloat("_MaxLength", maxLocalLength);
-        staticMaterialB.SetFloat("_MaxGirth", maxGirth);
+        staticMaterialB.SetFloat("_MaxLength", girthFrame.maxLocalLength);
+        staticMaterialB.SetFloat("_MaxGirth", girthFrame.maxGirthRadius);
 
         // Then use the GPU to rasterize
         CommandBuffer buffer = new CommandBuffer();
@@ -174,7 +199,7 @@ public class GirthFrame {
 
         girthMap.GenerateMips();
 
-        Readback();
+        girthFrame = await Readback(girthFrame, girthMap);
 
         if (freemesh) {
             if (Application.isPlaying) {
@@ -184,9 +209,11 @@ public class GirthFrame {
                 Object.DestroyImmediate(blitMesh);
             }
         }
+
+        return girthFrame;
     }
 
-    private void DoSlowReadback() {
+    private static GirthFrame DoSlowReadback(GirthFrame girthFrame, RenderTexture girthMap) {
         Texture2D cpuTex = new Texture2D(girthMap.width, girthMap.height, TextureFormat.R8, false, true);
         var lastActive = RenderTexture.active;
         RenderTexture.active = girthMap;
@@ -194,99 +221,45 @@ public class GirthFrame {
         cpuTex.Apply();
         RenderTexture.active = lastActive;
         var bytes = cpuTex.GetRawTextureData<byte>();
-        PopulateOffsetCurves(bytes, girthMap.width, girthMap.height);
-        PopulateGirthCurve(bytes, girthMap.width, girthMap.height);
-        PopulateDetailMap(bytes, girthMap.width, girthMap.height);
+        girthFrame = PopulateOffsetCurves(girthFrame, bytes, girthMap.width, girthMap.height);
+        girthFrame = PopulateGirthCurve(girthFrame, bytes, girthMap.width, girthMap.height);
         if (Application.isPlaying) {
             Object.Destroy(cpuTex);
         }
         else {
             Object.DestroyImmediate(cpuTex);
         }
+        return girthFrame;
     }
 
-    private void OnCompleteReadBack(AsyncGPUReadbackRequest request) {
-        // if girthmap is null, that means we were released before the readback could complete.
-        if (girthMap == null) {
-            nativeArray.Dispose();
-            return;
-        }
-
-        // Failed request, I don't know how this happens, but it's possible. Fallback on a synchronous readback.
-        if (request.hasError || !request.done) {
-            nativeArray.Dispose();
-            DoSlowReadback();
-            return;
-        }
-
-        // Otherwise our data is good.
-        PopulateOffsetCurves(nativeArray, request.width, request.height);
-        PopulateGirthCurve(nativeArray, request.width, request.height);
-        PopulateDetailMap(nativeArray, request.width, request.height);
-        nativeArray.Dispose();
-    }
-
-    public void ConvertToBlendshape(GirthFrame baseShape, Shader subtractShader) {
-        if (subtractBlit == null) {
-            subtractBlit = new Material(subtractShader);
-        }
-        else {
-            subtractBlit.shader = subtractShader;
-        }
-
-        Graphics.Blit(baseShape.girthMap, girthMap, subtractBlit);
-    }
-
-    private void PopulateDetailMap(NativeArray<byte> bytes, int width, int height) {
-        NativeArray<byte> pixelData =
-            new NativeArray<byte>(width * height, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                if (x == width - 1) {
-                    pixelData[x + y * width] = byte.MaxValue / 2;
-                    continue;
-                }
-
-                float color = (float)bytes[x + y * width] / 255f;
-                ;
-                float rad = ((float)y / (float)height) * Mathf.PI * 2f;
-                float distFromCore = color * maxGirthRadius;
-                float xPosition = Mathf.Sin(rad - Mathf.PI / 2f) * distFromCore;
-                float yPosition = Mathf.Cos(rad - Mathf.PI / 2f) * distFromCore;
-                Vector2 position = new Vector2(xPosition, yPosition);
-                float distFromRoot = ((float)x / (float)width) * maxLocalLength;
-                Vector2 offsetSample = new Vector2(localXOffsetCurve.Sample(distFromRoot),
-                    localYOffsetCurve.Sample(distFromRoot));
-                Vector2 newOffset = position - offsetSample;
-                float newRadius = (newOffset.magnitude - localGirthRadiusCurve.Sample(distFromRoot)) / maxGirthRadius;
-                pixelData[x + y * width] = (byte)Mathf.RoundToInt(Mathf.Clamp01(newRadius + 0.5f) * 255f);
-            }
-        }
-
-        detailMap.SetPixelData(pixelData, 0);
-        detailMap.Apply();
-        pixelData.Dispose();
-    }
-
-    public void Readback() {
+    public static async Task<GirthFrame> Readback(GirthFrame girthFrame, RenderTexture girthMap) {
         if (SystemInfo.supportsAsyncGPUReadback && Application.isPlaying) {
-            nativeArray = new NativeArray<byte>(girthMap.width * girthMap.height * sizeof(byte), Allocator.Persistent);
-            AsyncGPUReadback.RequestIntoNativeArray(ref nativeArray, girthMap, 0, TextureFormat.R8, OnCompleteReadBack);
-        }
-        else {
-            DoSlowReadback();
+            var nativeArray = new NativeArray<byte>(girthMap.width * girthMap.height * sizeof(byte), Allocator.Persistent);
+            var request = AsyncGPUReadback.RequestIntoNativeArray(ref nativeArray, girthMap, 0, TextureFormat.R8);
+            await Task.Run(() => request.WaitForCompletion());
+            if (request.hasError || !request.done) {
+                nativeArray.Dispose();
+                return DoSlowReadback(girthFrame, girthMap);
+            }
+            // Otherwise our data is good.
+            girthFrame = PopulateOffsetCurves(girthFrame, nativeArray, request.width, request.height);
+            girthFrame = PopulateGirthCurve(girthFrame, nativeArray, request.width, request.height);
+            nativeArray.Dispose();
+            return girthFrame;
+        } else {
+            return DoSlowReadback(girthFrame, girthMap);
         }
     }
 
-    private void PopulateOffsetCurves(NativeArray<byte> bytes, int width, int height) {
-        localXOffsetCurve = new AnimationCurveFast(width, maxLocalLength);
-        localYOffsetCurve = new AnimationCurveFast(width, maxLocalLength);
+    private static GirthFrame PopulateOffsetCurves(GirthFrame input, NativeArray<byte> bytes, int width, int height) {
+        input.localXOffsetCurve = new AnimationCurveFast(width);
+        input.localYOffsetCurve = new AnimationCurveFast(width);
         for (int x = 0; x < width; x++) {
             Vector2 positionSum = Vector2.zero;
             for (int y = 0; y < height / 2; y++) {
                 float color = (float)bytes[x + y * width] / 255f; //cpuTex.GetPixel(x,y).r;
                 float rad = ((float)y / (float)height) * Mathf.PI * 2f;
-                float distFromCore = color * maxGirthRadius;
+                float distFromCore = color * input.maxGirthRadius;
                 float xPosition = Mathf.Sin(rad - Mathf.PI / 2f) * distFromCore;
                 float yPosition = Mathf.Cos(rad - Mathf.PI / 2f) * distFromCore;
                 Vector2 position = new Vector2(xPosition, yPosition);
@@ -294,45 +267,39 @@ public class GirthFrame {
                 int oppositeY = (y + height / 2) % height;
                 float oppositeColor = ((float)bytes[x + oppositeY * width] / 255f); //cpuTex.GetPixel(x,oppositeY).r;
                 float oppositeRad = ((float)oppositeY / (float)height) * Mathf.PI * 2f;
-                float oppositeDistFromCore = oppositeColor * maxGirthRadius;
+                float oppositeDistFromCore = oppositeColor * input.maxGirthRadius;
                 float oppositeXPosition = Mathf.Sin(oppositeRad - Mathf.PI / 2f) * oppositeDistFromCore;
                 float oppositeYPosition = Mathf.Cos(oppositeRad - Mathf.PI / 2f) * oppositeDistFromCore;
                 Vector2 oppositePosition = new Vector2(oppositeXPosition, oppositeYPosition);
                 positionSum += (position + oppositePosition) * 0.5f;
-
-                //Vector3 point = rendererLocalDickForward * (((float)x/(float)width) * maxLocalLength);
-                //Vector3 otherPoint = point+rendererLocalDickRight*xPosition + rendererLocalDickUp*yPosition;
-                //Debug.DrawLine(objectToWorld.MultiplyPoint(point),objectToWorld.MultiplyPoint(otherPoint), Color.red, 10f);
-
-                //Vector3 oppositeOtherPoint = point+rendererLocalDickRight*oppositeXPosition + rendererLocalDickUp*oppositeYPosition;
-                //Debug.DrawLine(objectToWorld.MultiplyPoint(point),objectToWorld.MultiplyPoint(oppositeOtherPoint), Color.blue, 10f);
             }
 
             Vector2 positionAverage = positionSum / (float)(height / 2);
             positionAverage *= 2;
 
-            localXOffsetCurve.AddSample(x, positionAverage.x);
-            localYOffsetCurve.AddSample(x, positionAverage.y);
+            input.localXOffsetCurve.SetSample(x, positionAverage.x);
+            input.localYOffsetCurve.SetSample(x, positionAverage.y);
         }
 
-        localXOffsetCurve.AddSample(width-1, 0f);
-        localYOffsetCurve.AddSample(width-1, 0f);
+        input.localXOffsetCurve.SetSample(width-1, 0f);
+        input.localYOffsetCurve.SetSample(width-1, 0f);
+        return input;
     }
 
-    private float GetEasing(float x) {
+    private static float GetEasing(float x) {
         return x >= 1f ? 1f : 1f - Mathf.Pow(2, -10f * x);
     }
 
-    private void PopulateGirthCurve(NativeArray<byte> bytes, int width, int height) {
-        localGirthRadiusCurve = new AnimationCurveFast(width, maxLocalLength);
+    private static GirthFrame PopulateGirthCurve(GirthFrame input, NativeArray<byte> bytes, int width, int height) {
+        input.localGirthRadiusCurve = new AnimationCurveFast(width);
         for (int x = 0; x < width; x++) {
             float averageRadius = 0f;
-            Vector2 offset = new Vector2(localXOffsetCurve.Sample((float)x / (float)width * maxLocalLength),
-                localYOffsetCurve.Sample((float)x / (float)width * maxLocalLength));
+            Vector2 offset = new Vector2(input.localXOffsetCurve.Sample((float)x / (float)width * input.maxLocalLength),
+                input.localYOffsetCurve.Sample((float)x / (float)width * input.maxLocalLength));
             for (int y = 0; y < height; y++) {
                 float color = (float)bytes[x + y * width] / 255f; //cpuTex.GetPixel(x,y).r;
                 float rad = ((float)y / (float)height) * Mathf.PI * 2f;
-                float distFromCore = color * maxGirthRadius;
+                float distFromCore = color * input.maxGirthRadius;
                 float xPosition = Mathf.Sin(rad - Mathf.PI / 2f) * distFromCore;
                 float yPosition = Mathf.Cos(rad - Mathf.PI / 2f) * distFromCore;
                 Vector2 position = new Vector2(xPosition, yPosition);
@@ -344,33 +311,17 @@ public class GirthFrame {
             int taperEndCount = Mathf.Max(width / 10, 3);
             if (x > width - taperEndCount) {
                 float multiplier = (float)(width - x) / (taperEndCount - 1);
-                localGirthRadiusCurve.AddSample(x, averageRadius * multiplier * multiplier);
+                input.localGirthRadiusCurve.SetSample(x, averageRadius * multiplier * multiplier);
             }
             else {
-                localGirthRadiusCurve.AddSample(x, averageRadius);
+                input.localGirthRadiusCurve.SetSample(x, averageRadius);
             }
         }
 
-        localGirthRadiusCurve.AddSample(width-1, 0f);
+        input.localGirthRadiusCurve.SetSample(width-1, 0f);
+        return input;
     }
-
-    public void Release() {
-        if (girthMap != null) {
-            girthMap.Release();
-        }
-
-        if (detailMap != null) {
-            if (Application.isPlaying) {
-                Object.Destroy(detailMap);
-            }
-            else {
-                Object.DestroyImmediate(detailMap);
-            }
-        }
-
-        detailMap = null;
-        girthMap = null;
-    }
+    
 }
 
 }

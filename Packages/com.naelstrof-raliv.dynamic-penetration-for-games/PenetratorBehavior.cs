@@ -1,6 +1,10 @@
 using System.Collections.Generic;
+using DPG;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace GatorDragonGames {
 
@@ -8,11 +12,29 @@ public class PenetratorBehavior : MonoBehaviour {
 
     [SerializeField] private Transform[] bones;
     [SerializeField] private PenetrableBehavior penetrableBehavior;
-    [SerializeField] private SkinnedMeshRenderer skinnedMeshRenderer;
+    [SerializeField] private RendererSubMeshMask skinnedMeshRendererMask;
     [SerializeField] private PenetratorCollisionSpheres penetratorCollisionSpheres;
+    [SerializeField] private GirthLookup girthLookup;
     private BoneChainOnCurve _boneChainOnCurve;
     private BoneChainCompression _boneChainCompression;
     private List<Vector3> cachedPoints = new List<Vector3>();
+
+#if UNITY_EDITOR
+    [ContextMenu("Generate Girth Lookup")]
+    private void GenerateGirthLookup() {
+        var girthUnwrapShader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath("34d24fe4568f98c4cae4724e139cb644"));
+        var girthLookupTask = GirthLookup.GenerateGirthLookup(skinnedMeshRendererMask, girthUnwrapShader, bones[0], Vector3.zero, Vector3.up, -Vector3.forward, Vector3.right);
+        Debug.Log("Attempting to generate lookups...");
+        girthLookupTask.ContinueWith(task => {
+            if (task.IsCompletedSuccessfully) {
+                girthLookup = task.Result;
+                Debug.Log("Girth lookup generated successfully.");
+            } else {
+                Debug.LogError("Failed to generate girth lookup: " + task.Exception);
+            }
+        });
+    }
+#endif
     
     private Penetrator GetPenetrator() {
         return new Penetrator() {
@@ -30,6 +52,7 @@ public class PenetratorBehavior : MonoBehaviour {
     
 
     private void LateUpdate() {
+        var skinnedMeshRenderer = skinnedMeshRendererMask.renderer as SkinnedMeshRenderer;
         Penetrator penetrator = GetPenetrator();
         var penetrable = penetrableBehavior.GetPenetrable();
         var penetration = new Penetration(penetrator, penetrable, cachedPoints);
@@ -64,6 +87,19 @@ public class PenetratorBehavior : MonoBehaviour {
 
     private void OnDrawGizmosSelected() {
         penetratorCollisionSpheres.OnDrawGizmosSelected();
+        if (skinnedMeshRendererMask.renderer == null) {
+            return;
+        }
+        if (bones == null || bones.Length < 1 || bones[0] == null) {
+            return;
+        }
+        var skinnedMeshRenderer = skinnedMeshRendererMask.renderer as SkinnedMeshRenderer;
+        Matrix4x4 basis = new Matrix4x4();
+        basis.SetRow(0, Vector3.right);
+        basis.SetRow(1, -Vector3.forward);
+        basis.SetRow(2, Vector3.up);
+        basis[3, 3] = 1f;
+        girthLookup.DrawGizmos(bones[0], skinnedMeshRenderer, basis.inverse);
     }
 
     private void OnValidate() {
