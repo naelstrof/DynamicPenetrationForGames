@@ -35,8 +35,8 @@ public struct GirthLookup {
     private GirthLookupHandle lookupHandle;
 
     private struct GirthLookupHandle {
-        private Spline poseSpaceTimeSpline;
-        private Spline worldDistanceSpline;
+        public Spline poseSpaceTimeSpline;
+        public Spline worldDistanceSpline;
         private Spline3D targetSpline;
         private List<float> boneWorldDistances;
         private float maxLength;
@@ -50,14 +50,14 @@ public struct GirthLookup {
             for (int i = 0; i < boneWorldDistances.Count; i++) {
                 boneWorldDistances[i] = Mathf.Clamp01(boneWorldDistances[i]/maxLength);
             }
-            worldDistanceSpline = new Spline().SetFromCardinalPositions(boneWorldDistances, 0.75f);
-            poseSpaceTimeSpline = new Spline().SetFromCardinalPositions(boneTimes, 0.75f);
+            worldDistanceSpline = new Spline().SetFromCardinalPositions(boneWorldDistances, 1f);
+            poseSpaceTimeSpline = new Spline().SetFromCardinalPositions(boneTimes, 1f);
         }
         private float GetPoseSpaceTimeFromWorldTime(float alpha) {
             float sampleDistanceWorld = Mathf.Clamp01(targetSpline.GetDistanceFromTime(alpha)/maxLength);
-            float sampleDistance = worldDistanceSpline.GetTimeFromDistance(sampleDistanceWorld);
-            float poseSampleTime = poseSpaceTimeSpline.GetPositionFromT(Mathf.Clamp01(sampleDistance));
-            return poseSampleTime;
+            float poseSampleTime = Mathf.Clamp01(poseSpaceTimeSpline.GetTimeFromDistance(sampleDistanceWorld));
+            float sampleDistance = Mathf.Clamp01(worldDistanceSpline.GetTimeFromDistance(poseSampleTime));
+            return sampleDistance;
         }
         
         public float GetGirth(GirthLookup lookup, SkinnedMeshRenderer renderer, float alpha) {
@@ -77,10 +77,11 @@ public struct GirthLookup {
             for (int i = 0; i < boneWorldDistances.Count; i++) {
                 boneWorldDistances[i] = Mathf.Clamp01(boneWorldDistances[i]/maxLength);
             }
+
             worldDistanceSpline ??= new Spline();
-            worldDistanceSpline.SetFromCardinalPositions(boneWorldDistances, 0.75f);
-            poseSpaceTimeSpline ??= new();
-            poseSpaceTimeSpline.SetFromCardinalPositions(boneTimes, 0.75f);
+            worldDistanceSpline.SetFromCardinalPositions(boneWorldDistances, 1f);
+            poseSpaceTimeSpline ??= new Spline();
+            poseSpaceTimeSpline.SetFromCardinalPositions(boneTimes, 1f);
         }
         
     }
@@ -103,6 +104,8 @@ public struct GirthLookup {
             prevPosition = bones[i].position;
         }
         lookupHandle.RegenerateLookupHandle(this, worldBoneTimes, boneTimes, pretendSpline);
+        lookupHandle.poseSpaceTimeSpline.DrawGizmos(Color.cyan, 128);
+        lookupHandle.worldDistanceSpline.DrawGizmos(Color.green, 128);
         
         for (int i = 0; i < sampleCount; i++) {
             float samplePreAlpha = ((float)i / (float)sampleCount);
@@ -287,15 +290,20 @@ public struct GirthLookup {
         var fullLength = baseGirth.maxLocalLength;
         var boneCount = bones.Length;
         var boneTimes = new float[boneCount+1];
+        var distance = 0f;
+        if (!TryGetBoneIndex(skinnedMeshRenderer.bones, bones[0], out int firstBone)) {
+            throw new UnityException("You must choose a bones on the armature...");
+        }
+        GetBindPoseBoneLocalPositionRotation(skinnedMeshRenderer.sharedMesh.bindposes[firstBone], out Vector3 lastBonePosition, out Quaternion _, out float _);
         for (int i = 0; i < boneCount; i++) {
             var bone = bones[i];
             if (!TryGetBoneIndex(skinnedMeshRenderer.bones, bone, out int boneID)) {
                 throw new UnityException("You must choose a bones on the armature...");
             }
-            GetBindPoseBoneLocalPositionRotation(skinnedMeshRenderer.sharedMesh.bindposes[boneID], out Vector3 bonePosition, out Quaternion boneRotation, out float boneScale);
-            var boneDistance = Vector3.Dot(rendererLocalPenetratorForward, bonePosition - rendererLocalPenetratorRoot);
-            var boneTime = Mathf.Clamp01(boneDistance / fullLength);
-            boneTimes[i] = boneTime;
+            GetBindPoseBoneLocalPositionRotation(skinnedMeshRenderer.sharedMesh.bindposes[boneID], out Vector3 bonePosition, out Quaternion _, out float _);
+            distance += Vector3.Distance(lastBonePosition, bonePosition);
+            lastBonePosition = bonePosition;
+            boneTimes[i] = distance/fullLength;
         }
         boneTimes[boneCount] = 1f;
         girthLookup.boneTimes = boneTimes;
