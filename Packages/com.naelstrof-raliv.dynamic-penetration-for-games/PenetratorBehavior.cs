@@ -86,7 +86,7 @@ public class PenetratorBehavior : MonoBehaviour {
     }
 
     private void OnDrawGizmosSelected() {
-        penetratorCollisionSpheres.OnDrawGizmosSelected();
+        //penetratorCollisionSpheres.OnDrawGizmosSelected();
         if (skinnedMeshRendererMask.renderer == null) {
             return;
         }
