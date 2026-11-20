@@ -30,11 +30,11 @@ public struct GirthFrame {
     public AnimationCurveFast localXOffsetCurve;
     public AnimationCurveFast localYOffsetCurve;
 
-    public float SampleGirth(float dist) {
-        return localGirthRadiusCurve.Sample(dist);
+    public float SampleGirth(float alpha) {
+        return localGirthRadiusCurve.Sample(alpha);
     }
-    public Vector2 SampleOffset(float dist) {
-        return new Vector2(localXOffsetCurve.Sample(dist), localYOffsetCurve.Sample(dist));
+    public Vector2 SampleOffset(float alpha) {
+        return new Vector2(localXOffsetCurve.Sample(alpha), localYOffsetCurve.Sample(alpha));
     }
     
     public GirthFrame(int sampleCount, float fullLength, float maxGirth) {
@@ -43,6 +43,31 @@ public struct GirthFrame {
         localGirthRadiusCurve = new AnimationCurveFast(sampleCount);
         localXOffsetCurve = new AnimationCurveFast(sampleCount);
         localYOffsetCurve = new AnimationCurveFast(sampleCount);
+    }
+
+    public GirthFrame Clone() {
+        return new GirthFrame {
+            maxGirthRadius = maxGirthRadius,
+            maxLocalLength = maxLocalLength,
+            localGirthRadiusCurve = localGirthRadiusCurve.Clone(),
+            localXOffsetCurve = localXOffsetCurve.Clone(),
+            localYOffsetCurve = localYOffsetCurve.Clone()
+        };
+    }
+
+    public void SampleSkinnedMeshRenderer(SkinnedMeshRenderer renderer, IList<GirthFrame> blendshapes) {
+        var samples = localGirthRadiusCurve.GetSampleCount();
+        for (int i = 0; i < samples; i++) {
+            float weight = renderer.GetBlendShapeWeight(i)*0.01f;
+            if (weight == 0f) {
+                continue;
+            }
+            localGirthRadiusCurve.SetSample(i, localGirthRadiusCurve.GetSample(i) + blendshapes[i].localGirthRadiusCurve.GetSample(i)*weight);
+            localXOffsetCurve.SetSample(i, localXOffsetCurve.GetSample(i) + blendshapes[i].localXOffsetCurve.GetSample(i)*weight);
+            localYOffsetCurve.SetSample(i, localYOffsetCurve.GetSample(i) + blendshapes[i].localYOffsetCurve.GetSample(i)*weight);
+            maxGirthRadius = maxGirthRadius + blendshapes[i].maxGirthRadius*weight;
+            maxLocalLength = maxLocalLength + blendshapes[i].maxLocalLength*weight;
+        }
     }
     
     public void ConvertToBlendshape(GirthFrame baseShape) {

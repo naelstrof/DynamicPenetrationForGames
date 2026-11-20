@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DPG;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Vector3 = UnityEngine.Vector3;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -14,7 +15,7 @@ public class PenetratorBehavior : MonoBehaviour {
     [SerializeField] private PenetrableBehavior penetrableBehavior;
     [SerializeField] private RendererSubMeshMask skinnedMeshRendererMask;
     [SerializeField] private PenetratorCollisionSpheres penetratorCollisionSpheres;
-    [SerializeField] private GirthLookup girthLookup;
+    [FormerlySerializedAs("girthLookup")] [SerializeField] private SkinnedMeshGirth skinnedMeshGirth;
     private BoneChainOnCurve _boneChainOnCurve;
     private BoneChainCompression _boneChainCompression;
     private List<Vector3> cachedPoints = new List<Vector3>();
@@ -23,11 +24,11 @@ public class PenetratorBehavior : MonoBehaviour {
     [ContextMenu("Generate Girth Lookup")]
     private void GenerateGirthLookup() {
         var girthUnwrapShader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath("34d24fe4568f98c4cae4724e139cb644"));
-        var girthLookupTask = GirthLookup.GenerateGirthLookup(skinnedMeshRendererMask, girthUnwrapShader, bones, Vector3.zero, Vector3.up, -Vector3.forward, Vector3.right);
+        var girthLookupTask = SkinnedMeshGirth.GenerateGirthLookup(skinnedMeshRendererMask, girthUnwrapShader, bones, Vector3.zero, Vector3.up, -Vector3.forward, Vector3.right);
         Debug.Log("Attempting to generate lookups...");
         girthLookupTask.ContinueWith(task => {
             if (task.IsCompletedSuccessfully) {
-                girthLookup = task.Result;
+                skinnedMeshGirth = task.Result;
                 Debug.Log("Girth lookup generated successfully.");
             } else {
                 Debug.LogError("Failed to generate girth lookup: " + task.Exception);
@@ -99,7 +100,7 @@ public class PenetratorBehavior : MonoBehaviour {
         basis.SetRow(1, -Vector3.forward);
         basis.SetRow(2, Vector3.up);
         basis[3, 3] = 1f;
-        girthLookup.DrawGizmos(bones, skinnedMeshRenderer, basis.inverse);
+        skinnedMeshGirth.DrawGizmos(bones, skinnedMeshRenderer, basis.inverse);
     }
 
     private void OnValidate() {

@@ -9,8 +9,17 @@ public struct AnimationCurveFast {
         samples = new float[sampleCount];
     }
 
+    public AnimationCurveFast Clone() {
+        var newCurve = new AnimationCurveFast(samples.Length);
+        System.Array.Copy(samples, newCurve.samples, GetSampleCount());
+        return newCurve;
+    }
+
     public void SetSample(int index, float value) {
         samples[index] = value;
+    }
+    public float GetSample(int index) {
+        return samples[index];
     }
 
     public float Sample(float time) {

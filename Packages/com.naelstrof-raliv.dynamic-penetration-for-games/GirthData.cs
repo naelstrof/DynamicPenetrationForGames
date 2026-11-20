@@ -17,135 +17,70 @@
 using System;
 using System.Threading.Tasks;
 using GatorDragonGames;
+using UnityEngine;
 
 namespace DPG {
 
 using System.Collections.Generic;
-using Unity.Collections;
-using UnityEngine;
-using UnityEngine.Rendering;
 
-[System.Serializable]
-public struct GirthLookup {
-    public float maxGirth;
-    [SerializeField] public GirthFrame baseGirth;
-    [SerializeField] public GirthFrame[] girthDeltas;
-    [SerializeField] public float[] boneTimes;
-    [SerializeField] public float lengthPastTip;
-    private GirthLookupHandle lookupHandle;
+[Serializable]
+public struct GirthLookupHandle {
+    [SerializeField] private float[] boneWorldDistances;
+    [SerializeField] private float maxLength;
+    [SerializeField] private GirthFrame girthFrame;
+    [SerializeField] private float[] boneTimes;
+    [SerializeField] private Vector3 poseToWorldScale;
+    
+    private Spline poseSpaceTimeSpline;
+    private Spline worldDistanceSpline;
+    private Spline3D targetSpline;
 
-    private struct GirthLookupHandle {
-        public Spline poseSpaceTimeSpline;
-        public Spline worldDistanceSpline;
-        private Spline3D targetSpline;
-        private List<float> boneWorldDistances;
-        private float maxLength;
-
-        public GirthLookupHandle(GirthLookup lookup, IList<float> worldBoneDistances, IList<float> boneTimes, Spline3D onSpline) {
-            targetSpline = onSpline;
-            boneWorldDistances = new();
-            boneWorldDistances.AddRange(worldBoneDistances);
-            boneWorldDistances.Add(worldBoneDistances[^1]+lookup.lengthPastTip);
-            maxLength = boneWorldDistances[^1];
-            for (int i = 0; i < boneWorldDistances.Count; i++) {
-                boneWorldDistances[i] = Mathf.Clamp01(boneWorldDistances[i]/maxLength);
-            }
-            worldDistanceSpline = new Spline().SetFromCardinalPositions(boneWorldDistances, 1f);
-            poseSpaceTimeSpline = new Spline().SetFromCardinalPositions(boneTimes, 1f);
+    public GirthLookupHandle(GirthFrame girthFrame, IList<float> worldBoneDistancesIncludingTip, IList<float> boneTimes, Vector3 poseToWorldScale, Spline3D onSpline) {
+        this.boneTimes = new float[boneTimes.Count];
+        boneTimes.CopyTo(this.boneTimes, 0);
+        targetSpline = onSpline;
+        boneWorldDistances = new float[worldBoneDistancesIncludingTip.Count];
+        worldBoneDistancesIncludingTip.CopyTo(boneWorldDistances, 0);
+        maxLength = boneWorldDistances[^1];
+        for (int i = 0; i < boneWorldDistances.Length; i++) {
+            boneWorldDistances[i] = Mathf.Clamp01(boneWorldDistances[i]/maxLength);
         }
-        private float GetPoseSpaceTimeFromWorldTime(float alpha) {
-            float sampleDistanceWorld = Mathf.Clamp01(targetSpline.GetDistanceFromTime(alpha)/maxLength);
-            float poseSampleTime = Mathf.Clamp01(poseSpaceTimeSpline.GetTimeFromDistance(sampleDistanceWorld));
-            float sampleDistance = Mathf.Clamp01(worldDistanceSpline.GetTimeFromDistance(poseSampleTime));
-            return sampleDistance;
-        }
-        
-        public float GetGirth(GirthLookup lookup, SkinnedMeshRenderer renderer, float alpha) {
-            return lookup.GetGirth(renderer, GetPoseSpaceTimeFromWorldTime(alpha));
-        }
-        
-        public Vector2 GetOffset(GirthLookup lookup, SkinnedMeshRenderer renderer, float alpha) {
-            return lookup.GetOffset(renderer, GetPoseSpaceTimeFromWorldTime(alpha));
-        }
-        public void RegenerateLookupHandle(GirthLookup lookup, IList<float> worldBoneDistances, IList<float> boneTimes, Spline3D onSpline) {
-            targetSpline = onSpline;
-            boneWorldDistances ??= new();
-            boneWorldDistances.Clear();
-            boneWorldDistances.AddRange(worldBoneDistances);
-            boneWorldDistances.Add(worldBoneDistances[^1]+lookup.lengthPastTip);
-            maxLength = boneWorldDistances[^1];
-            for (int i = 0; i < boneWorldDistances.Count; i++) {
-                boneWorldDistances[i] = Mathf.Clamp01(boneWorldDistances[i]/maxLength);
-            }
-
-            worldDistanceSpline ??= new Spline();
-            worldDistanceSpline.SetFromCardinalPositions(boneWorldDistances, 1f);
-            poseSpaceTimeSpline ??= new Spline();
-            poseSpaceTimeSpline.SetFromCardinalPositions(boneTimes, 1f);
-        }
-        
+        worldDistanceSpline = new Spline().SetFromCardinalPositions(boneWorldDistances, 1f);
+        poseSpaceTimeSpline = new Spline().SetFromCardinalPositions(boneTimes, 1f);
+        this.poseToWorldScale = poseToWorldScale;
+        this.girthFrame = girthFrame;
     }
-
-    public void DrawGizmos(Transform[] bones, SkinnedMeshRenderer renderer, Matrix4x4 dickBasis, int sampleCount = 128) {
-        Gizmos.matrix = Matrix4x4.identity;
-        Gizmos.color = Color.green;
-        
-        List<Vector3> staticVertices = new List<Vector3>(Array.ConvertAll(bones, t => t.position)) { bones[^1].position + (bones[^1].position-bones[^2].position).normalized*1f };
-        Spline3D pretendSpline = new Spline3D().SetFromBSplinePositions(staticVertices);
-        
-        pretendSpline.GizmoDraw(Color.green, Color.yellow, 128);
-        
-        float[] worldBoneTimes = new float[bones.Length];
-        var sum = 0f;
-        var prevPosition = bones[0].position;
-        for(int i=0; i<bones.Length; i++) {
-            sum += Vector3.Distance(prevPosition, bones[i].position);
-            worldBoneTimes[i] = sum;
-            prevPosition = bones[i].position;
-        }
-        lookupHandle.RegenerateLookupHandle(this, worldBoneTimes, boneTimes, pretendSpline);
-        lookupHandle.poseSpaceTimeSpline.DrawGizmos(Color.cyan, 128);
-        lookupHandle.worldDistanceSpline.DrawGizmos(Color.green, 128);
-        
+    private float GetPoseSpaceTimeFromWorldTime(float alpha) {
+        float sampleDistanceWorld = Mathf.Clamp01(targetSpline.GetDistanceFromTime(alpha)/maxLength/poseToWorldScale.z);
+        float poseSampleTime = Mathf.Clamp01(poseSpaceTimeSpline.GetTimeFromDistance(sampleDistanceWorld));
+        float sampleDistance = Mathf.Clamp01(worldDistanceSpline.GetTimeFromDistance(poseSampleTime));
+        return Mathf.Clamp01(sampleDistance);
+    }
+    
+    public float GetGirth(float alpha) {
+        return girthFrame.SampleGirth(GetPoseSpaceTimeFromWorldTime(alpha))*poseToWorldScale.x;
+    }
+    
+    public Vector2 GetOffset(float alpha) {
+        return girthFrame.SampleOffset(GetPoseSpaceTimeFromWorldTime(alpha))*poseToWorldScale;
+    }
+    
+    public void DrawGizmos(int sampleCount, Vector3 dickWorldUp, Matrix4x4 dickBasis) {
         for (int i = 0; i < sampleCount; i++) {
             float samplePreAlpha = ((float)i / (float)sampleCount);
-            float sampleDistance = samplePreAlpha * pretendSpline.arcLength;
-            float sampleAlpha = pretendSpline.GetTimeFromDistance(sampleDistance);
+            float sampleDistance = samplePreAlpha * targetSpline.arcLength;
+            float sampleAlpha = targetSpline.GetTimeFromDistance(sampleDistance);
             
-            Gizmos.color = Color.Lerp(Color.green, Color.red, sampleAlpha);
             if (sampleAlpha > 1f) {
                 break;
             }
-            float girthRadius = lookupHandle.GetGirth(this, renderer, sampleAlpha);
-            Vector3 offset = lookupHandle.GetOffset(this, renderer, sampleAlpha);
-            var refFrame = pretendSpline.GetReferenceFrameFromT(sampleAlpha, bones[0].up);
+            Gizmos.color = Color.Lerp(Color.green, Color.red, sampleAlpha);
+            float girthRadius = GetGirth(sampleAlpha);
+            Vector3 offset = GetOffset(sampleAlpha);
+            var refFrame = targetSpline.GetReferenceFrameFromT(sampleAlpha, dickWorldUp);
             var position = refFrame.MultiplyPoint(dickBasis.MultiplyVector(offset));
             DrawCircle(position, refFrame.MultiplyVector(Vector3.forward), girthRadius);
         }
-    }
-
-    public float GetLength(SkinnedMeshRenderer renderer) {
-        var b = baseGirth.maxLocalLength;
-        for(int i=0; i<girthDeltas.Length; i++) {
-            b += girthDeltas[i].maxLocalLength * renderer.GetBlendShapeWeight(i)*0.01f;
-        }
-        return b;
-    }
-    
-    public float GetGirth(SkinnedMeshRenderer renderer, float alpha) {
-        var b = baseGirth.SampleGirth(alpha);
-        for(int i=0; i<girthDeltas.Length; i++) {
-            b += girthDeltas[i].SampleGirth(alpha) * renderer.GetBlendShapeWeight(i)*0.01f;
-        }
-        return b;
-    }
-    
-    public Vector2 GetOffset(SkinnedMeshRenderer renderer, float alpha) {
-        var b = baseGirth.SampleOffset(alpha);
-        for(int i=0; i<girthDeltas.Length; i++) {
-            b += girthDeltas[i].SampleOffset(alpha) * renderer.GetBlendShapeWeight(i)*0.01f;
-        }
-        return b;
     }
     
     private void DrawCircle(Vector3 position, Vector3 normal, float radius, int segments = 16) {
@@ -165,6 +100,53 @@ public struct GirthLookup {
             prevPoint = nextPoint;
         }
     }
+}
+
+[Serializable]
+public struct SkinnedMeshGirth {
+    [SerializeField] public float maxGirth;
+    [SerializeField] public GirthFrame baseGirth;
+    [SerializeField] public GirthFrame[] girthDeltas;
+    [SerializeField] public float lengthPastTip;
+    [SerializeField] public float[] boneTimes;
+
+    public void DrawGizmos(Transform[] bones, SkinnedMeshRenderer renderer, Matrix4x4 dickBasis, int sampleCount = 128) {
+        Gizmos.matrix = Matrix4x4.identity;
+        Gizmos.color = Color.green;
+        
+        List<Vector3> staticVertices = new List<Vector3>(Array.ConvertAll(bones, t => t.position)) { bones[^1].position + (bones[^1].position-bones[^2].position).normalized*1f };
+        Spline3D pretendSpline = new Spline3D().SetFromBSplinePositions(staticVertices);
+        var lookupHandle = GetGirthLookupHandle(renderer, bones, GetWorldBoneTimes(bones), pretendSpline);
+        lookupHandle.DrawGizmos(sampleCount, Vector3.up, dickBasis);
+    }
+    
+    private float[] GetWorldBoneTimes(Transform[] bones) {
+        float[] worldBoneTimes = new float[bones.Length+1];
+        var sum = 0f;
+        var prevPosition = bones[0].position;
+        for(int i=0; i<bones.Length; i++) {
+            sum += Vector3.Distance(prevPosition, bones[i].position);
+            worldBoneTimes[i] = sum;
+            prevPosition = bones[i].position;
+        }
+
+        worldBoneTimes[^1] = sum + lengthPastTip;
+        return worldBoneTimes;
+    }
+    
+    public GirthLookupHandle GetGirthLookupHandle(SkinnedMeshRenderer renderer, Transform[] bones, float[] worldBoneTimesIncludingTip, Spline3D onSpline) {
+        var girthFrame = GetGirthFrame(renderer);
+        var scale = bones[0].lossyScale;
+        scale = new Vector3(scale.x, scale.z, scale.y*(girthFrame.maxLocalLength/baseGirth.maxLocalLength));
+        return new GirthLookupHandle(girthFrame, worldBoneTimesIncludingTip, boneTimes, scale, onSpline);
+    }
+
+    public GirthFrame GetGirthFrame(SkinnedMeshRenderer renderer) {
+        var b = baseGirth.Clone();
+        b.SampleSkinnedMeshRenderer(renderer, girthDeltas);
+        return b;
+    }
+    
 
     private static void GetBindPoseBoneLocalPositionRotation(Matrix4x4 boneMatrix, out Vector3 position, out Quaternion rotation, out float scale) {
         // Get global matrix for bone
@@ -251,7 +233,7 @@ public struct GirthLookup {
         return false;
     }
     
-    public static async Task<GirthLookup> GenerateGirthLookup(RendererSubMeshMask rendererWithMask, Shader girthUnwrapShader, Transform[] bones, Vector3 rootLocalPenetratorRoot, Vector3 rootLocalPenetratorForward, Vector3 rootLocalPenetratorUp, Vector3 rootLocalPenetratorRight) {
+    public static async Task<SkinnedMeshGirth> GenerateGirthLookup(RendererSubMeshMask rendererWithMask, Shader girthUnwrapShader, Transform[] bones, Vector3 rootLocalPenetratorRoot, Vector3 rootLocalPenetratorForward, Vector3 rootLocalPenetratorUp, Vector3 rootLocalPenetratorRight) {
         Vector3 rendererLocalPenetratorForward = Vector3.zero;
         Vector3 rendererLocalPenetratorUp = Vector3.zero;
         Vector3 rendererLocalPenetratorRight = Vector3.zero;
@@ -282,7 +264,7 @@ public struct GirthLookup {
             blendshapeGirth.ConvertToBlendshape(baseGirth);
             blendshapeGirths[i] = blendshapeGirth;
         }
-        var girthLookup = new GirthLookup() {
+        var girthLookup = new SkinnedMeshGirth() {
             baseGirth = baseGirth,
             girthDeltas = blendshapeGirths,
             maxGirth = maxGirth,
