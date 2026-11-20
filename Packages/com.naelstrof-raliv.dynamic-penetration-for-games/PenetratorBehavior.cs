@@ -23,8 +23,9 @@ public class PenetratorBehavior : MonoBehaviour {
 #if UNITY_EDITOR
     [ContextMenu("Generate Girth Lookup")]
     private void GenerateGirthLookup() {
+        Matrix4x4 bindPose = GirthFrame.GetDefaultPenetratorPose();
         var girthUnwrapShader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath("34d24fe4568f98c4cae4724e139cb644"));
-        var girthLookupTask = SkinnedMeshGirth.GenerateGirthLookup(skinnedMeshRendererMask, girthUnwrapShader, bones, Vector3.zero, Vector3.up, -Vector3.forward, Vector3.right);
+        var girthLookupTask = SkinnedMeshGirth.GenerateGirthLookup(skinnedMeshRendererMask, girthUnwrapShader, bones, bindPose);
         Debug.Log("Attempting to generate lookups...");
         girthLookupTask.ContinueWith(task => {
             if (task.IsCompletedSuccessfully) {
@@ -95,12 +96,7 @@ public class PenetratorBehavior : MonoBehaviour {
             return;
         }
         var skinnedMeshRenderer = skinnedMeshRendererMask.renderer as SkinnedMeshRenderer;
-        Matrix4x4 basis = new Matrix4x4();
-        basis.SetRow(0, Vector3.right);
-        basis.SetRow(1, -Vector3.forward);
-        basis.SetRow(2, Vector3.up);
-        basis[3, 3] = 1f;
-        skinnedMeshGirth.DrawGizmos(bones, skinnedMeshRenderer, basis.inverse);
+        skinnedMeshGirth.DrawGizmos(skinnedMeshRenderer, bones[0]);
     }
 
     private void OnValidate() {

@@ -24,75 +24,110 @@ namespace DPG {
 
 [System.Serializable]
 public struct GirthFrame {
+    public static Matrix4x4 GetDefaultPenetratorPose() => Matrix4x4.TRS(Vector3.zero, Quaternion.LookRotation(Vector3.up,-Vector3.forward), Vector3.one);
+
     public float maxGirthRadius;
     public float maxLocalLength;
-    public AnimationCurveFast localGirthRadiusCurve;
-    public AnimationCurveFast localXOffsetCurve;
-    public AnimationCurveFast localYOffsetCurve;
-
-    public float SampleGirth(float alpha) {
-        return localGirthRadiusCurve.Sample(alpha);
-    }
-    public Vector2 SampleOffset(float alpha) {
-        return new Vector2(localXOffsetCurve.Sample(alpha), localYOffsetCurve.Sample(alpha));
-    }
     
+    public GirthSliceCurve girthCurve;
+
+    public GirthSlice SampleGirth(float alpha) {
+        return girthCurve.Sample(alpha);
+    }
     public GirthFrame(int sampleCount, float fullLength, float maxGirth) {
         maxGirthRadius = maxGirth;
         maxLocalLength = fullLength;
-        localGirthRadiusCurve = new AnimationCurveFast(sampleCount);
-        localXOffsetCurve = new AnimationCurveFast(sampleCount);
-        localYOffsetCurve = new AnimationCurveFast(sampleCount);
+        girthCurve = new GirthSliceCurve(sampleCount);
+    }
+
+    public void DrawGizmos(Matrix4x4 transform, int samples) {
+        Gizmos.matrix = transform*GetDefaultPenetratorPose();
+        for (int i = 0; i < samples; i++) {
+            float alpha = (float)i / (float)(samples - 1);
+            GirthSlice slice = SampleGirth(alpha);
+            DrawCircle(slice.position, Vector3.forward, slice.radius, 16);
+        }
+    }
+    
+    private void DrawCircle(Vector3 position, Vector3 normal, float radius, int segments = 16) {
+        Vector3 tangent = Vector3.Cross(normal, Vector3.up);
+        if (tangent.sqrMagnitude < 0.001f) {
+            tangent = Vector3.Cross(normal, Vector3.right);
+        }
+        tangent.Normalize();
+        Vector3 bitangent = Vector3.Cross(normal, tangent);
+        bitangent.Normalize();
+
+        Vector3 prevPoint = position + tangent * radius;
+        for (int i = 1; i <= segments; i++) {
+            float angle = (float)i / (float)segments * Mathf.PI * 2f;
+            Vector3 nextPoint = position + (tangent * Mathf.Cos(angle) + bitangent * Mathf.Sin(angle)) * radius;
+            Gizmos.DrawLine(prevPoint, nextPoint);
+            prevPoint = nextPoint;
+        }
     }
 
     public GirthFrame Clone() {
         return new GirthFrame {
             maxGirthRadius = maxGirthRadius,
             maxLocalLength = maxLocalLength,
-            localGirthRadiusCurve = localGirthRadiusCurve.Clone(),
-            localXOffsetCurve = localXOffsetCurve.Clone(),
-            localYOffsetCurve = localYOffsetCurve.Clone()
+            girthCurve = girthCurve.Clone(),
         };
     }
 
-    public void SampleSkinnedMeshRenderer(SkinnedMeshRenderer renderer, IList<GirthFrame> blendshapes) {
-        var samples = localGirthRadiusCurve.GetSampleCount();
+    public void SampleBlendshapes(SkinnedMeshRenderer renderer, IList<GirthFrame> blendshapes) {
+        var samples = girthCurve.GetSampleCount();
+        var blendshapeCount = blendshapes.Count;
+
         for (int i = 0; i < samples; i++) {
-            float weight = renderer.GetBlendShapeWeight(i)*0.01f;
+            var girthSlice = girthCurve.GetSample(i);
+            for (int j = 0; j < blendshapeCount; j++) {
+                float weight = renderer.GetBlendShapeWeight(j) * 0.01f;
+                if (weight == 0f) {
+                    continue;
+                }
+                girthSlice += blendshapes[j].girthCurve.GetSample(i) * weight;
+            }
+            girthCurve.SetSample(i, girthSlice);
+        }
+
+        for (int j = 0; j < blendshapeCount; j++) {
+            float weight = renderer.GetBlendShapeWeight(j) * 0.01f;
             if (weight == 0f) {
                 continue;
             }
-            localGirthRadiusCurve.SetSample(i, localGirthRadiusCurve.GetSample(i) + blendshapes[i].localGirthRadiusCurve.GetSample(i)*weight);
-            localXOffsetCurve.SetSample(i, localXOffsetCurve.GetSample(i) + blendshapes[i].localXOffsetCurve.GetSample(i)*weight);
-            localYOffsetCurve.SetSample(i, localYOffsetCurve.GetSample(i) + blendshapes[i].localYOffsetCurve.GetSample(i)*weight);
-            maxGirthRadius = maxGirthRadius + blendshapes[i].maxGirthRadius*weight;
-            maxLocalLength = maxLocalLength + blendshapes[i].maxLocalLength*weight;
+            maxGirthRadius += blendshapes[j].maxGirthRadius * weight;
+            maxLocalLength += blendshapes[j].maxLocalLength * weight;
+        }
+    }
+
+    public void SampleTransforms(SkinnedMeshRenderer renderer, Matrix4x4 penetratorBindPose, Transform rootBone) {
+        var samples = girthCurve.GetSampleCount();
+        for (int i = 0; i < samples; i++) {
+            var slice = girthCurve.GetSample(i);
+            var meshPos = penetratorBindPose.MultiplyPoint3x4(slice.position);
+            var bindposes = renderer.sharedMesh.bindposes;
+            var bones = renderer.bones;
+            var worldPos =
+                bones[slice.boneIndex0].TransformPoint(bindposes[slice.boneIndex0].MultiplyPoint3x4(meshPos)) * slice.boneWeights.x +
+                bones[slice.boneIndex1].TransformPoint(bindposes[slice.boneIndex1].MultiplyPoint3x4(meshPos)) * slice.boneWeights.y +
+                bones[slice.boneIndex2].TransformPoint(bindposes[slice.boneIndex2].MultiplyPoint3x4(meshPos)) * slice.boneWeights.z +
+                bones[slice.boneIndex3].TransformPoint(bindposes[slice.boneIndex3].MultiplyPoint3x4(meshPos)) * slice.boneWeights.w;
+            
+            slice.position = GetDefaultPenetratorPose().inverse.MultiplyPoint3x4(rootBone.InverseTransformPoint(worldPos)); 
+            girthCurve.SetSample(i, slice);
         }
     }
     
     public void ConvertToBlendshape(GirthFrame baseShape) {
-        var samples = localGirthRadiusCurve.GetSampleCount();
-        var blendshapeGirthRadius = new AnimationCurveFast(samples);
-        var blendshapeXOffset = new AnimationCurveFast(samples);
-        var blendshapeYOffset = new AnimationCurveFast(samples);
-        for (int i = 0; i < samples-1; i++) {
-            var sampleDistance = (float)i / (float)samples;
-            float baseGirth = baseShape.localGirthRadiusCurve.Sample(sampleDistance);
-            float baseXOffset = baseShape.localXOffsetCurve.Sample(sampleDistance);
-            float baseYOffset = baseShape.localYOffsetCurve.Sample(sampleDistance);
-            float girthDelta = localGirthRadiusCurve.Sample(sampleDistance) - baseGirth;
-            float xOffsetDelta = localXOffsetCurve.Sample(sampleDistance) - baseXOffset;
-            float yOffsetDelta = localYOffsetCurve.Sample(sampleDistance) - baseYOffset;
-            blendshapeGirthRadius.SetSample(i, girthDelta);
-            blendshapeXOffset.SetSample(i, xOffsetDelta);
-            blendshapeYOffset.SetSample(i, yOffsetDelta);
+        var samples = girthCurve.GetSampleCount();
+        var blendshapeGirthCurve = girthCurve.Clone();
+        for (int i = 0; i < samples; i++) {
+            var baseGirth = baseShape.girthCurve.GetSample(i);
+            var girthDelta = girthCurve.GetSample(i) - baseGirth;
+            blendshapeGirthCurve.SetSample(i, girthDelta);
         }
-        blendshapeGirthRadius.SetSample(samples-1, 0f);
-        blendshapeXOffset.SetSample(samples-1, 0f);
-        blendshapeYOffset.SetSample(samples-1, 0f);
-        localGirthRadiusCurve = blendshapeGirthRadius;
-        localXOffsetCurve = blendshapeXOffset;
-        localYOffsetCurve = blendshapeYOffset;
+        girthCurve = blendshapeGirthCurve;
         maxLocalLength -= baseShape.maxLocalLength;
         maxGirthRadius -= baseShape.maxGirthRadius;
     }
@@ -102,12 +137,7 @@ public struct GirthFrame {
     private static Material staticMaterialA;
     private static Material staticMaterialB;
     private static Material subtractBlit;
-    public static async Task<GirthFrame> GenerateGirthFrame(RendererSubMeshMask rendererMask, Transform penetratorRoot, Vector3 rendererLocalPenetratorRoot,
-        Vector3 rendererLocalPenetratorForward,
-        Vector3 rendererLocalPenetratorUp,
-        Vector3 rendererLocalPenetratorRight,
-        int blendshapeIndex, float maxGirth, Shader girthUnwrapShader) {
-        
+    public static async Task<GirthFrame> GenerateGirthFrame(RendererSubMeshMask rendererMask, Transform penetratorRoot, Matrix4x4 penetratorBindPose, int blendshapeIndex, float maxGirth, Shader girthUnwrapShader) {
         GirthFrame girthFrame = new GirthFrame(2,1, maxGirth);
         var girthMap = new RenderTexture(64, 64, 0, RenderTextureFormat.R8, RenderTextureReadWrite.Linear) {
             useMipMap = true,
@@ -159,7 +189,7 @@ public struct GirthFrame {
                 BoneWeight1 weight = weights[wt];
                 if (validBones.Contains(weight.boneIndex) && weight.weight > 0.1f) {
                     Vector3 pos = staticVertices[vt];
-                    float length = Vector3.Dot(rendererLocalPenetratorForward, pos - rendererLocalPenetratorRoot);
+                    float length = Vector3.Dot(penetratorBindPose.GetColumn(2), pos - (Vector3)penetratorBindPose.GetColumn(3));
                     girthFrame.maxLocalLength = Mathf.Max(length, girthFrame.maxLocalLength);
                 }
 
@@ -178,17 +208,17 @@ public struct GirthFrame {
         }
 
         staticMaterialA.SetFloat("_AngleOffset", Mathf.PI / 2f);
-        staticMaterialA.SetVector("_PenetratorOrigin", rendererLocalPenetratorRoot);
-        staticMaterialA.SetVector("_PenetratorForward", rendererLocalPenetratorForward);
-        staticMaterialA.SetVector("_PenetratorUp", rendererLocalPenetratorUp);
-        staticMaterialA.SetVector("_PenetratorRight", rendererLocalPenetratorRight);
+        staticMaterialA.SetVector("_PenetratorOrigin", (Vector3)penetratorBindPose.GetColumn(3));
+        staticMaterialA.SetVector("_PenetratorForward", penetratorBindPose.GetColumn(2).normalized);
+        staticMaterialA.SetVector("_PenetratorUp", penetratorBindPose.GetColumn(1).normalized);
+        staticMaterialA.SetVector("_PenetratorRight", penetratorBindPose.GetColumn(0).normalized);
         staticMaterialA.SetFloat("_MaxLength", girthFrame.maxLocalLength);
         staticMaterialA.SetFloat("_MaxGirth", girthFrame.maxGirthRadius);
         staticMaterialB.SetFloat("_AngleOffset", -Mathf.PI / 2f);
-        staticMaterialB.SetVector("_PenetratorOrigin", rendererLocalPenetratorRoot);
-        staticMaterialB.SetVector("_PenetratorForward", rendererLocalPenetratorForward);
-        staticMaterialB.SetVector("_PenetratorUp", rendererLocalPenetratorUp);
-        staticMaterialB.SetVector("_PenetratorRight", rendererLocalPenetratorRight);
+        staticMaterialB.SetVector("_PenetratorOrigin", (Vector3)penetratorBindPose.GetColumn(3));
+        staticMaterialB.SetVector("_PenetratorForward", penetratorBindPose.GetColumn(2).normalized);
+        staticMaterialB.SetVector("_PenetratorUp", penetratorBindPose.GetColumn(1).normalized);
+        staticMaterialB.SetVector("_PenetratorRight", penetratorBindPose.GetColumn(0).normalized);
         staticMaterialB.SetFloat("_MaxLength", girthFrame.maxLocalLength);
         staticMaterialB.SetFloat("_MaxGirth", girthFrame.maxGirthRadius);
 
@@ -211,6 +241,8 @@ public struct GirthFrame {
         girthMap.GenerateMips();
 
         girthFrame = await Readback(girthFrame, girthMap);
+        
+        girthFrame = BindToNearestVertices(girthFrame, penetratorBindPose, mesh);
 
         if (freemesh) {
             if (Application.isPlaying) {
@@ -232,8 +264,7 @@ public struct GirthFrame {
         cpuTex.Apply();
         RenderTexture.active = lastActive;
         var bytes = cpuTex.GetRawTextureData<byte>();
-        girthFrame = PopulateOffsetCurves(girthFrame, bytes, girthMap.width, girthMap.height);
-        girthFrame = PopulateGirthCurve(girthFrame, bytes, girthMap.width, girthMap.height);
+        girthFrame = PopulateGirthSlices(girthFrame, bytes, girthMap.width, girthMap.height);
         if (Application.isPlaying) {
             Object.Destroy(cpuTex);
         }
@@ -253,8 +284,7 @@ public struct GirthFrame {
                 return DoSlowReadback(girthFrame, girthMap);
             }
             // Otherwise our data is good.
-            girthFrame = PopulateOffsetCurves(girthFrame, nativeArray, request.width, request.height);
-            girthFrame = PopulateGirthCurve(girthFrame, nativeArray, request.width, request.height);
+            girthFrame = PopulateGirthSlices(girthFrame, nativeArray, request.width, request.height);
             nativeArray.Dispose();
             return girthFrame;
         } else {
@@ -262,10 +292,42 @@ public struct GirthFrame {
         }
     }
 
-    private static GirthFrame PopulateOffsetCurves(GirthFrame input, NativeArray<byte> bytes, int width, int height) {
-        input.localXOffsetCurve = new AnimationCurveFast(width);
-        input.localYOffsetCurve = new AnimationCurveFast(width);
+    private static GirthFrame BindToNearestVertices(GirthFrame input, Matrix4x4 penetratorBindPose, Mesh mesh) {
+        var vertices = mesh.vertices;
+        var vertexCount = vertices.Length;
+        var boneWeights = mesh.boneWeights;
+        var samples = input.girthCurve.GetSampleCount();
+        for (int i = 0; i < samples; i++) {
+            var girthSlice = input.girthCurve.GetSample(i);
+            var localPos = penetratorBindPose.MultiplyPoint(girthSlice.position);
+            float nearestDistance = float.MaxValue;
+            int nearestVertexIndex = -1;
+            for (int v = 0; v < vertexCount; v++) {
+                var vertex = vertices[v];
+                var distance = Vector3.Distance(localPos, vertex);
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearestVertexIndex = v;
+                }
+            }
+            if (nearestVertexIndex != -1) {
+                var weight = boneWeights[nearestVertexIndex];
+                girthSlice.boneWeights = new Vector4(weight.weight0, weight.weight1, weight.weight2, weight.weight3);
+                girthSlice.boneIndex0 = weight.boneIndex0;
+                girthSlice.boneIndex1 = weight.boneIndex1;
+                girthSlice.boneIndex2 = weight.boneIndex2;
+                girthSlice.boneIndex3 = weight.boneIndex3;
+                input.girthCurve.SetSample(i, girthSlice);
+            }
+        }
+
+        return input;
+    }
+
+    private static GirthFrame PopulateGirthSlices(GirthFrame input, NativeArray<byte> bytes, int width, int height) {
+        input.girthCurve = new GirthSliceCurve(width);
         for (int x = 0; x < width; x++) {
+            GirthSlice slice = new GirthSlice();
             Vector2 positionSum = Vector2.zero;
             for (int y = 0; y < height / 2; y++) {
                 float color = (float)bytes[x + y * width] / 255f; //cpuTex.GetPixel(x,y).r;
@@ -288,25 +350,9 @@ public struct GirthFrame {
             Vector2 positionAverage = positionSum / (float)(height / 2);
             positionAverage *= 2;
 
-            input.localXOffsetCurve.SetSample(x, positionAverage.x);
-            input.localYOffsetCurve.SetSample(x, positionAverage.y);
-        }
+            slice.position = new Vector3(positionAverage.x, positionAverage.y, input.maxLocalLength*(float)x/(float)width);
 
-        input.localXOffsetCurve.SetSample(width-1, 0f);
-        input.localYOffsetCurve.SetSample(width-1, 0f);
-        return input;
-    }
-
-    private static float GetEasing(float x) {
-        return x >= 1f ? 1f : 1f - Mathf.Pow(2, -10f * x);
-    }
-
-    private static GirthFrame PopulateGirthCurve(GirthFrame input, NativeArray<byte> bytes, int width, int height) {
-        input.localGirthRadiusCurve = new AnimationCurveFast(width);
-        for (int x = 0; x < width; x++) {
             float averageRadius = 0f;
-            Vector2 offset = new Vector2(input.localXOffsetCurve.Sample((float)x / (float)width * input.maxLocalLength),
-                input.localYOffsetCurve.Sample((float)x / (float)width * input.maxLocalLength));
             for (int y = 0; y < height; y++) {
                 float color = (float)bytes[x + y * width] / 255f; //cpuTex.GetPixel(x,y).r;
                 float rad = ((float)y / (float)height) * Mathf.PI * 2f;
@@ -314,25 +360,30 @@ public struct GirthFrame {
                 float xPosition = Mathf.Sin(rad - Mathf.PI / 2f) * distFromCore;
                 float yPosition = Mathf.Cos(rad - Mathf.PI / 2f) * distFromCore;
                 Vector2 position = new Vector2(xPosition, yPosition);
-                averageRadius += Vector2.Distance(position, offset);
+                averageRadius += Vector2.Distance(position, new Vector2(slice.position.x, slice.position.y));
             }
-
+            
             averageRadius /= height;
             // 10% of the dick is tapered at the end, to make it continuous
             int taperEndCount = Mathf.Max(width / 10, 3);
             if (x > width - taperEndCount) {
                 float multiplier = (float)(width - x) / (taperEndCount - 1);
-                input.localGirthRadiusCurve.SetSample(x, averageRadius * multiplier * multiplier);
+                slice.radius = averageRadius * multiplier * multiplier;
+            } else {
+                slice.radius = averageRadius;
             }
-            else {
-                input.localGirthRadiusCurve.SetSample(x, averageRadius);
-            }
+            input.girthCurve.SetSample(x, slice);
         }
-
-        input.localGirthRadiusCurve.SetSample(width-1, 0f);
+        var copy = input.girthCurve.GetSample(width - 2);
+        copy.radius = 0f;
+        input.girthCurve.SetSample(width - 1, copy);
         return input;
     }
-    
+
+    private static float GetEasing(float x) {
+        return x >= 1f ? 1f : 1f - Mathf.Pow(2, -10f * x);
+    }
+
 }
 
 }
