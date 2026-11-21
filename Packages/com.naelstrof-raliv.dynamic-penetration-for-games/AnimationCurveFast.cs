@@ -27,7 +27,7 @@ public struct GirthSlice {
         GirthSlice result = new GirthSlice {
             radius = a.radius + b.radius,
             position = a.position + b.position,
-            boneWeights = a.boneWeights + b.boneWeights,
+            boneWeights = a.boneWeights,
             boneIndex0 = a.boneIndex0,
             boneIndex1 = a.boneIndex1,
             boneIndex2 = a.boneIndex2,
@@ -102,12 +102,12 @@ public struct GirthSliceCurve {
         return GirthSlice.Lerp(samples[loc], samples[loc + 1], lerp);
     }
 
-    /*public T GetPiecewiseDerivative(float time) {
+    public GirthSlice GetPiecewiseDerivative(float time) {
         float epsilon = 0.001f;
-        T a = Sample(time - epsilon);
-        T b = Sample(time + epsilon);
-        return (b - a) / (epsilon * 2f);
-    }*/
+        GirthSlice a = Sample(time - epsilon);
+        GirthSlice b = Sample(time + epsilon);
+        return (b - a) * (1f/(epsilon * 2f));
+    }
 }
 
 }

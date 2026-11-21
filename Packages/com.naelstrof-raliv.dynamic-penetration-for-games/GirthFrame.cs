@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using GatorDragonGames;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -42,10 +43,13 @@ public struct GirthFrame {
 
     public void DrawGizmos(Matrix4x4 transform, int samples) {
         Gizmos.matrix = transform*GetDefaultPenetratorPose();
+        var lastPosition = Vector3.forward * -0.1f;
         for (int i = 0; i < samples; i++) {
             float alpha = (float)i / (float)(samples - 1);
             GirthSlice slice = SampleGirth(alpha);
-            DrawCircle(slice.position, Vector3.forward, slice.radius, 16);
+            var diff = slice.position - lastPosition;
+            DrawCircle(slice.position, diff.normalized, slice.radius, 16);
+            lastPosition = slice.position;
         }
     }
     
@@ -100,6 +104,7 @@ public struct GirthFrame {
             maxLocalLength += blendshapes[j].maxLocalLength * weight;
         }
     }
+    
 
     public void SampleTransforms(SkinnedMeshRenderer renderer, Matrix4x4 penetratorBindPose, Transform rootBone) {
         var samples = girthCurve.GetSampleCount();
@@ -115,6 +120,13 @@ public struct GirthFrame {
                 bones[slice.boneIndex3].TransformPoint(bindposes[slice.boneIndex3].MultiplyPoint3x4(meshPos)) * slice.boneWeights.w;
             
             slice.position = GetDefaultPenetratorPose().inverse.MultiplyPoint3x4(rootBone.InverseTransformPoint(worldPos)); 
+            var meshRadial = penetratorBindPose.MultiplyVector(Vector3.right);
+            var worldRadial =
+                bones[slice.boneIndex0].TransformVector(bindposes[slice.boneIndex0].MultiplyVector(meshRadial)) * slice.boneWeights.x +
+                bones[slice.boneIndex1].TransformVector(bindposes[slice.boneIndex1].MultiplyVector(meshRadial)) * slice.boneWeights.y +
+                bones[slice.boneIndex2].TransformVector(bindposes[slice.boneIndex2].MultiplyVector(meshRadial)) * slice.boneWeights.z +
+                bones[slice.boneIndex3].TransformVector(bindposes[slice.boneIndex3].MultiplyVector(meshRadial)) * slice.boneWeights.w;
+            slice.radius *= rootBone.InverseTransformVector(worldRadial).magnitude;
             girthCurve.SetSample(i, slice);
         }
     }

@@ -10,7 +10,6 @@ using UnityEditor;
 namespace GatorDragonGames {
 
 public class PenetratorBehavior : MonoBehaviour {
-
     [SerializeField] private Transform[] bones;
     [SerializeField] private PenetrableBehavior penetrableBehavior;
     [SerializeField] private RendererSubMeshMask skinnedMeshRendererMask;
@@ -19,6 +18,9 @@ public class PenetratorBehavior : MonoBehaviour {
     private BoneChainOnCurve _boneChainOnCurve;
     private BoneChainCompression _boneChainCompression;
     private List<Vector3> cachedPoints = new List<Vector3>();
+
+    private Penetration penetration;
+    private GirthFrame penetrationGirthFrame;
 
 #if UNITY_EDITOR
     [ContextMenu("Generate Girth Lookup")]
@@ -57,7 +59,7 @@ public class PenetratorBehavior : MonoBehaviour {
         var skinnedMeshRenderer = skinnedMeshRendererMask.renderer as SkinnedMeshRenderer;
         Penetrator penetrator = GetPenetrator();
         var penetrable = penetrableBehavior.GetPenetrable();
-        var penetration = new Penetration(penetrator, penetrable, cachedPoints);
+        penetration = new Penetration(penetrator, penetrable, cachedPoints);
             
         var orificeDist = penetration.spline3D.GetDistanceFromTime(penetration.penetrableT);
         _boneChainCompression.Tick(orificeDist);
@@ -85,18 +87,20 @@ public class PenetratorBehavior : MonoBehaviour {
         skinnedMeshRenderer.SetBlendShapeWeight(blendShapeIndex, (1f / lengthMultiplier * 100f - 100f) * 2f);
         
         penetratorCollisionSpheres.Render(penetrableBehavior.GetRenderers());
+        
+        penetrationGirthFrame = skinnedMeshGirth.GetGirthFrame(skinnedMeshRenderer, bones[0]);
     }
 
     private void OnDrawGizmosSelected() {
-        //penetratorCollisionSpheres.OnDrawGizmosSelected();
-        if (skinnedMeshRendererMask.renderer == null) {
-            return;
+        if (Application.isPlaying) {
+            if (penetration.spline3D == null) return;
+            if (bones == null || bones.Length < 1 || bones[0] == null) return;
+            penetrationGirthFrame.DrawGizmos(bones[0].localToWorldMatrix, 256);
+        } else {
+            if (skinnedMeshRendererMask.renderer == null) return;
+            if (bones == null || bones.Length < 1 || bones[0] == null) return;
+            skinnedMeshGirth.GetGirthFrame(skinnedMeshRendererMask.renderer, bones[0]).DrawGizmos(bones[0].localToWorldMatrix, 256);
         }
-        if (bones == null || bones.Length < 1 || bones[0] == null) {
-            return;
-        }
-        var skinnedMeshRenderer = skinnedMeshRendererMask.renderer as SkinnedMeshRenderer;
-        skinnedMeshGirth.DrawGizmos(skinnedMeshRenderer, bones[0]);
     }
 
     private void OnValidate() {
