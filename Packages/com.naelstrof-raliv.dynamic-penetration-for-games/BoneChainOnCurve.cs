@@ -2,8 +2,8 @@ using UnityEngine;
 
 namespace GatorDragonGames {
 
-public class BoneChainOnCurve {
-    
+[System.Serializable]
+public struct BoneChainOnCurve {
     private Transform[] _boneChain;
     private Vector3[] _restBonePositions;
     private Quaternion[] _restBoneRotations;
@@ -11,7 +11,13 @@ public class BoneChainOnCurve {
 
     public BoneChainOnCurve(Transform[] bones) {
         _boneChain = bones;
-        RecordRestPosition();
+        _restBonePositions = new Vector3[_boneChain.Length];
+        _restBoneRotations = new Quaternion[_boneChain.Length];
+        for (var index = 0; index < _boneChain.Length; index++) {
+            _restBonePositions[index] = _boneChain[index].localPosition;
+            _restBoneRotations[index] = _boneChain[index].localRotation;
+        }
+        _restLength = 0f;
         _restLength = GetTotalLength();
     }
 
@@ -31,15 +37,6 @@ public class BoneChainOnCurve {
     
     public float GetRestLength() {
         return _restLength;
-    }
-
-    public void RecordRestPosition() {
-        _restBonePositions = new Vector3[_boneChain.Length];
-        _restBoneRotations = new Quaternion[_boneChain.Length];
-        for (var index = 0; index < _boneChain.Length; index++) {
-            _restBonePositions[index] = _boneChain[index].localPosition;
-            _restBoneRotations[index] = _boneChain[index].localRotation;
-        }
     }
 
     public void AlignToSpline(Spline3D targetSpline3D, float lengthMultiplier = 1f) {
@@ -67,10 +64,10 @@ public class BoneChainOnCurve {
             bone.rotation = fromToRotation * bone.rotation;
             previousSplinePosition = aimPoint;
         }
-        DebutDraw();
+        DebugDraw();
     }
 
-    public void DebutDraw() {
+    public void DebugDraw() {
         var firstBone = true;
         Transform previousBone = null;
         foreach (var _bone in _boneChain) {

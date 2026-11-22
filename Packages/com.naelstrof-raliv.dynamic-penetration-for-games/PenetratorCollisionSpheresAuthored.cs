@@ -11,7 +11,7 @@ using UnityEditor.UIElements;
 namespace GatorDragonGames {
 
 #if UNITY_EDITOR
-[CustomPropertyDrawer(typeof(PenetratorCollisionSpheres.PenetratorCollisionSphere))]
+[CustomPropertyDrawer(typeof(PenetratorCollisionSpheresAuthored.PenetratorCollisionSphere))]
 public class PenetratorCollisionSphereDrawer : PropertyDrawer {
     private static SerializedProperty _activeProperty;
     public override VisualElement CreatePropertyGUI(SerializedProperty property) {
@@ -37,7 +37,7 @@ public class PenetratorCollisionSphereDrawer : PropertyDrawer {
                 return;
             }
 
-            PenetratorCollisionSpheres.PenetratorCollisionSphere.DrawSphereHandles(_activeProperty);
+            PenetratorCollisionSpheresAuthored.PenetratorCollisionSphere.DrawSphereHandles(_activeProperty);
             _activeProperty.serializedObject.ApplyModifiedProperties();
         } catch {
             SceneView.duringSceneGui -= OnSceneGUI;
@@ -47,7 +47,7 @@ public class PenetratorCollisionSphereDrawer : PropertyDrawer {
 #endif
 
 [Serializable]
-public struct PenetratorCollisionSpheres {
+public struct PenetratorCollisionSpheresAuthored {
     private const float sphereCastInflation = 0.1f;
     [Serializable]
     public struct PenetratorCollisionSphere {
@@ -141,17 +141,6 @@ public struct PenetratorCollisionSpheres {
             Gizmos.DrawWireSphere(Vector3.zero, 1f);
         }
     }
-    public void Initialize(Penetrator penetrator) {
-        _sphereCasts = new SphereCasterRenderer.SphereCast[_penetratorCollisionSpheres.Length];
-        var dickDir = penetrator.direction;
-        Array.Sort(_penetratorCollisionSpheres, (a, b) => {
-            var aPos = a.GetWorldMatrix(0f).GetPosition();
-            var bPos = b.GetWorldMatrix(0f).GetPosition();
-            var aDist = Vector3.Dot(aPos - penetrator.position, dickDir);
-            var bDist = Vector3.Dot(bPos - penetrator.position, dickDir);
-            return aDist.CompareTo(bDist);
-        });
-    }
 
 #if UNITY_EDITOR
     public static void DrawHandles(SerializedProperty property) {
@@ -166,6 +155,7 @@ public struct PenetratorCollisionSpheres {
 #endif
 
     public void Render(IList<Renderer> renderers) {
+        _sphereCasts ??= new SphereCasterRenderer.SphereCast[_penetratorCollisionSpheres.Length];
         Assert.IsTrue(_sphereCasts != null && _sphereCasts.Length == _penetratorCollisionSpheres.Length, "Please call Initialize() before calling Render() on PenetratorCollisionSpheres.");
         for (int i=0; i < _penetratorCollisionSpheres.Length; i++) {
             var sphere = _penetratorCollisionSpheres[i];

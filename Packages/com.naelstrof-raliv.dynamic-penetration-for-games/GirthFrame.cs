@@ -16,7 +16,6 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using GatorDragonGames;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -35,14 +34,24 @@ public struct GirthFrame {
     public GirthSlice SampleGirth(float alpha) {
         return girthCurve.Sample(alpha);
     }
+    
+    public void TransformToWorld(Matrix4x4 transform) {
+        var mat = transform*GetDefaultPenetratorPose();
+        var samples = girthCurve.GetSampleCount();
+        for (int i = 0; i < samples; i++) {
+            var slice = girthCurve.GetSample(i);
+            slice.position = mat.MultiplyPoint3x4(slice.position);
+            girthCurve.SetSample(i, slice);
+        }
+    }
+    
     public GirthFrame(int sampleCount, float fullLength, float maxGirth) {
         maxGirthRadius = maxGirth;
         maxLocalLength = fullLength;
         girthCurve = new GirthSliceCurve(sampleCount);
     }
 
-    public void DrawGizmos(Matrix4x4 transform, int samples) {
-        Gizmos.matrix = transform*GetDefaultPenetratorPose();
+    public void DrawGizmos(int samples) {
         var lastPosition = Vector3.forward * -0.1f;
         for (int i = 0; i < samples; i++) {
             float alpha = (float)i / (float)(samples - 1);

@@ -1,27 +1,9 @@
-/* Copyright 2024 Naelstrof & Raliv
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
- * documentation files (the “Software”), to deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
- * Software.
- * 
- * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
- * OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
 namespace DPG {
-
-using System.Collections.Generic;
-
 [Serializable]
 public struct SkinnedMeshGirth {
     [SerializeField] public float maxGirth;
@@ -32,16 +14,16 @@ public struct SkinnedMeshGirth {
     public void DrawGizmos(SkinnedMeshRenderer renderer, Transform rootBone, int sampleCount = 128) {
         Gizmos.matrix = Matrix4x4.identity;
         Gizmos.color = Color.green;
-        GetGirthFrame(renderer, rootBone).DrawGizmos(rootBone.localToWorldMatrix, sampleCount);
+        GetGirthFrame(renderer, rootBone).DrawGizmos(sampleCount);
     }
 
     public GirthFrame GetGirthFrame(SkinnedMeshRenderer renderer, Transform rootBone) {
         var b = baseGirth.Clone();
         b.SampleBlendshapes(renderer, girthDeltas);
         b.SampleTransforms(renderer, penetratorBindPose, rootBone);
+        b.TransformToWorld(rootBone.localToWorldMatrix);
         return b;
     }
-    
 
     public static void GetBindPoseBoneLocalPositionRotation(Matrix4x4 boneMatrix, out Vector3 position, out Quaternion rotation, out float scale) {
         // Get global matrix for bone
@@ -129,7 +111,6 @@ public struct SkinnedMeshGirth {
     }
     
     public static async Task<SkinnedMeshGirth> GenerateGirthLookup(RendererSubMeshMask rendererWithMask, Shader girthUnwrapShader, Transform[] bones, Matrix4x4 penetratorLocalPose) {
-        Matrix4x4 poseMatrix = Matrix4x4.identity;
         var penetratorRoot = bones[0];
         var skinnedMeshRenderer = rendererWithMask.renderer;
         if (!TryGetBoneIndex(skinnedMeshRenderer.bones, penetratorRoot, out int rootBoneID)) {
@@ -140,8 +121,6 @@ public struct SkinnedMeshGirth {
         GetBindPoseBoneLocalPositionRotation(skinnedMesh.bindposes[rootBoneID], out Vector3 posePosition, out Quaternion poseRotation, out float scale);
 
         var rendererBindPose = Matrix4x4.TRS(posePosition, poseRotation, new Vector3(scale, scale, scale)) * penetratorLocalPose;
-        
-        poseMatrix = skinnedMeshRenderer.sharedMesh.bindposes[rootBoneID];
 
         var staticVertices = new List<Vector3>();
         var maxGirth = GetMaxGirth(rendererWithMask, penetratorRoot, rendererBindPose.MultiplyVector(Vector3.forward), rendererBindPose.MultiplyPoint(Vector3.zero), staticVertices);
@@ -162,5 +141,4 @@ public struct SkinnedMeshGirth {
         };
     }
 }
-
 }

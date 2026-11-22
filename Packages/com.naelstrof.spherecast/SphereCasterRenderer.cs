@@ -15,6 +15,14 @@ public class SphereCasterRenderer : MonoBehaviour {
             sphereCasterRenderer.AddSphereCasts(sphereCasts);
         }
     }
+    public static void Render(Renderer targetRenderer, SphereCast sphereCast) {
+        if (!targetRenderer.TryGetComponent(out SphereCasterRenderer sphereCasterRenderer)) {
+            sphereCasterRenderer = targetRenderer.gameObject.AddComponent<SphereCasterRenderer>();
+            sphereCasterRenderer.AddSphereCast(sphereCast);
+        } else {
+            sphereCasterRenderer.AddSphereCast(sphereCast);
+        }
+    }
     [StructLayout(LayoutKind.Sequential)]
     public struct SphereCast {
         public Matrix4x4 mat;
@@ -45,6 +53,29 @@ public class SphereCasterRenderer : MonoBehaviour {
             this.factor = Mathf.Clamp01(factor);
             axis = new Vector3(X ? 1f : 0f, Y ? 1f : 0f, Z ? 1f : 0f);
             this.backfaceCull = backfaceCull;
+        }
+
+        public void DrawDebug(Color color) {
+            DrawDebugCircle(color, mat, Vector3.up, 16);
+            DrawDebugCircle(color, mat, Vector3.right, 16);
+        }
+        
+        private void DrawDebugCircle(Color color, Matrix4x4 mat, Vector3 normal, int segments = 16) {
+            Vector3 tangent = Vector3.Cross(mat.MultiplyVector(normal), Vector3.up);
+            if (tangent.sqrMagnitude < 0.001f) {
+                tangent = Vector3.Cross(mat.MultiplyVector(normal), Vector3.right);
+            }
+            tangent.Normalize();
+            Vector3 bitangent = Vector3.Cross(mat.MultiplyVector(normal), tangent);
+            bitangent.Normalize();
+
+            Vector3 prevPoint = mat.MultiplyPoint(Vector3.zero) + tangent * mat.lossyScale.x;
+            for (int i = 1; i <= segments; i++) {
+                float angle = (float)i / (float)segments * Mathf.PI * 2f;
+                Vector3 nextPoint = mat.MultiplyPoint(Vector3.zero) + (tangent * Mathf.Cos(angle) + bitangent * Mathf.Sin(angle)) * mat.lossyScale.x;
+                Debug.DrawLine(prevPoint, nextPoint, color);
+                prevPoint = nextPoint;
+            }
         }
     }
 

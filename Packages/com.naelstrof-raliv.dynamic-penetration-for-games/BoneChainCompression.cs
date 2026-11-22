@@ -1,7 +1,8 @@
+using System;
 using UnityEngine;
 
-public class BoneChainCompression : MonoBehaviour {
-
+[Serializable]
+public struct BoneChainCompression {
     private float currentTip;
     private float prevTip;
     private float restTip;
@@ -10,20 +11,25 @@ public class BoneChainCompression : MonoBehaviour {
     private float previousFinalCompression;
     private bool inside;
 
-    private float outsideDamping = 0.9f;
-    private float insideDamping = 0.5f;
+    private float outsideDamping;
+    private float insideDamping;
     private float damping => inside ? insideDamping : outsideDamping;
 
-    private float timeAccumulation = 0f;
+    private float timeAccumulation;
 
     public float GetTipPosition() => currentTip;
 
     public BoneChainCompression(float restTip) {
         this.restTip = restTip;
-        this.currentTip = restTip;
-        this.prevTip = restTip;
+        currentTip = restTip;
+        prevTip = restTip;
         compressionCurrent = 0f;
         compressionPrev = 0f;
+        outsideDamping = 0.9f;
+        insideDamping = 0.5f;
+        timeAccumulation = 0f;
+        previousFinalCompression = 0f;
+        inside = false;
     }
 
     public void Tick(float compressionPoint) {

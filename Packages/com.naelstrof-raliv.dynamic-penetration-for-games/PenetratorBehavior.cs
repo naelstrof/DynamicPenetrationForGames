@@ -13,10 +13,9 @@ public class PenetratorBehavior : MonoBehaviour {
     [SerializeField] private Transform[] bones;
     [SerializeField] private PenetrableBehavior penetrableBehavior;
     [SerializeField] private RendererSubMeshMask skinnedMeshRendererMask;
-    [SerializeField] private PenetratorCollisionSpheres penetratorCollisionSpheres;
-    [FormerlySerializedAs("girthLookup")] [SerializeField] private SkinnedMeshGirth skinnedMeshGirth;
-    private BoneChainOnCurve _boneChainOnCurve;
-    private BoneChainCompression _boneChainCompression;
+    [SerializeField] private SkinnedMeshGirth skinnedMeshGirth;
+    [SerializeField] private BoneChainOnCurve boneChainOnCurve;
+    [SerializeField] private BoneChainCompression boneChainCompression;
     private List<Vector3> cachedPoints = new List<Vector3>();
 
     private Penetration penetration;
@@ -44,16 +43,14 @@ public class PenetratorBehavior : MonoBehaviour {
         return new Penetrator() {
             position = bones[0].position,
             direction = (bones[1].position - bones[0].position).normalized,
-            penetratorLength = _boneChainOnCurve.GetTotalLength()
+            penetratorLength = boneChainOnCurve.GetTotalLength()
         };
     }
 
     private void OnEnable() {
-        _boneChainOnCurve = new BoneChainOnCurve(bones);
-        _boneChainCompression = new BoneChainCompression(_boneChainOnCurve.GetTotalLength());
-        penetratorCollisionSpheres.Initialize(GetPenetrator());
+        boneChainOnCurve = new BoneChainOnCurve(bones);
+        boneChainCompression = new BoneChainCompression(boneChainOnCurve.GetTotalLength());
     }
-    
 
     private void LateUpdate() {
         var skinnedMeshRenderer = skinnedMeshRendererMask.renderer as SkinnedMeshRenderer;
@@ -62,8 +59,8 @@ public class PenetratorBehavior : MonoBehaviour {
         penetration = new Penetration(penetrator, penetrable, cachedPoints);
             
         var orificeDist = penetration.spline3D.GetDistanceFromTime(penetration.penetrableT);
-        _boneChainCompression.Tick(orificeDist);
-        var aimDist = _boneChainCompression.GetTipPosition();
+        boneChainCompression.Tick(orificeDist);
+        var aimDist = boneChainCompression.GetTipPosition();
         var aimPoint = penetration.spline3D.GetPositionFromDistance(aimDist);
         Debug.DrawLine(aimPoint - Vector3.up * 0.1f, aimPoint + Vector3.up * 0.1f, Color.red);
         Debug.DrawLine(aimPoint - Vector3.left * 0.1f, aimPoint + Vector3.left * 0.1f, Color.red);
@@ -72,8 +69,8 @@ public class PenetratorBehavior : MonoBehaviour {
         Debug.DrawLine(aimPoint - Vector3.up * 0.1f, aimPoint + Vector3.up * 0.1f, Color.red);
         Debug.DrawLine(aimPoint - Vector3.left * 0.1f, aimPoint + Vector3.left * 0.1f, Color.red);
         Debug.DrawLine(aimPoint - Vector3.forward * 0.1f, aimPoint + Vector3.forward * 0.1f, Color.red);
-        var lengthMultiplier = _boneChainCompression.GetTipPosition() / _boneChainOnCurve.GetRestLength();
-        penetration.Render(_boneChainOnCurve, lengthMultiplier);
+        var lengthMultiplier = boneChainCompression.GetTipPosition() / boneChainOnCurve.GetRestLength();
+        penetration.Render(boneChainOnCurve, lengthMultiplier);
         // get blend shape index by name
         var blendShapeIndex = skinnedMeshRenderer.sharedMesh.GetBlendShapeIndex("Throb.002");
         skinnedMeshRenderer.SetBlendShapeWeight(blendShapeIndex, (1f / lengthMultiplier * 100f - 100f) * 2f);
@@ -86,25 +83,20 @@ public class PenetratorBehavior : MonoBehaviour {
         blendShapeIndex = skinnedMeshRenderer.sharedMesh.GetBlendShapeIndex("Throb");
         skinnedMeshRenderer.SetBlendShapeWeight(blendShapeIndex, (1f / lengthMultiplier * 100f - 100f) * 2f);
         
-        penetratorCollisionSpheres.Render(penetrableBehavior.GetRenderers());
-        
         penetrationGirthFrame = skinnedMeshGirth.GetGirthFrame(skinnedMeshRenderer, bones[0]);
+        PenetratorCollisionSpheresAuto.Render(penetrableBehavior.GetRenderers(), penetrationGirthFrame,0.25f, 0.5f, 32);
     }
 
     private void OnDrawGizmosSelected() {
         if (Application.isPlaying) {
             if (penetration.spline3D == null) return;
             if (bones == null || bones.Length < 1 || bones[0] == null) return;
-            penetrationGirthFrame.DrawGizmos(bones[0].localToWorldMatrix, 256);
+            penetrationGirthFrame.DrawGizmos(256);
         } else {
             if (skinnedMeshRendererMask.renderer == null) return;
             if (bones == null || bones.Length < 1 || bones[0] == null) return;
-            skinnedMeshGirth.GetGirthFrame(skinnedMeshRendererMask.renderer, bones[0]).DrawGizmos(bones[0].localToWorldMatrix, 256);
+            skinnedMeshGirth.DrawGizmos(skinnedMeshRendererMask.renderer, bones[0], 256);
         }
-    }
-
-    private void OnValidate() {
-        penetratorCollisionSpheres.OnValidate();
     }
 }
 
