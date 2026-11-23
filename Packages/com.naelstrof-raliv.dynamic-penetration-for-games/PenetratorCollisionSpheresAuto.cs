@@ -13,7 +13,6 @@ public static class PenetratorCollisionSpheresAuto {
             var girthSlice = girthFrameWorld.SampleGirth(alpha);
             if (girthSlice.radius == 0f) continue;
             var sphereCast = new SphereCasterRenderer.SphereCast(girthSlice.position, Vector3.one * (girthSlice.radius+inflation), Quaternion.identity, factor, 0f, true, true, true);
-            sphereCast.DrawDebug(Color.red);
             foreach (var renderer in renderers) {
                 SphereCasterRenderer.Render(renderer, sphereCast);
             }

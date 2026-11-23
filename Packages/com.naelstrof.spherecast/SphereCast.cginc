@@ -11,6 +11,7 @@ uniform uint _SphereCastCount;
 
 void GetDeformationFromSphereCasts(float4x4 worldToObject, float4x4 objectToWorld, inout float3 localPosition, inout float3 localNormal) {
     float3 offsetSum = 0;
+    float maxOffset = 0;
     float3 worldPosition = mul(objectToWorld, float4(localPosition,1));
     float3 worldNormal = mul(objectToWorld, float4(localNormal,0));
     float3 normalSum = 0;
@@ -42,11 +43,14 @@ void GetDeformationFromSphereCasts(float4x4 worldToObject, float4x4 objectToWorl
         
         float3 undeformedPosition = mul(sphereMat, float4(projectedPosition,0));
         float3 undeformedNormal = mul(sphereMat, float4(projectedNormal,0));
-        
-        offsetSum += mul(worldToObject, float4(undeformedPosition+spherePosition,1))-localPosition;
+        float3 offset = mul(worldToObject, float4(undeformedPosition+spherePosition,1))-localPosition; 
+        offsetSum += offset;
+        maxOffset = max(maxOffset, length(offset));
         maxNormalPerturb = max(maxNormalPerturb, oneMinusMag*factor);
         normalSum += mul(worldToObject, float4(undeformedNormal,0));
     }
+    float offsetLength = length(offsetSum);
+    offsetSum *= min(1.0, maxOffset / max(offsetLength, 1e-8));
     localPosition += offsetSum;
     localNormal = normalize(localNormal*(1-maxNormalPerturb)+normalSum);
 }
