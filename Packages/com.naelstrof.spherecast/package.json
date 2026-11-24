@@ -1,0 +1,7 @@
+{
+  "name": "com.naelstrof.spherecast",
+  "displayName": "Sphere Cast",
+  "version": "0.0.1",
+  "unity": "2022.3",
+  "description": "Simple gpu-based sphere casting"
+}

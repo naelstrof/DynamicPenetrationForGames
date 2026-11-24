@@ -1,17 +1,7 @@
 {
   "dependencies": {
-    "com.gator-dragon-games.jigglephysics": {
-      "version": "https://github.com/naelstrof/JigglePhysics.git#upm",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.unity.mathematics": "1.0.0",
-        "com.unity.collections": "2.0.0"
-      },
-      "hash": "565c8416ec50df18e9bd88786e226c467519e0c2"
-    },
-    "com.naelstrof-raliv.dynamic-penetration-for-games": {
-      "version": "file:com.naelstrof-raliv.dynamic-penetration-for-games",
+    "com.gator-dragon-games.dynamic-penetration-for-games": {
+      "version": "file:com.gator-dragon-games.dynamic-penetration-for-games",
       "depth": 0,
       "source": "embedded",
       "dependencies": {
@@ -19,12 +9,27 @@
         "com.gator-dragon-games.jigglephysics": "15.0.5"
       }
     },
-    "com.naelstrof.splines": {
-      "version": "https://github.com/naelstrof/com.naelstrof.splines.git",
+    "com.gator-dragon-games.jigglephysics": {
+      "version": "https://github.com/naelstrof/JigglePhysics.git#v16.2.2",
       "depth": 0,
       "source": "git",
-      "dependencies": {},
-      "hash": "536755b5f26ae71d2abcb0605c0c67f3aece1972"
+      "dependencies": {
+        "com.unity.mathematics": "1.0.0",
+        "com.unity.collections": "2.0.0"
+      },
+      "hash": "87c312a3ffc6ccd63db35f062a83cade23ecce00"
+    },
+    "com.naelstrof.spherecast": {
+      "version": "file:com.naelstrof.spherecast",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
+    "com.naelstrof.splines": {
+      "version": "file:com.naelstrof.splines",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.unity.animation.rigging": {
       "version": "1.4.1",
@@ -38,7 +43,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.burst": {
-      "version": "1.8.27",
+      "version": "1.8.31",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -48,35 +53,33 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.collections": {
-      "version": "2.6.2",
+      "version": "2.7.1",
       "depth": 1,
       "source": "registry",
       "dependencies": {
-        "com.unity.burst": "1.8.23",
+        "com.unity.burst": "1.8.29",
         "com.unity.mathematics": "1.3.2",
         "com.unity.test-framework": "1.4.6",
-        "com.unity.nuget.mono-cecil": "1.11.5",
+        "com.unity.nuget.mono-cecil": "1.11.6",
         "com.unity.test-framework.performance": "3.0.3"
       },
       "url": "https://packages.unity.com"
     },
     "com.unity.ext.nunit": {
       "version": "2.0.5",
-      "depth": 1,
+      "depth": 2,
       "source": "builtin",
       "dependencies": {}
     },
     "com.unity.ide.rider": {
-      "version": "3.0.39",
+      "version": "3.1.1",
       "depth": 0,
       "source": "registry",
-      "dependencies": {
-        "com.unity.ext.nunit": "1.0.6"
-      },
+      "dependencies": {},
       "url": "https://packages.unity.com"
     },
     "com.unity.inputsystem": {
-      "version": "1.18.0",
+      "version": "1.20.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -120,8 +123,26 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       }
     },
+    "com.unity.render-pipelines.universal": {
+      "version": "17.3.0",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.render-pipelines.core": "17.3.0",
+        "com.unity.shadergraph": "17.3.0",
+        "com.unity.render-pipelines.universal-config": "17.0.3"
+      }
+    },
+    "com.unity.render-pipelines.universal-config": {
+      "version": "17.0.3",
+      "depth": 1,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.render-pipelines.core": "17.0.3"
+      }
+    },
     "com.unity.searcher": {
-      "version": "4.9.4",
+      "version": "4.9.5",
       "depth": 1,
       "source": "registry",
       "dependencies": {},
@@ -133,7 +154,7 @@
       "source": "builtin",
       "dependencies": {
         "com.unity.render-pipelines.core": "17.3.0",
-        "com.unity.searcher": "4.9.3"
+        "com.unity.searcher": "4.9.5"
       }
     },
     "com.unity.test-framework": {
@@ -147,7 +168,7 @@
       }
     },
     "com.unity.test-framework.performance": {
-      "version": "3.2.0",
+      "version": "3.5.0",
       "depth": 2,
       "source": "registry",
       "dependencies": {
@@ -157,7 +178,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.timeline": {
-      "version": "1.8.10",
+      "version": "1.8.13",
       "depth": 0,
       "source": "registry",
       "dependencies": {
