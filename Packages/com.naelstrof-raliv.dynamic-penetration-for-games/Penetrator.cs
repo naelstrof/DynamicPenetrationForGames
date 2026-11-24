@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace GatorDragonGames {
+namespace GatorDragonGames.DPG {
 public struct Penetrator {
     public Vector3 position;
     public Vector3 direction;

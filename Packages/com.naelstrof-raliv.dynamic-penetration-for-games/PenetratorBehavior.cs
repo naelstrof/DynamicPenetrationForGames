@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using DPG;
 using GatorDragonGames.JigglePhysics;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
@@ -7,7 +6,7 @@ using Vector3 = UnityEngine.Vector3;
 using UnityEditor;
 #endif
 
-namespace GatorDragonGames {
+namespace GatorDragonGames.DPG {
 
 public class PenetratorBehavior : MonoBehaviour {
     [SerializeField] private Transform[] bones;
@@ -59,6 +58,11 @@ public class PenetratorBehavior : MonoBehaviour {
         boneChainCompression = new BoneChainCompression(boneChainOnCurve.GetTotalLength());
         skinnedMeshGirthSampler = new SkinnedMeshGirth.SkinnedMeshGirthSampler(skinnedMeshRendererMask.renderer);
         penetrationGirthFrame = new GirthFrame(1f, 0.1f);
+        JigglePhysics.JigglePhysics.JigglePoseCompleted += OnJigglePoseCompleted;
+    }
+
+    private void OnDisable() {
+        JigglePhysics.JigglePhysics.JigglePoseCompleted -= OnJigglePoseCompleted;
     }
 
     private void LateUpdate() {
@@ -66,7 +70,6 @@ public class PenetratorBehavior : MonoBehaviour {
             if (penetratorJiggle.GetBlend() < 1f) penetratorJiggle.SetBlend(1f);
             return;
         }
-        var skinnedMeshRenderer = skinnedMeshRendererMask.renderer;
         Penetrator penetrator = GetPenetrator();
         var penetrable = penetrableBehavior.GetPenetrable();
         penetration = new Penetration(penetrator, penetrable, cachedPoints, reusableSpline3D);
@@ -75,19 +78,6 @@ public class PenetratorBehavior : MonoBehaviour {
         boneChainCompression.Tick(orificeDist);
         var lengthMultiplier = boneChainCompression.GetTipPosition() / boneChainOnCurve.GetRestLength();
         penetration.Render(boneChainOnCurve, lengthMultiplier);
-        // get blend shape index by name
-        var blendShapeIndex = skinnedMeshRenderer.sharedMesh.GetBlendShapeIndex("Throb.002");
-        skinnedMeshRenderer.SetBlendShapeWeight(blendShapeIndex, (1f / lengthMultiplier * 100f - 100f) * 2f);
-        blendShapeIndex = skinnedMeshRenderer.sharedMesh.GetBlendShapeIndex("Throb.003");
-        skinnedMeshRenderer.SetBlendShapeWeight(blendShapeIndex, (1f / lengthMultiplier * 100f - 100f) * 2f);
-        blendShapeIndex = skinnedMeshRenderer.sharedMesh.GetBlendShapeIndex("Throb.004");
-        skinnedMeshRenderer.SetBlendShapeWeight(blendShapeIndex, (1f / lengthMultiplier * 100f - 100f) * 2f);
-        blendShapeIndex = skinnedMeshRenderer.sharedMesh.GetBlendShapeIndex("Throb.005");
-        skinnedMeshRenderer.SetBlendShapeWeight(blendShapeIndex, (1f / lengthMultiplier * 100f - 100f) * 2f);
-        blendShapeIndex = skinnedMeshRenderer.sharedMesh.GetBlendShapeIndex("Throb");
-        skinnedMeshRenderer.SetBlendShapeWeight(blendShapeIndex, (1f / lengthMultiplier * 100f - 100f) * 2f);
-        
-        skinnedMeshGirth.GetGirthFrame(ref penetrationGirthFrame, skinnedMeshRenderer, skinnedMeshGirthSampler, bones[0]);
         
         float penetrableDistance = penetration.spline3D.GetDistanceFromTime(penetration.penetrableT);
         float penetratorTipDistance = penetration.spline3D.GetDistanceFromTime(penetration.tipT);
@@ -95,6 +85,13 @@ public class PenetratorBehavior : MonoBehaviour {
         float jiggleBlendDistance = 1f;
         float jiggleBlend = Mathf.Clamp01((penetrableDistance - penetratorTipDistance)/jiggleBlendDistance);
         penetratorJiggle.SetBlend(jiggleBlend);
+    }
+
+    private void OnJigglePoseCompleted() {
+        if (penetrableBehavior == null) {
+            return;
+        }
+        skinnedMeshGirth.GetGirthFrame(ref penetrationGirthFrame, skinnedMeshRendererMask.renderer, skinnedMeshGirthSampler, bones[0]);
         
         PenetratorCollisionSpheresAuto.Render(penetrableBehavior.GetRenderers(), penetrationGirthFrame,0.25f, 0.5f, 32);
     }

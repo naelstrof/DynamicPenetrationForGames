@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace GatorDragonGames {
+namespace GatorDragonGames.DPG {
 
 [System.Serializable]
 public struct BoneChainOnCurve {

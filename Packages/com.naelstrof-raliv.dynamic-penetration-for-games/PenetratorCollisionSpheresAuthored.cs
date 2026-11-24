@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
@@ -8,7 +7,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 #endif
 
-namespace GatorDragonGames {
+namespace GatorDragonGames.DPG {
 
 #if UNITY_EDITOR
 [CustomPropertyDrawer(typeof(PenetratorCollisionSpheresAuthored.PenetratorCollisionSphere))]

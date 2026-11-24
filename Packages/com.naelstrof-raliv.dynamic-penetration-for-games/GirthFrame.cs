@@ -22,7 +22,7 @@ using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace DPG {
+namespace GatorDragonGames.DPG {
 
 [System.Serializable]
 public struct GirthFrame {

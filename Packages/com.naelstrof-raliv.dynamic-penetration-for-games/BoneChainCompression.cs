@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+namespace GatorDragonGames.DPG {
+
 [Serializable]
 public struct BoneChainCompression {
     private float currentTip;
@@ -41,14 +43,14 @@ public struct BoneChainCompression {
             SolveVerlet(compressionPoint);
         }
     }
-    
+
     private void SolveVerlet(float compressionPoint) {
         var dt = Time.deltaTime;
         if (dt <= 0f) return;
-        
+
         var actualCompressionPoint = compressionPoint + compressionCurrent;
         var slideDelta = previousFinalCompression - compressionPoint;
-        
+
         var prevTipCompressionOffset = actualCompressionPoint - currentTip;
 
         var predicted = currentTip + (currentTip - prevTip) + 0f * dt * dt;
@@ -59,7 +61,7 @@ public struct BoneChainCompression {
         var tipError = Mathf.Abs(currentTip - restTip);
         tipError = Mathf.Clamp(tipError, 0f, 0.5f);
         currentTip = Mathf.Lerp(currentTip, restTip, tipError);
-        
+
         var tipCompressionOffset = actualCompressionPoint - currentTip;
 
         const float pushDistance = 0.1f;
@@ -78,7 +80,10 @@ public struct BoneChainCompression {
                 inside = true;
             }
         }
+
         previousFinalCompression = actualCompressionPoint;
     }
+
+}
 
 }

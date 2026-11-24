@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
-using DPG;
 using UnityEngine;
 
-namespace GatorDragonGames {
+namespace GatorDragonGames.DPG {
 
 [Serializable]
 public static class PenetratorCollisionSpheresAuto {

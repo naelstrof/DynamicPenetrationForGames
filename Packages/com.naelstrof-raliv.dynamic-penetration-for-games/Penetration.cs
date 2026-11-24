@@ -1,8 +1,7 @@
 using System.Collections.Generic;
-using DPG;
 using UnityEngine;
 
-namespace GatorDragonGames {
+namespace GatorDragonGames.DPG {
 public struct Penetration {
     public Spline3D spline3D;
     public float penetrableT;

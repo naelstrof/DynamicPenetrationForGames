@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace DPG {
+namespace GatorDragonGames.DPG {
 [Serializable]
 public struct SkinnedMeshGirth {
     [SerializeField] public float maxGirth;

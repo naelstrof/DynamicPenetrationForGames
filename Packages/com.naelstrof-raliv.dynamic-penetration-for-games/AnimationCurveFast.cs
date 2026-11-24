@@ -1,7 +1,6 @@
 using UnityEngine;
-using UnityEngine.Assertions;
 
-namespace DPG {
+namespace GatorDragonGames.DPG {
 
 [System.Serializable]
 public struct GirthSlice {
