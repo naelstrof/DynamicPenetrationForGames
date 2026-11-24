@@ -1,14 +1,14 @@
 {
   "dependencies": {
     "com.gator-dragon-games.jigglephysics": {
-      "version": "https://github.com/naelstrof/JigglePhysics.git#upm",
+      "version": "https://github.com/naelstrof/JigglePhysics.git#v16.1.2",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.mathematics": "1.0.0",
         "com.unity.collections": "2.0.0"
       },
-      "hash": "565c8416ec50df18e9bd88786e226c467519e0c2"
+      "hash": "4c9a4f1279ff8dffccb85fa362fcba7d33249a65"
     },
     "com.naelstrof-raliv.dynamic-penetration-for-games": {
       "version": "file:com.naelstrof-raliv.dynamic-penetration-for-games",

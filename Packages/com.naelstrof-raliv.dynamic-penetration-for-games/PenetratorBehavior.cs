@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DPG;
+using GatorDragonGames.JigglePhysics;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 #if UNITY_EDITOR
@@ -15,6 +16,8 @@ public class PenetratorBehavior : MonoBehaviour {
     [SerializeField] private SkinnedMeshGirth skinnedMeshGirth;
     [SerializeField] private BoneChainOnCurve boneChainOnCurve;
     [SerializeField] private BoneChainCompression boneChainCompression;
+    [SerializeField] private JiggleRig penetratorJiggle;
+    
     private List<Vector3> cachedPoints = new List<Vector3>();
     private Transform[] rendererTransforms;
 
@@ -59,6 +62,10 @@ public class PenetratorBehavior : MonoBehaviour {
     }
 
     private void LateUpdate() {
+        if (penetrableBehavior == null) {
+            if (penetratorJiggle.GetBlend() < 1f) penetratorJiggle.SetBlend(1f);
+            return;
+        }
         var skinnedMeshRenderer = skinnedMeshRendererMask.renderer;
         Penetrator penetrator = GetPenetrator();
         var penetrable = penetrableBehavior.GetPenetrable();
@@ -66,15 +73,6 @@ public class PenetratorBehavior : MonoBehaviour {
             
         var orificeDist = penetration.spline3D.GetDistanceFromTime(penetration.penetrableT);
         boneChainCompression.Tick(orificeDist);
-        var aimDist = boneChainCompression.GetTipPosition();
-        var aimPoint = penetration.spline3D.GetPositionFromDistance(aimDist);
-        Debug.DrawLine(aimPoint - Vector3.up * 0.1f, aimPoint + Vector3.up * 0.1f, Color.red);
-        Debug.DrawLine(aimPoint - Vector3.left * 0.1f, aimPoint + Vector3.left * 0.1f, Color.red);
-        Debug.DrawLine(aimPoint - Vector3.forward * 0.1f, aimPoint + Vector3.forward * 0.1f, Color.red);
-        aimPoint = penetration.spline3D.GetPositionFromDistance(orificeDist);
-        Debug.DrawLine(aimPoint - Vector3.up * 0.1f, aimPoint + Vector3.up * 0.1f, Color.red);
-        Debug.DrawLine(aimPoint - Vector3.left * 0.1f, aimPoint + Vector3.left * 0.1f, Color.red);
-        Debug.DrawLine(aimPoint - Vector3.forward * 0.1f, aimPoint + Vector3.forward * 0.1f, Color.red);
         var lengthMultiplier = boneChainCompression.GetTipPosition() / boneChainOnCurve.GetRestLength();
         penetration.Render(boneChainOnCurve, lengthMultiplier);
         // get blend shape index by name
@@ -90,6 +88,14 @@ public class PenetratorBehavior : MonoBehaviour {
         skinnedMeshRenderer.SetBlendShapeWeight(blendShapeIndex, (1f / lengthMultiplier * 100f - 100f) * 2f);
         
         skinnedMeshGirth.GetGirthFrame(ref penetrationGirthFrame, skinnedMeshRenderer, skinnedMeshGirthSampler, bones[0]);
+        
+        float penetrableDistance = penetration.spline3D.GetDistanceFromTime(penetration.penetrableT);
+        float penetratorTipDistance = penetration.spline3D.GetDistanceFromTime(penetration.tipT);
+
+        float jiggleBlendDistance = 1f;
+        float jiggleBlend = Mathf.Clamp01((penetrableDistance - penetratorTipDistance)/jiggleBlendDistance);
+        penetratorJiggle.SetBlend(jiggleBlend);
+        
         PenetratorCollisionSpheresAuto.Render(penetrableBehavior.GetRenderers(), penetrationGirthFrame,0.25f, 0.5f, 32);
     }
 
@@ -97,12 +103,12 @@ public class PenetratorBehavior : MonoBehaviour {
         if (Application.isPlaying) {
             if (penetration.spline3D == null) return;
             if (bones == null || bones.Length < 1 || bones[0] == null) return;
-            penetrationGirthFrame.DrawGizmos(256);
+            penetrationGirthFrame.DrawGizmos(GirthFrame.GirthFrameSamples, Color.grey, Color.white);
         } else {
             penetrationGirthFrame.OnValidate();
             if (skinnedMeshRendererMask.renderer == null) return;
             if (bones == null || bones.Length < 1 || bones[0] == null) return;
-            skinnedMeshGirth.DrawGizmos(ref penetrationGirthFrame, skinnedMeshRendererMask.renderer, new SkinnedMeshGirth.SkinnedMeshGirthSampler(skinnedMeshRendererMask.renderer), bones[0], 256);
+            skinnedMeshGirth.DrawGizmos(ref penetrationGirthFrame, skinnedMeshRendererMask.renderer, new SkinnedMeshGirth.SkinnedMeshGirthSampler(skinnedMeshRendererMask.renderer), bones[0], GirthFrame.GirthFrameSamples);
         }
     }
 }

@@ -13,7 +13,7 @@ public struct Penetration {
         cachedPoints.AddRange(penetrable.points);
         this.spline3D = spline3D;
         this.spline3D.SetFromCatmullPositions(cachedPoints, penetrator.position-penetrator.direction, cachedPoints[^1]-cachedPoints[^2]+cachedPoints[^2]);
-        penetrableT = 1f/cachedPoints.Count;
+        penetrableT = 1f/(cachedPoints.Count-1);
         tipT = spline3D.GetTimeFromDistance(penetrator.penetratorLength);
     }
 

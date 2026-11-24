@@ -58,10 +58,11 @@ public struct GirthFrame {
         girthCurve = new GirthSliceCurve(GirthFrameSamples);
     }
 
-    public void DrawGizmos(int samples) {
+    public void DrawGizmos(int samples, Color startColor, Color endColor) {
         var lastPosition = Vector3.forward * -0.1f;
         for (int i = 0; i < samples; i++) {
             float alpha = (float)i / (float)(samples - 1);
+            Gizmos.color = Color.Lerp(startColor, endColor, alpha);
             GirthSlice slice = SampleGirth(alpha);
             var diff = slice.position - lastPosition;
             DrawCircle(slice.position, diff.normalized, slice.radius, 16);

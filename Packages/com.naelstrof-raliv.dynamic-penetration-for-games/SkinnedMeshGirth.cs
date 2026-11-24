@@ -42,9 +42,8 @@ public struct SkinnedMeshGirth {
 
     public void DrawGizmos(ref GirthFrame girthFrameMemory, SkinnedMeshRenderer renderer, SkinnedMeshGirthSampler sampler, Transform rootBone, int sampleCount = 128) {
         Gizmos.matrix = Matrix4x4.identity;
-        Gizmos.color = Color.green;
         GetGirthFrame(ref girthFrameMemory, renderer, sampler, rootBone);
-        girthFrameMemory.DrawGizmos(sampleCount);
+        girthFrameMemory.DrawGizmos(sampleCount, Color.green, Color.red);
     }
 
     public void GetGirthFrame(ref GirthFrame output, SkinnedMeshRenderer renderer, SkinnedMeshGirthSampler sampler, Transform rootBone) {
