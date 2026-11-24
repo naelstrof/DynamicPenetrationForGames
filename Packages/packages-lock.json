@@ -1,5 +1,14 @@
 {
   "dependencies": {
+    "com.gator-dragon-games.dynamic-penetration-for-games": {
+      "version": "file:com.gator-dragon-games.dynamic-penetration-for-games",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.naelstrof.splines": "2.0.5",
+        "com.gator-dragon-games.jigglephysics": "15.0.5"
+      }
+    },
     "com.gator-dragon-games.jigglephysics": {
       "version": "https://github.com/naelstrof/JigglePhysics.git#v16.2.2",
       "depth": 0,
@@ -9,15 +18,6 @@
         "com.unity.collections": "2.0.0"
       },
       "hash": "87c312a3ffc6ccd63db35f062a83cade23ecce00"
-    },
-    "com.naelstrof-raliv.dynamic-penetration-for-games": {
-      "version": "file:com.naelstrof-raliv.dynamic-penetration-for-games",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.naelstrof.splines": "2.0.5",
-        "com.gator-dragon-games.jigglephysics": "15.0.5"
-      }
     },
     "com.naelstrof.spherecast": {
       "version": "file:com.naelstrof.spherecast",
