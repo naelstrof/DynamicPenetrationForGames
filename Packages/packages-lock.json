@@ -19,8 +19,8 @@
       },
       "hash": "87c312a3ffc6ccd63db35f062a83cade23ecce00"
     },
-    "com.naelstrof.spherecast": {
-      "version": "file:com.naelstrof.spherecast",
+    "com.gator-dragon-games.spherecast": {
+      "version": "file:com.gator-dragon-games.spherecast",
       "depth": 0,
       "source": "embedded",
       "dependencies": {}

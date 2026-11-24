@@ -1,3 +1,9 @@
 [submodule "Packages/com.naelstrof.splines"]
 	path = Packages/com.naelstrof.splines
 	url = https://github.com/naelstrof/com.naelstrof.splines.git
+[submodule "Packages/com.gator-dragon-games.dynamic-penetration-for-games"]
+	path = Packages/com.gator-dragon-games.dynamic-penetration-for-games
+	url = https://github.com/naelstrof/com.gator-dragon-games.dynamic-penetration-for-games.git
+[submodule "Packages/com.gator-dragon-games.spherecast"]
+	path = Packages/com.gator-dragon-games.spherecast
+	url = https://github.com/naelstrof/com.gator-dragon-games.spherecast.git

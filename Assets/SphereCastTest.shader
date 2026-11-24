@@ -1,4 +1,4 @@
-// Made with Amplify Shader Editor v1.9.9.14
+// Made with Amplify Shader Editor v1.9.9.15
 // Available at the Unity Asset Store - http://u3d.as/y3X 
 Shader "SphereCastTest"
 {
@@ -27,8 +27,9 @@ Shader "SphereCastTest"
 		[ToggleOff(_SPECULARHIGHLIGHTS_OFF)] _SpecularHighlights("Specular Highlights", Float) = 1.0
 		[ToggleOff] _EnvironmentReflections("Environment Reflections", Float) = 1.0
 		[ToggleOff] _ScreenSpaceReflections("Screen Space Reflections", Float) = 1.0
-		[ToggleUI] _ScreenSpaceReflectionsContributeTransparent("Screen Space Reflections Contribute Transparent", Float) = 1.0
+		[HideInInspector][ToggleUI] _ScreenSpaceReflectionsContributeTransparent("Screen Space Reflections Contribute Transparent", Float) = 1.0
 		[HideInInspector][ToggleUI] _ReceiveShadows("Receive Shadows", Float) = 1.0
+		//[Toggle(ASE_WRITE_DEPTH)] _WriteDepth("Write Depth", Float) = 1.0
 
 		[HideInInspector] _QueueOffset("_QueueOffset", Float) = 0
         [HideInInspector] _QueueControl("_QueueControl", Float) = -1
@@ -54,6 +55,8 @@ Shader "SphereCastTest"
 
 		
 
+		
+
 		Tags { "RenderPipeline"="UniversalPipeline" "RenderType"="Opaque" "Queue"="Geometry" "UniversalMaterialType"="Lit" }
 
 	LOD 0
@@ -64,6 +67,7 @@ Shader "SphereCastTest"
 		ZTest LEqual
 		Offset 0 , 0
 		AlphaToMask Off
+		Conservative False
 
 		
 
@@ -216,13 +220,13 @@ Shader "SphereCastTest"
 			#define ASE_SCREEN_SPACE_REFLECTIONS
 			#pragma shader_feature_local_fragment _SCREENSPACEREFLECTIONS_OFF
 			#pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#pragma multi_compile_instancing
 			#pragma instancing_options renderinglayer
 			#pragma multi_compile _ LOD_FADE_CROSSFADE
 			#define ASE_FOG 1
-			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#define ASE_ABSOLUTE_VERTEX_POS 1
-			#define ASE_VERSION 19914
+			#define ASE_VERSION 19915
 			#define ASE_SRP_VERSION 170300
 
 
@@ -259,7 +263,7 @@ Shader "SphereCastTest"
 			#pragma multi_compile_fragment _ _SCREEN_SPACE_IRRADIANCE
 			#endif
 
-			#if ( UNITY_VERSION >= 60060000 ) && defined( ASE_SCREEN_SPACE_REFLECTIONS )
+			#if ( UNITY_VERSION >= 60060000 ) && defined( ASE_SCREEN_SPACE_REFLECTIONS ) && !defined( ASE_SSR_CONTRIBUTE_TRANSPARENT_OFF )
 			#pragma multi_compile_fragment _ _SCREEN_SPACE_REFLECTION
 			#endif
 
@@ -352,11 +356,15 @@ Shader "SphereCastTest"
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_VERT_NORMAL
 			#pragma multi_compile _ _SPHERE_CAST_ON
-			#include "Packages/com.naelstrof.spherecast/SphereCast.cginc"
+			#include "Packages/com.gator-dragon-games.spherecast/SphereCast.cginc"
 
 
 			#if defined(ASE_WRITE_DEPTH_CONSERVATIVE) && (SHADER_TARGET >= 45)
-				#define ASE_SV_DEPTH SV_DepthLessEqual
+				#if UNITY_REVERSED_Z
+					#define ASE_SV_DEPTH SV_DepthLessEqual
+				#else
+					#define ASE_SV_DEPTH SV_DepthGreaterEqual
+				#endif
 				#define ASE_SV_POSITION_QUALIFIERS linear noperspective centroid
 			#else
 				#define ASE_SV_DEPTH SV_Depth
@@ -403,12 +411,19 @@ Shader "SphereCastTest"
 				
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
+				#if defined( SHADER_STAGE_FRAGMENT ) && defined( ASE_NEED_CULLFACE )
+					uint cullFace : SV_IsFrontFace;
+				#endif
 			};
 
 			CBUFFER_START(UnityPerMaterial)
 			float4 _Color0;
-			float _AlphaClip;
-			float _Cutoff;
+			#ifdef ASE_PROPERTY_ALPHACLIP
+				float _AlphaClip;
+			#endif
+			#ifdef ASE_PROPERTY_CUTOFF
+				float _Cutoff;
+			#endif
 			#ifdef ASE_TRANSMISSION
 				float _TransmissionShadow;
 			#endif
@@ -421,12 +436,22 @@ Shader "SphereCastTest"
 				float _TransShadow;
 			#endif
 			#ifdef ASE_TESSELLATION
-				float _TessPhongStrength;
-				float _TessValue;
-				float _TessMin;
-				float _TessMax;
-				float _TessEdgeLength;
-				float _TessMaxDisp;
+				#ifdef ASE_PHONG_TESSELLATION
+					float _TessPhongStrength;
+				#endif
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+					float _TessValue;
+				#endif
+				#ifdef ASE_DISTANCE_TESSELLATION
+					float _TessMin;
+					float _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+					float _TessEdgeLength;
+				#endif
+				#ifdef ASE_LENGTH_CULL_TESSELLATION
+					float _TessMaxDisp;
+				#endif
 			#endif
 			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
@@ -450,26 +475,26 @@ Shader "SphereCastTest"
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-				float3 temp_output_1_0_g3 = input.positionOS.xyz;
-				float localGetDeformationFromSphereCasts5_g3 = ( 0.0 );
-				float4x4 worldToObject5_g3 = GetWorldToObjectMatrix();
-				float4x4 objectToWorld5_g3 = GetObjectToWorldMatrix();
-				float3 localPosition5_g3 = temp_output_1_0_g3;
-				float3 temp_output_2_0_g3 = input.normalOS;
-				float3 localNormal5_g3 = temp_output_2_0_g3;
+				float3 temp_output_1_0_g4 = input.positionOS.xyz;
+				float localGetDeformationFromSphereCasts5_g4 = ( 0.0 );
+				float4x4 worldToObject5_g4 = GetWorldToObjectMatrix();
+				float4x4 objectToWorld5_g4 = GetObjectToWorldMatrix();
+				float3 localPosition5_g4 = temp_output_1_0_g4;
+				float3 temp_output_2_0_g4 = input.normalOS;
+				float3 localNormal5_g4 = temp_output_2_0_g4;
 				{
-					GetDeformationFromSphereCasts(worldToObject5_g3, objectToWorld5_g3, localPosition5_g3, localNormal5_g3);
+					GetDeformationFromSphereCasts(worldToObject5_g4, objectToWorld5_g4, localPosition5_g4, localNormal5_g4);
 				}
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch9_g3 = localPosition5_g3;
+				float3 staticSwitch9_g4 = localPosition5_g4;
 				#else
-				float3 staticSwitch9_g3 = temp_output_1_0_g3;
+				float3 staticSwitch9_g4 = temp_output_1_0_g4;
 				#endif
 				
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch10_g3 = localNormal5_g3;
+				float3 staticSwitch10_g4 = localNormal5_g4;
 				#else
-				float3 staticSwitch10_g3 = temp_output_2_0_g3;
+				float3 staticSwitch10_g4 = temp_output_2_0_g4;
 				#endif
 				
 
@@ -479,14 +504,14 @@ Shader "SphereCastTest"
 					float3 defaultVertexValue = float3(0, 0, 0);
 				#endif
 
-				float3 vertexValue = staticSwitch9_g3;
+				float3 vertexValue = staticSwitch9_g4;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					input.positionOS.xyz = vertexValue;
 				#else
 					input.positionOS.xyz += vertexValue;
 				#endif
-				input.normalOS = staticSwitch10_g3;
+				input.normalOS = staticSwitch10_g4;
 				input.tangentOS = input.tangentOS;
 
 				#ifdef ASE_CUSTOM_MOTION_VECTOR
@@ -572,8 +597,18 @@ Shader "SphereCastTest"
 			{
 				TessellationFactors output;
 				float4 tf = 1;
-				float tessValue = _TessValue; float tessMin = _TessMin; float tessMax = _TessMax;
-				float edgeLength = _TessEdgeLength; float tessMaxDisp = _TessMaxDisp;
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+				float tessValue = _TessValue;
+				#endif
+				#if defined( ASE_DISTANCE_TESSELLATION )
+				float tessMin = _TessMin; float tessMax = _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+				float edgeLength = _TessEdgeLength;
+				#endif
+				#if defined( ASE_LENGTH_CULL_TESSELLATION )
+				float tessMaxDisp = _TessMaxDisp;
+				#endif
 				#if defined(ASE_FIXED_TESSELLATION)
 				tf = FixedTess( tessValue );
 				#elif defined(ASE_DISTANCE_TESSELLATION)
@@ -682,6 +717,12 @@ Shader "SphereCastTest"
 					BitangentWS = cross(NormalWS, -TangentWS);
 				#endif
 
+				#if defined( SHADER_STAGE_FRAGMENT ) && defined( ASE_NEED_CULLFACE )
+					float IsFrontFace = input.cullFace;
+				#else
+					float IsFrontFace = 1;
+				#endif
+
 				
 
 				float3 BaseColor = _Color0.rgb;
@@ -693,7 +734,12 @@ Shader "SphereCastTest"
 				float3 Emission = 0;
 				float Alpha = 1;
 				#if defined( _ALPHATEST_ON )
-					float AlphaClipThreshold = _Cutoff;
+					#ifdef ASE_PROPERTY_CUTOFF
+					float alphaCutoff = _Cutoff;
+					#else
+					float alphaCutoff = 0.5;
+					#endif
+					float AlphaClipThreshold = alphaCutoff;
 					float AlphaClipThresholdShadow = 0.5;
 				#endif
 				float3 BakedGI = 0;
@@ -726,6 +772,13 @@ Shader "SphereCastTest"
 				inputData.viewDirectionWS = ViewDirWS;
 				inputData.shadowCoord = ShadowCoord;
 
+				#if defined( ASE_DOUBLE_SIDED_FLIP ) || defined( ASE_DOUBLE_SIDED_MIRROR )
+					NormalWS = IsFrontFace ? NormalWS : -NormalWS;
+					#if defined( ASE_DOUBLE_SIDED_FLIP ) && _NORMAL_DROPOFF_TS
+						Normal.xy = IsFrontFace ? Normal.xy : -Normal.xy;
+					#endif
+				#endif
+
 				#ifdef _NORMALMAP
 						#if _NORMAL_DROPOFF_TS
 							inputData.normalWS = TransformTangentToWorld(Normal, half3x3(TangentWS, BitangentWS, NormalWS));
@@ -733,6 +786,16 @@ Shader "SphereCastTest"
 							inputData.normalWS = TransformObjectToWorldNormal(Normal);
 						#elif _NORMAL_DROPOFF_WS
 							inputData.normalWS = Normal;
+						#endif
+						#if !_NORMAL_DROPOFF_TS && ( defined( ASE_DOUBLE_SIDED_FLIP ) || defined( ASE_DOUBLE_SIDED_MIRROR ) )
+							// @diogo: same back-face correction as HDRP's GetNormalWS_SrcWS
+							if ( !IsFrontFace )
+							{
+								inputData.normalWS += 2 * NormalWS * max( 0, -dot( NormalWS, inputData.normalWS ) );
+								#if defined( ASE_DOUBLE_SIDED_FLIP )
+									inputData.normalWS = reflect( -inputData.normalWS, NormalWS );
+								#endif
+							}
 						#endif
 					inputData.normalWS = NormalizeNormalPerPixel(inputData.normalWS);
 				#else
@@ -941,7 +1004,12 @@ Shader "SphereCastTest"
 						// @diogo: the opaque texture is already pre-exposed, and color is exposed again below
 						refraction *= GetInvPreExposureMultiplier();
 					#endif
-					color.rgb = lerp( refraction, color.rgb, color.a );
+					#if defined( _ALPHAPREMULTIPLY_ON )
+						// @diogo: HDRP-style composite: diffuse is already alpha-weighted by the BRDF, specular stays unscaled
+						color.rgb = refraction * ( 1 - color.a ) + color.rgb;
+					#else
+						color.rgb = lerp( refraction, color.rgb, color.a );
+					#endif
 					color.a = 1;
 				#endif
 
@@ -960,7 +1028,11 @@ Shader "SphereCastTest"
 					color.rgb = ClampExposed(inputData.preExposureMultiplier * color.rgb);
 				#endif
 				#if ( UNITY_VERSION >= 60070000 ) && defined( _SURFACE_TYPE_TRANSPARENT ) && defined( _TRANSPARENT_RECEIVE_FOG )
-					color.rgb = MixVolumetricFog( color.rgb, color.a, ASE_BLEND_MODE, false, input.positionCS );
+					#if defined( _ALPHAPREMULTIPLY_ON )
+						color.rgb = MixVolumetricFog( color.rgb, color.a, ASE_BLEND_MODE, true, input.positionCS );
+					#else
+						color.rgb = MixVolumetricFog( color.rgb, color.a, ASE_BLEND_MODE, false, input.positionCS );
+					#endif
 				#endif
 
 				#if defined( ASE_WRITE_DEPTH )
@@ -1002,12 +1074,12 @@ Shader "SphereCastTest"
 			#define ASE_GEOMETRY
 			#define _NORMAL_DROPOFF_TS 1
 			#define ASE_SCREEN_SPACE_REFLECTIONS
+			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#pragma multi_compile_instancing
 			#pragma multi_compile _ LOD_FADE_CROSSFADE
 			#define ASE_FOG 1
-			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#define ASE_ABSOLUTE_VERTEX_POS 1
-			#define ASE_VERSION 19914
+			#define ASE_VERSION 19915
 			#define ASE_SRP_VERSION 170300
 
 
@@ -1046,11 +1118,15 @@ Shader "SphereCastTest"
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_VERT_NORMAL
 			#pragma multi_compile _ _SPHERE_CAST_ON
-			#include "Packages/com.naelstrof.spherecast/SphereCast.cginc"
+			#include "Packages/com.gator-dragon-games.spherecast/SphereCast.cginc"
 
 
 			#if defined(ASE_WRITE_DEPTH_CONSERVATIVE) && (SHADER_TARGET >= 45)
-				#define ASE_SV_DEPTH SV_DepthLessEqual
+				#if UNITY_REVERSED_Z
+					#define ASE_SV_DEPTH SV_DepthLessEqual
+				#else
+					#define ASE_SV_DEPTH SV_DepthGreaterEqual
+				#endif
 				#define ASE_SV_POSITION_QUALIFIERS linear noperspective centroid
 			#else
 				#define ASE_SV_DEPTH SV_Depth
@@ -1077,8 +1153,12 @@ Shader "SphereCastTest"
 
 			CBUFFER_START(UnityPerMaterial)
 			float4 _Color0;
-			float _AlphaClip;
-			float _Cutoff;
+			#ifdef ASE_PROPERTY_ALPHACLIP
+				float _AlphaClip;
+			#endif
+			#ifdef ASE_PROPERTY_CUTOFF
+				float _Cutoff;
+			#endif
 			#ifdef ASE_TRANSMISSION
 				float _TransmissionShadow;
 			#endif
@@ -1091,12 +1171,22 @@ Shader "SphereCastTest"
 				float _TransShadow;
 			#endif
 			#ifdef ASE_TESSELLATION
-				float _TessPhongStrength;
-				float _TessValue;
-				float _TessMin;
-				float _TessMax;
-				float _TessEdgeLength;
-				float _TessMaxDisp;
+				#ifdef ASE_PHONG_TESSELLATION
+					float _TessPhongStrength;
+				#endif
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+					float _TessValue;
+				#endif
+				#ifdef ASE_DISTANCE_TESSELLATION
+					float _TessMin;
+					float _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+					float _TessEdgeLength;
+				#endif
+				#ifdef ASE_LENGTH_CULL_TESSELLATION
+					float _TessMaxDisp;
+				#endif
 			#endif
 			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
@@ -1123,26 +1213,26 @@ Shader "SphereCastTest"
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
 
-				float3 temp_output_1_0_g3 = input.positionOS.xyz;
-				float localGetDeformationFromSphereCasts5_g3 = ( 0.0 );
-				float4x4 worldToObject5_g3 = GetWorldToObjectMatrix();
-				float4x4 objectToWorld5_g3 = GetObjectToWorldMatrix();
-				float3 localPosition5_g3 = temp_output_1_0_g3;
-				float3 temp_output_2_0_g3 = input.normalOS;
-				float3 localNormal5_g3 = temp_output_2_0_g3;
+				float3 temp_output_1_0_g4 = input.positionOS.xyz;
+				float localGetDeformationFromSphereCasts5_g4 = ( 0.0 );
+				float4x4 worldToObject5_g4 = GetWorldToObjectMatrix();
+				float4x4 objectToWorld5_g4 = GetObjectToWorldMatrix();
+				float3 localPosition5_g4 = temp_output_1_0_g4;
+				float3 temp_output_2_0_g4 = input.normalOS;
+				float3 localNormal5_g4 = temp_output_2_0_g4;
 				{
-					GetDeformationFromSphereCasts(worldToObject5_g3, objectToWorld5_g3, localPosition5_g3, localNormal5_g3);
+					GetDeformationFromSphereCasts(worldToObject5_g4, objectToWorld5_g4, localPosition5_g4, localNormal5_g4);
 				}
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch9_g3 = localPosition5_g3;
+				float3 staticSwitch9_g4 = localPosition5_g4;
 				#else
-				float3 staticSwitch9_g3 = temp_output_1_0_g3;
+				float3 staticSwitch9_g4 = temp_output_1_0_g4;
 				#endif
 				
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch10_g3 = localNormal5_g3;
+				float3 staticSwitch10_g4 = localNormal5_g4;
 				#else
-				float3 staticSwitch10_g3 = temp_output_2_0_g3;
+				float3 staticSwitch10_g4 = temp_output_2_0_g4;
 				#endif
 				
 
@@ -1152,14 +1242,14 @@ Shader "SphereCastTest"
 					float3 defaultVertexValue = float3(0, 0, 0);
 				#endif
 
-				float3 vertexValue = staticSwitch9_g3;
+				float3 vertexValue = staticSwitch9_g4;
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					input.positionOS.xyz = vertexValue;
 				#else
 					input.positionOS.xyz += vertexValue;
 				#endif
 
-				input.normalOS = staticSwitch10_g3;
+				input.normalOS = staticSwitch10_g4;
 				input.tangentOS = input.tangentOS;
 
 				float3 positionWS = TransformObjectToWorld( input.positionOS.xyz );
@@ -1213,8 +1303,18 @@ Shader "SphereCastTest"
 			{
 				TessellationFactors output;
 				float4 tf = 1;
-				float tessValue = _TessValue; float tessMin = _TessMin; float tessMax = _TessMax;
-				float edgeLength = _TessEdgeLength; float tessMaxDisp = _TessMaxDisp;
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+				float tessValue = _TessValue;
+				#endif
+				#if defined( ASE_DISTANCE_TESSELLATION )
+				float tessMin = _TessMin; float tessMax = _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+				float edgeLength = _TessEdgeLength;
+				#endif
+				#if defined( ASE_LENGTH_CULL_TESSELLATION )
+				float tessMaxDisp = _TessMaxDisp;
+				#endif
 				#if defined(ASE_FIXED_TESSELLATION)
 				tf = FixedTess( tessValue );
 				#elif defined(ASE_DISTANCE_TESSELLATION)
@@ -1289,7 +1389,12 @@ Shader "SphereCastTest"
 
 				float Alpha = 1;
 				#if defined( _ALPHATEST_ON )
-					float AlphaClipThreshold = _Cutoff;
+					#ifdef ASE_PROPERTY_CUTOFF
+					float alphaCutoff = _Cutoff;
+					#else
+					float alphaCutoff = 0.5;
+					#endif
+					float AlphaClipThreshold = alphaCutoff;
 					float AlphaClipThresholdShadow = 0.5;
 				#endif
 
@@ -1334,12 +1439,12 @@ Shader "SphereCastTest"
 			#define ASE_GEOMETRY
 			#define _NORMAL_DROPOFF_TS 1
 			#define ASE_SCREEN_SPACE_REFLECTIONS
+			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#pragma multi_compile_instancing
 			#pragma multi_compile _ LOD_FADE_CROSSFADE
 			#define ASE_FOG 1
-			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#define ASE_ABSOLUTE_VERTEX_POS 1
-			#define ASE_VERSION 19914
+			#define ASE_VERSION 19915
 			#define ASE_SRP_VERSION 170300
 
 
@@ -1376,11 +1481,15 @@ Shader "SphereCastTest"
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_VERT_NORMAL
 			#pragma multi_compile _ _SPHERE_CAST_ON
-			#include "Packages/com.naelstrof.spherecast/SphereCast.cginc"
+			#include "Packages/com.gator-dragon-games.spherecast/SphereCast.cginc"
 
 
 			#if defined(ASE_WRITE_DEPTH_CONSERVATIVE) && (SHADER_TARGET >= 45)
-				#define ASE_SV_DEPTH SV_DepthLessEqual
+				#if UNITY_REVERSED_Z
+					#define ASE_SV_DEPTH SV_DepthLessEqual
+				#else
+					#define ASE_SV_DEPTH SV_DepthGreaterEqual
+				#endif
 				#define ASE_SV_POSITION_QUALIFIERS linear noperspective centroid
 			#else
 				#define ASE_SV_DEPTH SV_Depth
@@ -1407,8 +1516,12 @@ Shader "SphereCastTest"
 
 			CBUFFER_START(UnityPerMaterial)
 			float4 _Color0;
-			float _AlphaClip;
-			float _Cutoff;
+			#ifdef ASE_PROPERTY_ALPHACLIP
+				float _AlphaClip;
+			#endif
+			#ifdef ASE_PROPERTY_CUTOFF
+				float _Cutoff;
+			#endif
 			#ifdef ASE_TRANSMISSION
 				float _TransmissionShadow;
 			#endif
@@ -1421,12 +1534,22 @@ Shader "SphereCastTest"
 				float _TransShadow;
 			#endif
 			#ifdef ASE_TESSELLATION
-				float _TessPhongStrength;
-				float _TessValue;
-				float _TessMin;
-				float _TessMax;
-				float _TessEdgeLength;
-				float _TessMaxDisp;
+				#ifdef ASE_PHONG_TESSELLATION
+					float _TessPhongStrength;
+				#endif
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+					float _TessValue;
+				#endif
+				#ifdef ASE_DISTANCE_TESSELLATION
+					float _TessMin;
+					float _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+					float _TessEdgeLength;
+				#endif
+				#ifdef ASE_LENGTH_CULL_TESSELLATION
+					float _TessMaxDisp;
+				#endif
 			#endif
 			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
@@ -1450,26 +1573,26 @@ Shader "SphereCastTest"
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-				float3 temp_output_1_0_g3 = input.positionOS.xyz;
-				float localGetDeformationFromSphereCasts5_g3 = ( 0.0 );
-				float4x4 worldToObject5_g3 = GetWorldToObjectMatrix();
-				float4x4 objectToWorld5_g3 = GetObjectToWorldMatrix();
-				float3 localPosition5_g3 = temp_output_1_0_g3;
-				float3 temp_output_2_0_g3 = input.normalOS;
-				float3 localNormal5_g3 = temp_output_2_0_g3;
+				float3 temp_output_1_0_g4 = input.positionOS.xyz;
+				float localGetDeformationFromSphereCasts5_g4 = ( 0.0 );
+				float4x4 worldToObject5_g4 = GetWorldToObjectMatrix();
+				float4x4 objectToWorld5_g4 = GetObjectToWorldMatrix();
+				float3 localPosition5_g4 = temp_output_1_0_g4;
+				float3 temp_output_2_0_g4 = input.normalOS;
+				float3 localNormal5_g4 = temp_output_2_0_g4;
 				{
-					GetDeformationFromSphereCasts(worldToObject5_g3, objectToWorld5_g3, localPosition5_g3, localNormal5_g3);
+					GetDeformationFromSphereCasts(worldToObject5_g4, objectToWorld5_g4, localPosition5_g4, localNormal5_g4);
 				}
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch9_g3 = localPosition5_g3;
+				float3 staticSwitch9_g4 = localPosition5_g4;
 				#else
-				float3 staticSwitch9_g3 = temp_output_1_0_g3;
+				float3 staticSwitch9_g4 = temp_output_1_0_g4;
 				#endif
 				
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch10_g3 = localNormal5_g3;
+				float3 staticSwitch10_g4 = localNormal5_g4;
 				#else
-				float3 staticSwitch10_g3 = temp_output_2_0_g3;
+				float3 staticSwitch10_g4 = temp_output_2_0_g4;
 				#endif
 				
 
@@ -1479,7 +1602,7 @@ Shader "SphereCastTest"
 					float3 defaultVertexValue = float3(0, 0, 0);
 				#endif
 
-				float3 vertexValue = staticSwitch9_g3;
+				float3 vertexValue = staticSwitch9_g4;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					input.positionOS.xyz = vertexValue;
@@ -1487,7 +1610,7 @@ Shader "SphereCastTest"
 					input.positionOS.xyz += vertexValue;
 				#endif
 
-				input.normalOS = staticSwitch10_g3;
+				input.normalOS = staticSwitch10_g4;
 				input.tangentOS = input.tangentOS;
 
 				VertexPositionInputs vertexInput = GetVertexPositionInputs( input.positionOS.xyz );
@@ -1529,8 +1652,18 @@ Shader "SphereCastTest"
 			{
 				TessellationFactors output;
 				float4 tf = 1;
-				float tessValue = _TessValue; float tessMin = _TessMin; float tessMax = _TessMax;
-				float edgeLength = _TessEdgeLength; float tessMaxDisp = _TessMaxDisp;
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+				float tessValue = _TessValue;
+				#endif
+				#if defined( ASE_DISTANCE_TESSELLATION )
+				float tessMin = _TessMin; float tessMax = _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+				float edgeLength = _TessEdgeLength;
+				#endif
+				#if defined( ASE_LENGTH_CULL_TESSELLATION )
+				float tessMaxDisp = _TessMaxDisp;
+				#endif
 				#if defined(ASE_FIXED_TESSELLATION)
 				tf = FixedTess( tessValue );
 				#elif defined(ASE_DISTANCE_TESSELLATION)
@@ -1605,7 +1738,12 @@ Shader "SphereCastTest"
 
 				float Alpha = 1;
 				#if defined( _ALPHATEST_ON )
-					float AlphaClipThreshold = _Cutoff;
+					#ifdef ASE_PROPERTY_CUTOFF
+					float alphaCutoff = _Cutoff;
+					#else
+					float alphaCutoff = 0.5;
+					#endif
+					float AlphaClipThreshold = alphaCutoff;
 				#endif
 
 				#if defined( ASE_WRITE_DEPTH )
@@ -1642,10 +1780,10 @@ Shader "SphereCastTest"
 			#define ASE_GEOMETRY
 			#define _NORMAL_DROPOFF_TS 1
 			#define ASE_SCREEN_SPACE_REFLECTIONS
-			#define ASE_FOG 1
 			#pragma multi_compile_fragment _ DEBUG_DISPLAY
+			#define ASE_FOG 1
 			#define ASE_ABSOLUTE_VERTEX_POS 1
-			#define ASE_VERSION 19914
+			#define ASE_VERSION 19915
 			#define ASE_SRP_VERSION 170300
 
 			#pragma shader_feature EDITOR_VISUALIZATION
@@ -1679,7 +1817,7 @@ Shader "SphereCastTest"
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_VERT_NORMAL
 			#pragma multi_compile _ _SPHERE_CAST_ON
-			#include "Packages/com.naelstrof.spherecast/SphereCast.cginc"
+			#include "Packages/com.gator-dragon-games.spherecast/SphereCast.cginc"
 
 
 			struct Attributes
@@ -1709,8 +1847,12 @@ Shader "SphereCastTest"
 
 			CBUFFER_START(UnityPerMaterial)
 			float4 _Color0;
-			float _AlphaClip;
-			float _Cutoff;
+			#ifdef ASE_PROPERTY_ALPHACLIP
+				float _AlphaClip;
+			#endif
+			#ifdef ASE_PROPERTY_CUTOFF
+				float _Cutoff;
+			#endif
 			#ifdef ASE_TRANSMISSION
 				float _TransmissionShadow;
 			#endif
@@ -1723,12 +1865,22 @@ Shader "SphereCastTest"
 				float _TransShadow;
 			#endif
 			#ifdef ASE_TESSELLATION
-				float _TessPhongStrength;
-				float _TessValue;
-				float _TessMin;
-				float _TessMax;
-				float _TessEdgeLength;
-				float _TessMaxDisp;
+				#ifdef ASE_PHONG_TESSELLATION
+					float _TessPhongStrength;
+				#endif
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+					float _TessValue;
+				#endif
+				#ifdef ASE_DISTANCE_TESSELLATION
+					float _TessMin;
+					float _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+					float _TessEdgeLength;
+				#endif
+				#ifdef ASE_LENGTH_CULL_TESSELLATION
+					float _TessMaxDisp;
+				#endif
 			#endif
 			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
@@ -1752,26 +1904,26 @@ Shader "SphereCastTest"
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-				float3 temp_output_1_0_g3 = input.positionOS.xyz;
-				float localGetDeformationFromSphereCasts5_g3 = ( 0.0 );
-				float4x4 worldToObject5_g3 = GetWorldToObjectMatrix();
-				float4x4 objectToWorld5_g3 = GetObjectToWorldMatrix();
-				float3 localPosition5_g3 = temp_output_1_0_g3;
-				float3 temp_output_2_0_g3 = input.normalOS;
-				float3 localNormal5_g3 = temp_output_2_0_g3;
+				float3 temp_output_1_0_g4 = input.positionOS.xyz;
+				float localGetDeformationFromSphereCasts5_g4 = ( 0.0 );
+				float4x4 worldToObject5_g4 = GetWorldToObjectMatrix();
+				float4x4 objectToWorld5_g4 = GetObjectToWorldMatrix();
+				float3 localPosition5_g4 = temp_output_1_0_g4;
+				float3 temp_output_2_0_g4 = input.normalOS;
+				float3 localNormal5_g4 = temp_output_2_0_g4;
 				{
-					GetDeformationFromSphereCasts(worldToObject5_g3, objectToWorld5_g3, localPosition5_g3, localNormal5_g3);
+					GetDeformationFromSphereCasts(worldToObject5_g4, objectToWorld5_g4, localPosition5_g4, localNormal5_g4);
 				}
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch9_g3 = localPosition5_g3;
+				float3 staticSwitch9_g4 = localPosition5_g4;
 				#else
-				float3 staticSwitch9_g3 = temp_output_1_0_g3;
+				float3 staticSwitch9_g4 = temp_output_1_0_g4;
 				#endif
 				
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch10_g3 = localNormal5_g3;
+				float3 staticSwitch10_g4 = localNormal5_g4;
 				#else
-				float3 staticSwitch10_g3 = temp_output_2_0_g3;
+				float3 staticSwitch10_g4 = temp_output_2_0_g4;
 				#endif
 				
 
@@ -1781,7 +1933,7 @@ Shader "SphereCastTest"
 					float3 defaultVertexValue = float3(0, 0, 0);
 				#endif
 
-				float3 vertexValue = staticSwitch9_g3;
+				float3 vertexValue = staticSwitch9_g4;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					input.positionOS.xyz = vertexValue;
@@ -1789,7 +1941,7 @@ Shader "SphereCastTest"
 					input.positionOS.xyz += vertexValue;
 				#endif
 
-				input.normalOS = staticSwitch10_g3;
+				input.normalOS = staticSwitch10_g4;
 				input.tangentOS = input.tangentOS;
 
 				#ifdef EDITOR_VISUALIZATION
@@ -1843,8 +1995,18 @@ Shader "SphereCastTest"
 			{
 				TessellationFactors output;
 				float4 tf = 1;
-				float tessValue = _TessValue; float tessMin = _TessMin; float tessMax = _TessMax;
-				float edgeLength = _TessEdgeLength; float tessMaxDisp = _TessMaxDisp;
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+				float tessValue = _TessValue;
+				#endif
+				#if defined( ASE_DISTANCE_TESSELLATION )
+				float tessMin = _TessMin; float tessMax = _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+				float edgeLength = _TessEdgeLength;
+				#endif
+				#if defined( ASE_LENGTH_CULL_TESSELLATION )
+				float tessMaxDisp = _TessMaxDisp;
+				#endif
 				#if defined(ASE_FIXED_TESSELLATION)
 				tf = FixedTess( tessValue );
 				#elif defined(ASE_DISTANCE_TESSELLATION)
@@ -1917,7 +2079,12 @@ Shader "SphereCastTest"
 				float3 Emission = 0;
 				float Alpha = 1;
 				#if defined( _ALPHATEST_ON )
-					float AlphaClipThreshold = _Cutoff;
+					#ifdef ASE_PROPERTY_CUTOFF
+					float alphaCutoff = _Cutoff;
+					#else
+					float alphaCutoff = 0.5;
+					#endif
+					float AlphaClipThreshold = alphaCutoff;
 				#endif
 
 				#if defined( _ALPHATEST_ON )
@@ -1955,10 +2122,10 @@ Shader "SphereCastTest"
 			#define ASE_GEOMETRY
 			#define _NORMAL_DROPOFF_TS 1
 			#define ASE_SCREEN_SPACE_REFLECTIONS
-			#define ASE_FOG 1
 			#pragma multi_compile_fragment _ DEBUG_DISPLAY
+			#define ASE_FOG 1
 			#define ASE_ABSOLUTE_VERTEX_POS 1
-			#define ASE_VERSION 19914
+			#define ASE_VERSION 19915
 			#define ASE_SRP_VERSION 170300
 
 
@@ -1990,7 +2157,7 @@ Shader "SphereCastTest"
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_VERT_NORMAL
 			#pragma multi_compile _ _SPHERE_CAST_ON
-			#include "Packages/com.naelstrof.spherecast/SphereCast.cginc"
+			#include "Packages/com.gator-dragon-games.spherecast/SphereCast.cginc"
 
 
 			struct Attributes
@@ -2013,8 +2180,12 @@ Shader "SphereCastTest"
 
 			CBUFFER_START(UnityPerMaterial)
 			float4 _Color0;
-			float _AlphaClip;
-			float _Cutoff;
+			#ifdef ASE_PROPERTY_ALPHACLIP
+				float _AlphaClip;
+			#endif
+			#ifdef ASE_PROPERTY_CUTOFF
+				float _Cutoff;
+			#endif
 			#ifdef ASE_TRANSMISSION
 				float _TransmissionShadow;
 			#endif
@@ -2027,12 +2198,22 @@ Shader "SphereCastTest"
 				float _TransShadow;
 			#endif
 			#ifdef ASE_TESSELLATION
-				float _TessPhongStrength;
-				float _TessValue;
-				float _TessMin;
-				float _TessMax;
-				float _TessEdgeLength;
-				float _TessMaxDisp;
+				#ifdef ASE_PHONG_TESSELLATION
+					float _TessPhongStrength;
+				#endif
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+					float _TessValue;
+				#endif
+				#ifdef ASE_DISTANCE_TESSELLATION
+					float _TessMin;
+					float _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+					float _TessEdgeLength;
+				#endif
+				#ifdef ASE_LENGTH_CULL_TESSELLATION
+					float _TessMaxDisp;
+				#endif
 			#endif
 			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
@@ -2056,26 +2237,26 @@ Shader "SphereCastTest"
 				UNITY_TRANSFER_INSTANCE_ID( input, output );
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
 
-				float3 temp_output_1_0_g3 = input.positionOS.xyz;
-				float localGetDeformationFromSphereCasts5_g3 = ( 0.0 );
-				float4x4 worldToObject5_g3 = GetWorldToObjectMatrix();
-				float4x4 objectToWorld5_g3 = GetObjectToWorldMatrix();
-				float3 localPosition5_g3 = temp_output_1_0_g3;
-				float3 temp_output_2_0_g3 = input.normalOS;
-				float3 localNormal5_g3 = temp_output_2_0_g3;
+				float3 temp_output_1_0_g4 = input.positionOS.xyz;
+				float localGetDeformationFromSphereCasts5_g4 = ( 0.0 );
+				float4x4 worldToObject5_g4 = GetWorldToObjectMatrix();
+				float4x4 objectToWorld5_g4 = GetObjectToWorldMatrix();
+				float3 localPosition5_g4 = temp_output_1_0_g4;
+				float3 temp_output_2_0_g4 = input.normalOS;
+				float3 localNormal5_g4 = temp_output_2_0_g4;
 				{
-					GetDeformationFromSphereCasts(worldToObject5_g3, objectToWorld5_g3, localPosition5_g3, localNormal5_g3);
+					GetDeformationFromSphereCasts(worldToObject5_g4, objectToWorld5_g4, localPosition5_g4, localNormal5_g4);
 				}
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch9_g3 = localPosition5_g3;
+				float3 staticSwitch9_g4 = localPosition5_g4;
 				#else
-				float3 staticSwitch9_g3 = temp_output_1_0_g3;
+				float3 staticSwitch9_g4 = temp_output_1_0_g4;
 				#endif
 				
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch10_g3 = localNormal5_g3;
+				float3 staticSwitch10_g4 = localNormal5_g4;
 				#else
-				float3 staticSwitch10_g3 = temp_output_2_0_g3;
+				float3 staticSwitch10_g4 = temp_output_2_0_g4;
 				#endif
 				
 
@@ -2085,7 +2266,7 @@ Shader "SphereCastTest"
 					float3 defaultVertexValue = float3(0, 0, 0);
 				#endif
 
-				float3 vertexValue = staticSwitch9_g3;
+				float3 vertexValue = staticSwitch9_g4;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					input.positionOS.xyz = vertexValue;
@@ -2093,7 +2274,7 @@ Shader "SphereCastTest"
 					input.positionOS.xyz += vertexValue;
 				#endif
 
-				input.normalOS = staticSwitch10_g3;
+				input.normalOS = staticSwitch10_g4;
 				input.tangentOS = input.tangentOS;
 
 				VertexPositionInputs vertexInput = GetVertexPositionInputs( input.positionOS.xyz );
@@ -2135,8 +2316,18 @@ Shader "SphereCastTest"
 			{
 				TessellationFactors output;
 				float4 tf = 1;
-				float tessValue = _TessValue; float tessMin = _TessMin; float tessMax = _TessMax;
-				float edgeLength = _TessEdgeLength; float tessMaxDisp = _TessMaxDisp;
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+				float tessValue = _TessValue;
+				#endif
+				#if defined( ASE_DISTANCE_TESSELLATION )
+				float tessMin = _TessMin; float tessMax = _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+				float edgeLength = _TessEdgeLength;
+				#endif
+				#if defined( ASE_LENGTH_CULL_TESSELLATION )
+				float tessMaxDisp = _TessMaxDisp;
+				#endif
 				#if defined(ASE_FIXED_TESSELLATION)
 				tf = FixedTess( tessValue );
 				#elif defined(ASE_DISTANCE_TESSELLATION)
@@ -2205,13 +2396,22 @@ Shader "SphereCastTest"
 				float3 BaseColor = _Color0.rgb;
 				float Alpha = 1;
 				#if defined( _ALPHATEST_ON )
-					float AlphaClipThreshold = _Cutoff;
+					#ifdef ASE_PROPERTY_CUTOFF
+					float alphaCutoff = _Cutoff;
+					#else
+					float alphaCutoff = 0.5;
+					#endif
+					float AlphaClipThreshold = alphaCutoff;
 				#endif
 
 				half4 color = half4(BaseColor, Alpha );
 
 				#if defined( _ALPHATEST_ON )
 					AlphaDiscard( Alpha, AlphaClipThreshold );
+				#endif
+
+				#if defined( _ALPHAPREMULTIPLY_ON )
+					color.rgb *= color.a;
 				#endif
 
 				return color;
@@ -2237,12 +2437,12 @@ Shader "SphereCastTest"
 			#define _NORMAL_DROPOFF_TS 1
 			#define ASE_SCREEN_SPACE_REFLECTIONS
 			#pragma shader_feature_local_fragment _SCREENSPACEREFLECTIONS_OFF
+			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#pragma multi_compile_instancing
 			#pragma multi_compile _ LOD_FADE_CROSSFADE
 			#define ASE_FOG 1
-			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#define ASE_ABSOLUTE_VERTEX_POS 1
-			#define ASE_VERSION 19914
+			#define ASE_VERSION 19915
 			#define ASE_SRP_VERSION 170300
 
 
@@ -2294,11 +2494,15 @@ Shader "SphereCastTest"
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_VERT_NORMAL
 			#pragma multi_compile _ _SPHERE_CAST_ON
-			#include "Packages/com.naelstrof.spherecast/SphereCast.cginc"
+			#include "Packages/com.gator-dragon-games.spherecast/SphereCast.cginc"
 
 
 			#if defined(ASE_WRITE_DEPTH_CONSERVATIVE) && (SHADER_TARGET >= 45)
-				#define ASE_SV_DEPTH SV_DepthLessEqual
+				#if UNITY_REVERSED_Z
+					#define ASE_SV_DEPTH SV_DepthLessEqual
+				#else
+					#define ASE_SV_DEPTH SV_DepthGreaterEqual
+				#endif
 				#define ASE_SV_POSITION_QUALIFIERS linear noperspective centroid
 			#else
 				#define ASE_SV_DEPTH SV_Depth
@@ -2324,12 +2528,19 @@ Shader "SphereCastTest"
 				
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
+				#if defined( SHADER_STAGE_FRAGMENT ) && defined( ASE_NEED_CULLFACE )
+					uint cullFace : SV_IsFrontFace;
+				#endif
 			};
 
 			CBUFFER_START(UnityPerMaterial)
 			float4 _Color0;
-			float _AlphaClip;
-			float _Cutoff;
+			#ifdef ASE_PROPERTY_ALPHACLIP
+				float _AlphaClip;
+			#endif
+			#ifdef ASE_PROPERTY_CUTOFF
+				float _Cutoff;
+			#endif
 			#ifdef ASE_TRANSMISSION
 				float _TransmissionShadow;
 			#endif
@@ -2342,12 +2553,22 @@ Shader "SphereCastTest"
 				float _TransShadow;
 			#endif
 			#ifdef ASE_TESSELLATION
-				float _TessPhongStrength;
-				float _TessValue;
-				float _TessMin;
-				float _TessMax;
-				float _TessEdgeLength;
-				float _TessMaxDisp;
+				#ifdef ASE_PHONG_TESSELLATION
+					float _TessPhongStrength;
+				#endif
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+					float _TessValue;
+				#endif
+				#ifdef ASE_DISTANCE_TESSELLATION
+					float _TessMin;
+					float _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+					float _TessEdgeLength;
+				#endif
+				#ifdef ASE_LENGTH_CULL_TESSELLATION
+					float _TessMaxDisp;
+				#endif
 			#endif
 			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
@@ -2371,26 +2592,26 @@ Shader "SphereCastTest"
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-				float3 temp_output_1_0_g3 = input.positionOS.xyz;
-				float localGetDeformationFromSphereCasts5_g3 = ( 0.0 );
-				float4x4 worldToObject5_g3 = GetWorldToObjectMatrix();
-				float4x4 objectToWorld5_g3 = GetObjectToWorldMatrix();
-				float3 localPosition5_g3 = temp_output_1_0_g3;
-				float3 temp_output_2_0_g3 = input.normalOS;
-				float3 localNormal5_g3 = temp_output_2_0_g3;
+				float3 temp_output_1_0_g4 = input.positionOS.xyz;
+				float localGetDeformationFromSphereCasts5_g4 = ( 0.0 );
+				float4x4 worldToObject5_g4 = GetWorldToObjectMatrix();
+				float4x4 objectToWorld5_g4 = GetObjectToWorldMatrix();
+				float3 localPosition5_g4 = temp_output_1_0_g4;
+				float3 temp_output_2_0_g4 = input.normalOS;
+				float3 localNormal5_g4 = temp_output_2_0_g4;
 				{
-					GetDeformationFromSphereCasts(worldToObject5_g3, objectToWorld5_g3, localPosition5_g3, localNormal5_g3);
+					GetDeformationFromSphereCasts(worldToObject5_g4, objectToWorld5_g4, localPosition5_g4, localNormal5_g4);
 				}
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch9_g3 = localPosition5_g3;
+				float3 staticSwitch9_g4 = localPosition5_g4;
 				#else
-				float3 staticSwitch9_g3 = temp_output_1_0_g3;
+				float3 staticSwitch9_g4 = temp_output_1_0_g4;
 				#endif
 				
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch10_g3 = localNormal5_g3;
+				float3 staticSwitch10_g4 = localNormal5_g4;
 				#else
-				float3 staticSwitch10_g3 = temp_output_2_0_g3;
+				float3 staticSwitch10_g4 = temp_output_2_0_g4;
 				#endif
 				
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
@@ -2399,7 +2620,7 @@ Shader "SphereCastTest"
 					float3 defaultVertexValue = float3(0, 0, 0);
 				#endif
 
-				float3 vertexValue = staticSwitch9_g3;
+				float3 vertexValue = staticSwitch9_g4;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					input.positionOS.xyz = vertexValue;
@@ -2407,7 +2628,7 @@ Shader "SphereCastTest"
 					input.positionOS.xyz += vertexValue;
 				#endif
 
-				input.normalOS = staticSwitch10_g3;
+				input.normalOS = staticSwitch10_g4;
 				input.tangentOS = input.tangentOS;
 
 				VertexPositionInputs vertexInput = GetVertexPositionInputs( input.positionOS.xyz );
@@ -2459,8 +2680,18 @@ Shader "SphereCastTest"
 			{
 				TessellationFactors output;
 				float4 tf = 1;
-				float tessValue = _TessValue; float tessMin = _TessMin; float tessMax = _TessMax;
-				float edgeLength = _TessEdgeLength; float tessMaxDisp = _TessMaxDisp;
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+				float tessValue = _TessValue;
+				#endif
+				#if defined( ASE_DISTANCE_TESSELLATION )
+				float tessMin = _TessMin; float tessMax = _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+				float edgeLength = _TessEdgeLength;
+				#endif
+				#if defined( ASE_LENGTH_CULL_TESSELLATION )
+				float tessMaxDisp = _TessMaxDisp;
+				#endif
 				#if defined(ASE_FIXED_TESSELLATION)
 				tf = FixedTess( tessValue );
 				#elif defined(ASE_DISTANCE_TESSELLATION)
@@ -2553,13 +2784,24 @@ Shader "SphereCastTest"
 					BitangentWS = cross(NormalWS, -TangentWS);
 				#endif
 
+				#if defined( SHADER_STAGE_FRAGMENT ) && defined( ASE_NEED_CULLFACE )
+					float IsFrontFace = input.cullFace;
+				#else
+					float IsFrontFace = 1;
+				#endif
+
 				
 
 				float3 Normal = float3(0, 0, 1);
 				float Smoothness = 0.5;
 				float Alpha = 1;
 				#if defined( _ALPHATEST_ON )
-					float AlphaClipThreshold = _Cutoff;
+					#ifdef ASE_PROPERTY_CUTOFF
+					float alphaCutoff = _Cutoff;
+					#else
+					float alphaCutoff = 0.5;
+					#endif
+					float AlphaClipThreshold = alphaCutoff;
 				#endif
 
 				#if defined( ASE_WRITE_DEPTH )
@@ -2574,8 +2816,19 @@ Shader "SphereCastTest"
 					LODFadeCrossFade( input.positionCS );
 				#endif
 
+				#if ( UNITY_VERSION >= 60060000 ) && defined( _SCREENSPACEREFLECTIONSCONTRIBUTETRANSPARENT_OFF )
+					discard;
+				#endif
+
 				#if defined( ASE_WRITE_DEPTH )
 					outputDepth = input.positionCS.z;
+				#endif
+
+				#if defined( ASE_DOUBLE_SIDED_FLIP ) || defined( ASE_DOUBLE_SIDED_MIRROR )
+					NormalWS = IsFrontFace ? NormalWS : -NormalWS;
+					#if defined( ASE_DOUBLE_SIDED_FLIP ) && _NORMAL_DROPOFF_TS
+						Normal.xy = IsFrontFace ? Normal.xy : -Normal.xy;
+					#endif
 				#endif
 
 				#if defined(_NORMALMAP)
@@ -2585,6 +2838,16 @@ Shader "SphereCastTest"
 						float3 normalWS = TransformObjectToWorldNormal(Normal);
 					#elif _NORMAL_DROPOFF_WS
 						float3 normalWS = Normal;
+					#endif
+					#if !_NORMAL_DROPOFF_TS && ( defined( ASE_DOUBLE_SIDED_FLIP ) || defined( ASE_DOUBLE_SIDED_MIRROR ) )
+						// @diogo: same back-face correction as HDRP's GetNormalWS_SrcWS
+						if ( !IsFrontFace )
+						{
+							normalWS += 2 * NormalWS * max( 0, -dot( NormalWS, normalWS ) );
+							#if defined( ASE_DOUBLE_SIDED_FLIP )
+								normalWS = reflect( -normalWS, NormalWS );
+							#endif
+						}
 					#endif
 				#else
 					float3 normalWS = NormalWS;
@@ -2642,13 +2905,13 @@ Shader "SphereCastTest"
 			#pragma shader_feature_local_fragment _ENVIRONMENTREFLECTIONS_OFF
 			#define ASE_SCREEN_SPACE_REFLECTIONS
 			#pragma shader_feature_local_fragment _SCREENSPACEREFLECTIONS_OFF
+			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#pragma multi_compile_instancing
 			#pragma instancing_options renderinglayer
 			#pragma multi_compile _ LOD_FADE_CROSSFADE
 			#define ASE_FOG 1
-			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#define ASE_ABSOLUTE_VERTEX_POS 1
-			#define ASE_VERSION 19914
+			#define ASE_VERSION 19915
 			#define ASE_SRP_VERSION 170300
 
 
@@ -2759,11 +3022,15 @@ Shader "SphereCastTest"
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_VERT_NORMAL
 			#pragma multi_compile _ _SPHERE_CAST_ON
-			#include "Packages/com.naelstrof.spherecast/SphereCast.cginc"
+			#include "Packages/com.gator-dragon-games.spherecast/SphereCast.cginc"
 
 
 			#if defined(ASE_WRITE_DEPTH_CONSERVATIVE) && (SHADER_TARGET >= 45)
-				#define ASE_SV_DEPTH SV_DepthLessEqual
+				#if UNITY_REVERSED_Z
+					#define ASE_SV_DEPTH SV_DepthLessEqual
+				#else
+					#define ASE_SV_DEPTH SV_DepthGreaterEqual
+				#endif
 				#define ASE_SV_POSITION_QUALIFIERS linear noperspective centroid
 			#else
 				#define ASE_SV_DEPTH SV_Depth
@@ -2805,12 +3072,19 @@ Shader "SphereCastTest"
 				
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
+				#if defined( SHADER_STAGE_FRAGMENT ) && defined( ASE_NEED_CULLFACE )
+					uint cullFace : SV_IsFrontFace;
+				#endif
 			};
 
 			CBUFFER_START(UnityPerMaterial)
 			float4 _Color0;
-			float _AlphaClip;
-			float _Cutoff;
+			#ifdef ASE_PROPERTY_ALPHACLIP
+				float _AlphaClip;
+			#endif
+			#ifdef ASE_PROPERTY_CUTOFF
+				float _Cutoff;
+			#endif
 			#ifdef ASE_TRANSMISSION
 				float _TransmissionShadow;
 			#endif
@@ -2823,12 +3097,22 @@ Shader "SphereCastTest"
 				float _TransShadow;
 			#endif
 			#ifdef ASE_TESSELLATION
-				float _TessPhongStrength;
-				float _TessValue;
-				float _TessMin;
-				float _TessMax;
-				float _TessEdgeLength;
-				float _TessMaxDisp;
+				#ifdef ASE_PHONG_TESSELLATION
+					float _TessPhongStrength;
+				#endif
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+					float _TessValue;
+				#endif
+				#ifdef ASE_DISTANCE_TESSELLATION
+					float _TessMin;
+					float _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+					float _TessEdgeLength;
+				#endif
+				#ifdef ASE_LENGTH_CULL_TESSELLATION
+					float _TessMaxDisp;
+				#endif
 			#endif
 			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
@@ -2858,26 +3142,26 @@ Shader "SphereCastTest"
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-				float3 temp_output_1_0_g3 = input.positionOS.xyz;
-				float localGetDeformationFromSphereCasts5_g3 = ( 0.0 );
-				float4x4 worldToObject5_g3 = GetWorldToObjectMatrix();
-				float4x4 objectToWorld5_g3 = GetObjectToWorldMatrix();
-				float3 localPosition5_g3 = temp_output_1_0_g3;
-				float3 temp_output_2_0_g3 = input.normalOS;
-				float3 localNormal5_g3 = temp_output_2_0_g3;
+				float3 temp_output_1_0_g4 = input.positionOS.xyz;
+				float localGetDeformationFromSphereCasts5_g4 = ( 0.0 );
+				float4x4 worldToObject5_g4 = GetWorldToObjectMatrix();
+				float4x4 objectToWorld5_g4 = GetObjectToWorldMatrix();
+				float3 localPosition5_g4 = temp_output_1_0_g4;
+				float3 temp_output_2_0_g4 = input.normalOS;
+				float3 localNormal5_g4 = temp_output_2_0_g4;
 				{
-					GetDeformationFromSphereCasts(worldToObject5_g3, objectToWorld5_g3, localPosition5_g3, localNormal5_g3);
+					GetDeformationFromSphereCasts(worldToObject5_g4, objectToWorld5_g4, localPosition5_g4, localNormal5_g4);
 				}
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch9_g3 = localPosition5_g3;
+				float3 staticSwitch9_g4 = localPosition5_g4;
 				#else
-				float3 staticSwitch9_g3 = temp_output_1_0_g3;
+				float3 staticSwitch9_g4 = temp_output_1_0_g4;
 				#endif
 				
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch10_g3 = localNormal5_g3;
+				float3 staticSwitch10_g4 = localNormal5_g4;
 				#else
-				float3 staticSwitch10_g3 = temp_output_2_0_g3;
+				float3 staticSwitch10_g4 = temp_output_2_0_g4;
 				#endif
 				
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
@@ -2886,7 +3170,7 @@ Shader "SphereCastTest"
 					float3 defaultVertexValue = float3(0, 0, 0);
 				#endif
 
-				float3 vertexValue = staticSwitch9_g3;
+				float3 vertexValue = staticSwitch9_g4;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					input.positionOS.xyz = vertexValue;
@@ -2894,7 +3178,7 @@ Shader "SphereCastTest"
 					input.positionOS.xyz += vertexValue;
 				#endif
 
-				input.normalOS = staticSwitch10_g3;
+				input.normalOS = staticSwitch10_g4;
 				input.tangentOS = input.tangentOS;
 
 				#ifdef ASE_CUSTOM_MOTION_VECTOR
@@ -2980,8 +3264,18 @@ Shader "SphereCastTest"
 			{
 				TessellationFactors output;
 				float4 tf = 1;
-				float tessValue = _TessValue; float tessMin = _TessMin; float tessMax = _TessMax;
-				float edgeLength = _TessEdgeLength; float tessMaxDisp = _TessMaxDisp;
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+				float tessValue = _TessValue;
+				#endif
+				#if defined( ASE_DISTANCE_TESSELLATION )
+				float tessMin = _TessMin; float tessMax = _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+				float edgeLength = _TessEdgeLength;
+				#endif
+				#if defined( ASE_LENGTH_CULL_TESSELLATION )
+				float tessMaxDisp = _TessMaxDisp;
+				#endif
 				#if defined(ASE_FIXED_TESSELLATION)
 				tf = FixedTess( tessValue );
 				#elif defined(ASE_DISTANCE_TESSELLATION)
@@ -3081,6 +3375,12 @@ Shader "SphereCastTest"
 					BitangentWS = cross(NormalWS, -TangentWS);
 				#endif
 
+				#if defined( SHADER_STAGE_FRAGMENT ) && defined( ASE_NEED_CULLFACE )
+					float IsFrontFace = input.cullFace;
+				#else
+					float IsFrontFace = 1;
+				#endif
+
 				
 
 				float3 BaseColor = _Color0.rgb;
@@ -3092,7 +3392,12 @@ Shader "SphereCastTest"
 				float3 Emission = 0;
 				float Alpha = 1;
 				#if defined( _ALPHATEST_ON )
-					float AlphaClipThreshold = _Cutoff;
+					#ifdef ASE_PROPERTY_CUTOFF
+					float alphaCutoff = _Cutoff;
+					#else
+					float alphaCutoff = 0.5;
+					#endif
+					float AlphaClipThreshold = alphaCutoff;
 					float AlphaClipThresholdShadow = 0.5;
 				#endif
 				float3 BakedGI = 0;
@@ -3119,6 +3424,13 @@ Shader "SphereCastTest"
 				inputData.normalizedScreenSpaceUV = ScreenPosNorm.xy;
 				inputData.shadowCoord = ShadowCoord;
 
+				#if defined( ASE_DOUBLE_SIDED_FLIP ) || defined( ASE_DOUBLE_SIDED_MIRROR )
+					NormalWS = IsFrontFace ? NormalWS : -NormalWS;
+					#if defined( ASE_DOUBLE_SIDED_FLIP ) && _NORMAL_DROPOFF_TS
+						Normal.xy = IsFrontFace ? Normal.xy : -Normal.xy;
+					#endif
+				#endif
+
 				#ifdef _NORMALMAP
 					#if _NORMAL_DROPOFF_TS
 						inputData.normalWS = TransformTangentToWorld(Normal, half3x3( TangentWS, BitangentWS, NormalWS ));
@@ -3126,6 +3438,16 @@ Shader "SphereCastTest"
 						inputData.normalWS = TransformObjectToWorldNormal(Normal);
 					#elif _NORMAL_DROPOFF_WS
 						inputData.normalWS = Normal;
+					#endif
+					#if !_NORMAL_DROPOFF_TS && ( defined( ASE_DOUBLE_SIDED_FLIP ) || defined( ASE_DOUBLE_SIDED_MIRROR ) )
+						// @diogo: same back-face correction as HDRP's GetNormalWS_SrcWS
+						if ( !IsFrontFace )
+						{
+							inputData.normalWS += 2 * NormalWS * max( 0, -dot( NormalWS, inputData.normalWS ) );
+							#if defined( ASE_DOUBLE_SIDED_FLIP )
+								inputData.normalWS = reflect( -inputData.normalWS, NormalWS );
+							#endif
+						}
 					#endif
 				#else
 					inputData.normalWS = NormalWS;
@@ -3270,11 +3592,11 @@ Shader "SphereCastTest"
 			#define ASE_GEOMETRY
 			#define _NORMAL_DROPOFF_TS 1
 			#define ASE_SCREEN_SPACE_REFLECTIONS
+			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#pragma multi_compile_instancing
 			#define ASE_FOG 1
-			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#define ASE_ABSOLUTE_VERTEX_POS 1
-			#define ASE_VERSION 19914
+			#define ASE_VERSION 19915
 			#define ASE_SRP_VERSION 170300
 
 
@@ -3311,11 +3633,15 @@ Shader "SphereCastTest"
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_VERT_NORMAL
 			#pragma multi_compile _ _SPHERE_CAST_ON
-			#include "Packages/com.naelstrof.spherecast/SphereCast.cginc"
+			#include "Packages/com.gator-dragon-games.spherecast/SphereCast.cginc"
 
 
 			#if defined(ASE_WRITE_DEPTH_CONSERVATIVE) && (SHADER_TARGET >= 45)
-				#define ASE_SV_DEPTH SV_DepthLessEqual
+				#if UNITY_REVERSED_Z
+					#define ASE_SV_DEPTH SV_DepthLessEqual
+				#else
+					#define ASE_SV_DEPTH SV_DepthGreaterEqual
+				#endif
 				#define ASE_SV_POSITION_QUALIFIERS linear noperspective centroid
 			#else
 				#define ASE_SV_DEPTH SV_Depth
@@ -3342,8 +3668,12 @@ Shader "SphereCastTest"
 
 			CBUFFER_START(UnityPerMaterial)
 			float4 _Color0;
-			float _AlphaClip;
-			float _Cutoff;
+			#ifdef ASE_PROPERTY_ALPHACLIP
+				float _AlphaClip;
+			#endif
+			#ifdef ASE_PROPERTY_CUTOFF
+				float _Cutoff;
+			#endif
 			#ifdef ASE_TRANSMISSION
 				float _TransmissionShadow;
 			#endif
@@ -3356,12 +3686,22 @@ Shader "SphereCastTest"
 				float _TransShadow;
 			#endif
 			#ifdef ASE_TESSELLATION
-				float _TessPhongStrength;
-				float _TessValue;
-				float _TessMin;
-				float _TessMax;
-				float _TessEdgeLength;
-				float _TessMaxDisp;
+				#ifdef ASE_PHONG_TESSELLATION
+					float _TessPhongStrength;
+				#endif
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+					float _TessValue;
+				#endif
+				#ifdef ASE_DISTANCE_TESSELLATION
+					float _TessMin;
+					float _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+					float _TessEdgeLength;
+				#endif
+				#ifdef ASE_LENGTH_CULL_TESSELLATION
+					float _TessMaxDisp;
+				#endif
 			#endif
 			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
@@ -3393,26 +3733,26 @@ Shader "SphereCastTest"
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-				float3 temp_output_1_0_g3 = input.positionOS.xyz;
-				float localGetDeformationFromSphereCasts5_g3 = ( 0.0 );
-				float4x4 worldToObject5_g3 = GetWorldToObjectMatrix();
-				float4x4 objectToWorld5_g3 = GetObjectToWorldMatrix();
-				float3 localPosition5_g3 = temp_output_1_0_g3;
-				float3 temp_output_2_0_g3 = input.normalOS;
-				float3 localNormal5_g3 = temp_output_2_0_g3;
+				float3 temp_output_1_0_g4 = input.positionOS.xyz;
+				float localGetDeformationFromSphereCasts5_g4 = ( 0.0 );
+				float4x4 worldToObject5_g4 = GetWorldToObjectMatrix();
+				float4x4 objectToWorld5_g4 = GetObjectToWorldMatrix();
+				float3 localPosition5_g4 = temp_output_1_0_g4;
+				float3 temp_output_2_0_g4 = input.normalOS;
+				float3 localNormal5_g4 = temp_output_2_0_g4;
 				{
-					GetDeformationFromSphereCasts(worldToObject5_g3, objectToWorld5_g3, localPosition5_g3, localNormal5_g3);
+					GetDeformationFromSphereCasts(worldToObject5_g4, objectToWorld5_g4, localPosition5_g4, localNormal5_g4);
 				}
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch9_g3 = localPosition5_g3;
+				float3 staticSwitch9_g4 = localPosition5_g4;
 				#else
-				float3 staticSwitch9_g3 = temp_output_1_0_g3;
+				float3 staticSwitch9_g4 = temp_output_1_0_g4;
 				#endif
 				
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch10_g3 = localNormal5_g3;
+				float3 staticSwitch10_g4 = localNormal5_g4;
 				#else
-				float3 staticSwitch10_g3 = temp_output_2_0_g3;
+				float3 staticSwitch10_g4 = temp_output_2_0_g4;
 				#endif
 				
 
@@ -3422,7 +3762,7 @@ Shader "SphereCastTest"
 					float3 defaultVertexValue = float3(0, 0, 0);
 				#endif
 
-				float3 vertexValue = staticSwitch9_g3;
+				float3 vertexValue = staticSwitch9_g4;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					input.positionOS.xyz = vertexValue;
@@ -3430,7 +3770,7 @@ Shader "SphereCastTest"
 					input.positionOS.xyz += vertexValue;
 				#endif
 
-				input.normalOS = staticSwitch10_g3;
+				input.normalOS = staticSwitch10_g4;
 
 				VertexPositionInputs vertexInput = GetVertexPositionInputs( input.positionOS.xyz );
 
@@ -3471,8 +3811,18 @@ Shader "SphereCastTest"
 			{
 				TessellationFactors output;
 				float4 tf = 1;
-				float tessValue = _TessValue; float tessMin = _TessMin; float tessMax = _TessMax;
-				float edgeLength = _TessEdgeLength; float tessMaxDisp = _TessMaxDisp;
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+				float tessValue = _TessValue;
+				#endif
+				#if defined( ASE_DISTANCE_TESSELLATION )
+				float tessMin = _TessMin; float tessMax = _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+				float edgeLength = _TessEdgeLength;
+				#endif
+				#if defined( ASE_LENGTH_CULL_TESSELLATION )
+				float tessMaxDisp = _TessMaxDisp;
+				#endif
 				#if defined(ASE_FIXED_TESSELLATION)
 				tf = FixedTess( tessValue );
 				#elif defined(ASE_DISTANCE_TESSELLATION)
@@ -3539,7 +3889,12 @@ Shader "SphereCastTest"
 
 				surfaceDescription.Alpha = 1;
 				#if defined( _ALPHATEST_ON )
-					surfaceDescription.AlphaClipThreshold = _Cutoff;
+					#ifdef ASE_PROPERTY_CUTOFF
+					float alphaCutoff = _Cutoff;
+					#else
+					float alphaCutoff = 0.5;
+					#endif
+					surfaceDescription.AlphaClipThreshold = alphaCutoff;
 				#endif
 
 				#if defined( ASE_WRITE_DEPTH )
@@ -3574,11 +3929,11 @@ Shader "SphereCastTest"
 			#define ASE_GEOMETRY
 			#define _NORMAL_DROPOFF_TS 1
 			#define ASE_SCREEN_SPACE_REFLECTIONS
+			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#pragma multi_compile_instancing
 			#define ASE_FOG 1
-			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#define ASE_ABSOLUTE_VERTEX_POS 1
-			#define ASE_VERSION 19914
+			#define ASE_VERSION 19915
 			#define ASE_SRP_VERSION 170300
 
 
@@ -3615,11 +3970,15 @@ Shader "SphereCastTest"
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_VERT_NORMAL
 			#pragma multi_compile _ _SPHERE_CAST_ON
-			#include "Packages/com.naelstrof.spherecast/SphereCast.cginc"
+			#include "Packages/com.gator-dragon-games.spherecast/SphereCast.cginc"
 
 
 			#if defined(ASE_WRITE_DEPTH_CONSERVATIVE) && (SHADER_TARGET >= 45)
-				#define ASE_SV_DEPTH SV_DepthLessEqual
+				#if UNITY_REVERSED_Z
+					#define ASE_SV_DEPTH SV_DepthLessEqual
+				#else
+					#define ASE_SV_DEPTH SV_DepthGreaterEqual
+				#endif
 				#define ASE_SV_POSITION_QUALIFIERS linear noperspective centroid
 			#else
 				#define ASE_SV_DEPTH SV_Depth
@@ -3646,8 +4005,12 @@ Shader "SphereCastTest"
 
 			CBUFFER_START(UnityPerMaterial)
 			float4 _Color0;
-			float _AlphaClip;
-			float _Cutoff;
+			#ifdef ASE_PROPERTY_ALPHACLIP
+				float _AlphaClip;
+			#endif
+			#ifdef ASE_PROPERTY_CUTOFF
+				float _Cutoff;
+			#endif
 			#ifdef ASE_TRANSMISSION
 				float _TransmissionShadow;
 			#endif
@@ -3660,12 +4023,22 @@ Shader "SphereCastTest"
 				float _TransShadow;
 			#endif
 			#ifdef ASE_TESSELLATION
-				float _TessPhongStrength;
-				float _TessValue;
-				float _TessMin;
-				float _TessMax;
-				float _TessEdgeLength;
-				float _TessMaxDisp;
+				#ifdef ASE_PHONG_TESSELLATION
+					float _TessPhongStrength;
+				#endif
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+					float _TessValue;
+				#endif
+				#ifdef ASE_DISTANCE_TESSELLATION
+					float _TessMin;
+					float _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+					float _TessEdgeLength;
+				#endif
+				#ifdef ASE_LENGTH_CULL_TESSELLATION
+					float _TessMaxDisp;
+				#endif
 			#endif
 			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
@@ -3697,26 +4070,26 @@ Shader "SphereCastTest"
 				UNITY_TRANSFER_INSTANCE_ID(input, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-				float3 temp_output_1_0_g3 = input.positionOS.xyz;
-				float localGetDeformationFromSphereCasts5_g3 = ( 0.0 );
-				float4x4 worldToObject5_g3 = GetWorldToObjectMatrix();
-				float4x4 objectToWorld5_g3 = GetObjectToWorldMatrix();
-				float3 localPosition5_g3 = temp_output_1_0_g3;
-				float3 temp_output_2_0_g3 = input.normalOS;
-				float3 localNormal5_g3 = temp_output_2_0_g3;
+				float3 temp_output_1_0_g4 = input.positionOS.xyz;
+				float localGetDeformationFromSphereCasts5_g4 = ( 0.0 );
+				float4x4 worldToObject5_g4 = GetWorldToObjectMatrix();
+				float4x4 objectToWorld5_g4 = GetObjectToWorldMatrix();
+				float3 localPosition5_g4 = temp_output_1_0_g4;
+				float3 temp_output_2_0_g4 = input.normalOS;
+				float3 localNormal5_g4 = temp_output_2_0_g4;
 				{
-					GetDeformationFromSphereCasts(worldToObject5_g3, objectToWorld5_g3, localPosition5_g3, localNormal5_g3);
+					GetDeformationFromSphereCasts(worldToObject5_g4, objectToWorld5_g4, localPosition5_g4, localNormal5_g4);
 				}
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch9_g3 = localPosition5_g3;
+				float3 staticSwitch9_g4 = localPosition5_g4;
 				#else
-				float3 staticSwitch9_g3 = temp_output_1_0_g3;
+				float3 staticSwitch9_g4 = temp_output_1_0_g4;
 				#endif
 				
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch10_g3 = localNormal5_g3;
+				float3 staticSwitch10_g4 = localNormal5_g4;
 				#else
-				float3 staticSwitch10_g3 = temp_output_2_0_g3;
+				float3 staticSwitch10_g4 = temp_output_2_0_g4;
 				#endif
 				
 
@@ -3726,7 +4099,7 @@ Shader "SphereCastTest"
 					float3 defaultVertexValue = float3(0, 0, 0);
 				#endif
 
-				float3 vertexValue = staticSwitch9_g3;
+				float3 vertexValue = staticSwitch9_g4;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					input.positionOS.xyz = vertexValue;
@@ -3734,7 +4107,7 @@ Shader "SphereCastTest"
 					input.positionOS.xyz += vertexValue;
 				#endif
 
-				input.normalOS = staticSwitch10_g3;
+				input.normalOS = staticSwitch10_g4;
 
 				VertexPositionInputs vertexInput = GetVertexPositionInputs( input.positionOS.xyz );
 
@@ -3775,8 +4148,18 @@ Shader "SphereCastTest"
 			{
 				TessellationFactors output;
 				float4 tf = 1;
-				float tessValue = _TessValue; float tessMin = _TessMin; float tessMax = _TessMax;
-				float edgeLength = _TessEdgeLength; float tessMaxDisp = _TessMaxDisp;
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+				float tessValue = _TessValue;
+				#endif
+				#if defined( ASE_DISTANCE_TESSELLATION )
+				float tessMin = _TessMin; float tessMax = _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+				float edgeLength = _TessEdgeLength;
+				#endif
+				#if defined( ASE_LENGTH_CULL_TESSELLATION )
+				float tessMaxDisp = _TessMaxDisp;
+				#endif
 				#if defined(ASE_FIXED_TESSELLATION)
 				tf = FixedTess( tessValue );
 				#elif defined(ASE_DISTANCE_TESSELLATION)
@@ -3843,7 +4226,12 @@ Shader "SphereCastTest"
 
 				surfaceDescription.Alpha = 1;
 				#if defined( _ALPHATEST_ON )
-					surfaceDescription.AlphaClipThreshold = _Cutoff;
+					#ifdef ASE_PROPERTY_CUTOFF
+					float alphaCutoff = _Cutoff;
+					#else
+					float alphaCutoff = 0.5;
+					#endif
+					surfaceDescription.AlphaClipThreshold = alphaCutoff;
 				#endif
 
 				#if defined( ASE_WRITE_DEPTH )
@@ -3878,11 +4266,11 @@ Shader "SphereCastTest"
 			#define _NORMAL_DROPOFF_TS 1
 			#define ASE_SCREEN_SPACE_REFLECTIONS
 			#define ASE_TIME_BASED_MOTION_VECTORS
+			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#pragma multi_compile _ LOD_FADE_CROSSFADE
 			#define ASE_FOG 1
-			#pragma multi_compile_fragment _ DEBUG_DISPLAY
 			#define ASE_ABSOLUTE_VERTEX_POS 1
-			#define ASE_VERSION 19914
+			#define ASE_VERSION 19915
 			#define ASE_SRP_VERSION 170300
 
 
@@ -3922,11 +4310,15 @@ Shader "SphereCastTest"
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_VERT_NORMAL
 			#pragma multi_compile _ _SPHERE_CAST_ON
-			#include "Packages/com.naelstrof.spherecast/SphereCast.cginc"
+			#include "Packages/com.gator-dragon-games.spherecast/SphereCast.cginc"
 
 
 			#if defined(ASE_WRITE_DEPTH_CONSERVATIVE) && (SHADER_TARGET >= 45)
-				#define ASE_SV_DEPTH SV_DepthLessEqual
+				#if UNITY_REVERSED_Z
+					#define ASE_SV_DEPTH SV_DepthLessEqual
+				#else
+					#define ASE_SV_DEPTH SV_DepthGreaterEqual
+				#endif
 				#define ASE_SV_POSITION_QUALIFIERS linear noperspective centroid
 			#else
 				#define ASE_SV_DEPTH SV_Depth
@@ -3963,8 +4355,12 @@ Shader "SphereCastTest"
 
 			CBUFFER_START(UnityPerMaterial)
 			float4 _Color0;
-			float _AlphaClip;
-			float _Cutoff;
+			#ifdef ASE_PROPERTY_ALPHACLIP
+				float _AlphaClip;
+			#endif
+			#ifdef ASE_PROPERTY_CUTOFF
+				float _Cutoff;
+			#endif
 			#ifdef ASE_TRANSMISSION
 				float _TransmissionShadow;
 			#endif
@@ -3977,12 +4373,22 @@ Shader "SphereCastTest"
 				float _TransShadow;
 			#endif
 			#ifdef ASE_TESSELLATION
-				float _TessPhongStrength;
-				float _TessValue;
-				float _TessMin;
-				float _TessMax;
-				float _TessEdgeLength;
-				float _TessMaxDisp;
+				#ifdef ASE_PHONG_TESSELLATION
+					float _TessPhongStrength;
+				#endif
+				#if defined( ASE_FIXED_TESSELLATION ) || defined( ASE_DISTANCE_TESSELLATION )
+					float _TessValue;
+				#endif
+				#ifdef ASE_DISTANCE_TESSELLATION
+					float _TessMin;
+					float _TessMax;
+				#endif
+				#if defined( ASE_LENGTH_TESSELLATION ) || defined( ASE_LENGTH_CULL_TESSELLATION )
+					float _TessEdgeLength;
+				#endif
+				#ifdef ASE_LENGTH_CULL_TESSELLATION
+					float _TessMaxDisp;
+				#endif
 			#endif
 			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
@@ -4006,20 +4412,20 @@ Shader "SphereCastTest"
 				// @diogo: local copy shadows the global; DXC rejects writes to globals
 				float4 _TimeParameters = float4( timeParameters, 0 );
 
-				float3 temp_output_1_0_g3 = input.positionOS.xyz;
-				float localGetDeformationFromSphereCasts5_g3 = ( 0.0 );
-				float4x4 worldToObject5_g3 = GetWorldToObjectMatrix();
-				float4x4 objectToWorld5_g3 = GetObjectToWorldMatrix();
-				float3 localPosition5_g3 = temp_output_1_0_g3;
-				float3 temp_output_2_0_g3 = input.normalOS;
-				float3 localNormal5_g3 = temp_output_2_0_g3;
+				float3 temp_output_1_0_g4 = input.positionOS.xyz;
+				float localGetDeformationFromSphereCasts5_g4 = ( 0.0 );
+				float4x4 worldToObject5_g4 = GetWorldToObjectMatrix();
+				float4x4 objectToWorld5_g4 = GetObjectToWorldMatrix();
+				float3 localPosition5_g4 = temp_output_1_0_g4;
+				float3 temp_output_2_0_g4 = input.normalOS;
+				float3 localNormal5_g4 = temp_output_2_0_g4;
 				{
-					GetDeformationFromSphereCasts(worldToObject5_g3, objectToWorld5_g3, localPosition5_g3, localNormal5_g3);
+					GetDeformationFromSphereCasts(worldToObject5_g4, objectToWorld5_g4, localPosition5_g4, localNormal5_g4);
 				}
 				#ifdef _SPHERE_CAST_ON
-				float3 staticSwitch9_g3 = localPosition5_g3;
+				float3 staticSwitch9_g4 = localPosition5_g4;
 				#else
-				float3 staticSwitch9_g3 = temp_output_1_0_g3;
+				float3 staticSwitch9_g4 = temp_output_1_0_g4;
 				#endif
 				
 
@@ -4029,7 +4435,7 @@ Shader "SphereCastTest"
 					float3 defaultVertexValue = float3(0, 0, 0);
 				#endif
 
-				float3 vertexValue = staticSwitch9_g3;
+				float3 vertexValue = staticSwitch9_g4;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					input.positionOS.xyz = vertexValue;
@@ -4123,7 +4529,12 @@ Shader "SphereCastTest"
 
 				float Alpha = 1;
 				#if defined( _ALPHATEST_ON )
-					float AlphaClipThreshold = _Cutoff;
+					#ifdef ASE_PROPERTY_CUTOFF
+					float alphaCutoff = _Cutoff;
+					#else
+					float alphaCutoff = 0.5;
+					#endif
+					float AlphaClipThreshold = alphaCutoff;
 				#endif
 
 				#if defined( ASE_WRITE_DEPTH )
@@ -4170,23 +4581,23 @@ Shader "SphereCastTest"
 	Fallback Off
 }
 /*ASEBEGIN
-Version=19914
-{"type":"AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor","id":23,"pos":[-352,168],"params":["Inherit","False","SphereCastPass","-1","","3","0e2173025c1010aab867baea3cb409e3","0","2","1","FLOAT3","0,0,0","False","2","FLOAT3","0,0,0","False","2","FLOAT3","0","FLOAT3","7"]}
+Version=19915
 {"type":"AmplifyShaderEditor.ColorNode, AmplifyShaderEditor","id":24,"pos":[-360,-80],"params":["Inherit","False","Property","_Color0","Color 0","0","0","Create","True","0","0","0","False","0","False","Object","-1","","0.5777007,0.2198291,0.7169812,1","0,0,0,0","True","True","0","6","COLOR","0","FLOAT","1","FLOAT","2","FLOAT","3","FLOAT","4","FLOAT3","5"]}
-{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":9,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","ExtraPrePass","0","0","ExtraPrePass","6","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","False","True","1","1","False","","0","False","","0","1","False","","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","True","True","True","True","0","False","","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","False","True","0","False","False","0","","0","0","Standard","0","False","0"]}
-{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":11,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","ShadowCaster","0","2","ShadowCaster","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","False","False","True","False","False","False","False","0","False","","False","False","False","False","False","False","False","False","False","True","1","False","","True","3","False","","False","False","True","1","LightMode=ShadowCaster","False","False","0","","0","0","Standard","0","False","0"]}
-{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":12,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","DepthOnly","0","3","DepthOnly","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","False","False","True","True","False","False","False","0","False","","False","False","False","False","False","False","False","False","False","True","1","False","","False","False","False","True","1","LightMode=DepthOnly","False","False","0","","0","0","Standard","0","False","0"]}
-{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":13,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","Meta","0","4","Meta","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","2","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","1","LightMode=Meta","False","False","0","","0","0","Standard","0","False","0"]}
-{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":14,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","Universal2D","0","5","Universal2D","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","False","True","1","1","False","","0","False","","0","1","False","","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","True","True","True","True","0","False","","False","False","False","False","False","False","False","False","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","False","True","1","LightMode=Universal2D","False","False","0","","0","0","Standard","0","False","0"]}
-{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":15,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","DepthNormals","0","6","DepthNormals","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","False","True","1","1","False","","0","False","","0","1","False","","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","1","False","","True","3","False","","False","False","True","1","LightMode=DepthNormals","False","False","0","","0","0","Standard","0","False","0"]}
-{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":16,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","GBuffer","0","7","GBuffer","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","False","True","1","1","False","","0","False","","0","1","False","","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","True","True","True","True","0","False","","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","False","True","1","LightMode=UniversalGBuffer","False","True","12","d3d11","gles","metal","vulkan","xboxone","xboxseries","playstation","ps4","ps5","switch","switch2","webgpu","0","","0","0","Standard","0","False","0"]}
-{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":17,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","SceneSelectionPass","0","8","SceneSelectionPass","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","2","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","1","LightMode=SceneSelectionPass","False","False","0","","0","0","Standard","0","False","0"]}
-{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":18,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","ScenePickingPass","0","9","ScenePickingPass","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","1","LightMode=Picking","False","False","0","","0","0","Standard","0","False","0"]}
-{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":19,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","MotionVectors","0","10","MotionVectors","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","True","True","False","False","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","True","1","LightMode=MotionVectors","False","False","0","","0","0","Standard","0","False","0"]}
-{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":20,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","XRMotionVectors","0","11","XRMotionVectors","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","True","True","True","True","0","False","","False","False","False","False","False","False","False","True","True","1","False","","255","False","","1","False","","7","False","","3","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","False","False","False","False","True","1","LightMode=XRMotionVectors","False","False","0","","0","0","Standard","0","False","0"]}
-{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":10,"pos":[0,0],"params":["Float","False","True","-1","3","UnityEditor.ShaderGraphLitGUI","0","16","SphereCastTest","94348b07e5e8bab40bd6c8a1e3df54cd","True","ForwardLit","0","1","ForwardLit","22","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","False","True","1","1","False","","0","False","","0","1","False","","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","True","True","True","True","0","False","","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","False","True","1","LightMode=UniversalForward","False","False","0","","0","0","Standard","55","Category","0","0","  Instanced Terrain Normals","1","0","Lighting Model","0","0","Workflow","1","0","Surface","0","0","  Keep Alpha","0","0","  Refraction Model","0","0","  Blend","0","0","  Receive Fog","1","0","Two Sided","1","0","Alpha Clipping","0","0","  Use Shadow Threshold","0","0","Fragment Normal Space","0","0","Forward Only","0","0","  Keep GBuffer","0","0","Transmission","0","0","  Transmission Shadow","0.5,False,","0","Translucency","0","0","  Translucency Strength","1,False,","0","  Normal Distortion","0.5,False,","0","  Scattering","2,False,","0","  Direct","0.9,False,","0","  Ambient","0.1,False,","0","  Shadow","0.5,False,","0","Cast Shadows","1","0","Receive Shadows","2","0","Specular Highlights","2","0","Environment Reflections","2","0","Screen Space Reflections","2","0","Receive SSAO","1","0","Motion Vectors","1","0","  Additional Motion Vectors","1","0","  Alembic Motion Vectors","0","0","  XR Motion Vectors","0","0","GPU Instancing","1","0","LOD CrossFade","1","0","Built-in Fog","1","0","_FinalColorxAlpha","0","0","Meta Pass","1","0","Override Baked GI","0","0","Extra Pre Pass","0","0","Tessellation","0","0","  Phong","0","0","  Strength","0.5,False,","0","  Type","0","0","  Tess","16,False,","0","  Min","10,False,","0","  Max","25,False,","0","  Edge Length","16,False,","0","  Max Displacement","25,False,","0","Write Depth","0","0","  Conservative","0","0","Vertex Position","0","639257213741980896","Debug Display","1","0","Clear Coat","0","0","0","12","False","True","True","True","True","True","True","True","True","True","True","False","False","","False","0"]}
+{"type":"AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor","id":25,"pos":[-352,168],"params":["Inherit","False","SphereCastPass","-1","","4","0e2173025c1010aab867baea3cb409e3","0","2","1","FLOAT3","0,0,0","False","2","FLOAT3","0,0,0","False","2","FLOAT3","0","FLOAT3","7"]}
+{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":9,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","ExtraPrePass","0","0","ExtraPrePass","6","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","True","0","False","","False","True","1","1","False","","0","False","","0","1","False","","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","True","True","True","True","0","False","","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","False","True","0","False","False","0","False","","0","0","Standard","0","False","0"]}
+{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":11,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","ShadowCaster","0","2","ShadowCaster","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","True","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","False","False","True","False","False","False","False","0","False","","False","False","False","False","False","False","False","False","False","True","1","False","","True","3","False","","False","False","True","1","LightMode=ShadowCaster","False","False","0","False","","0","0","Standard","0","False","0"]}
+{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":12,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","DepthOnly","0","3","DepthOnly","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","True","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","False","False","True","True","False","False","False","0","False","","False","False","False","False","False","False","False","False","False","True","1","False","","False","False","False","True","1","LightMode=DepthOnly","False","False","0","False","","0","0","Standard","0","False","0"]}
+{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":13,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","Meta","0","4","Meta","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","True","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","2","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","1","LightMode=Meta","False","False","0","False","","0","0","Standard","0","False","0"]}
+{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":14,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","Universal2D","0","5","Universal2D","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","True","0","False","","False","True","1","1","False","","0","False","","0","1","False","","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","True","True","True","True","0","False","","False","False","False","False","False","False","False","False","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","False","True","1","LightMode=Universal2D","False","False","0","False","","0","0","Standard","0","False","0"]}
+{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":15,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","DepthNormals","0","6","DepthNormals","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","True","0","False","","False","True","1","1","False","","0","False","","0","1","False","","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","1","False","","True","3","False","","False","False","True","1","LightMode=DepthNormals","False","False","0","False","","0","0","Standard","0","False","0"]}
+{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":16,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","GBuffer","0","7","GBuffer","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","True","0","False","","False","True","1","1","False","","0","False","","0","1","False","","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","True","True","True","True","0","False","","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","False","True","1","LightMode=UniversalGBuffer","False","True","12","d3d11","gles","metal","vulkan","xboxone","xboxseries","playstation","ps4","ps5","switch","switch2","webgpu","0","False","","0","0","Standard","0","False","0"]}
+{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":17,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","SceneSelectionPass","0","8","SceneSelectionPass","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","True","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","2","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","1","LightMode=SceneSelectionPass","False","False","0","False","","0","0","Standard","0","False","0"]}
+{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":18,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","ScenePickingPass","0","9","ScenePickingPass","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","True","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","1","LightMode=Picking","False","False","0","False","","0","0","Standard","0","False","0"]}
+{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":19,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","MotionVectors","0","10","MotionVectors","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","True","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","True","True","False","False","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","True","1","LightMode=MotionVectors","False","False","0","False","","0","0","Standard","0","False","0"]}
+{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":20,"pos":[0,0],"params":["Float","False","False","-1","3","UnityEditor.ShaderGraphLitGUI","0","1","New Amplify Shader","94348b07e5e8bab40bd6c8a1e3df54cd","True","XRMotionVectors","0","11","XRMotionVectors","0","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","True","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","True","True","True","True","0","False","","False","False","False","False","False","False","False","True","True","1","False","","255","False","","1","False","","7","False","","3","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","False","False","False","False","True","1","LightMode=XRMotionVectors","False","False","0","False","","0","0","Standard","0","False","0"]}
+{"type":"AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor","id":10,"pos":[0,0],"params":["Float","False","True","-1","3","UnityEditor.ShaderGraphLitGUI","0","16","SphereCastTest","94348b07e5e8bab40bd6c8a1e3df54cd","True","ForwardLit","0","1","ForwardLit","22","False","False","False","False","False","False","False","False","False","False","False","False","True","0","False","","False","True","0","False","","False","False","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","True","1","False","","True","4","RenderPipeline=UniversalPipeline","RenderType=Opaque=RenderType","Queue=Geometry=Queue=0","UniversalMaterialType=Lit","True","5","True","14","all","0","True","0","False","","False","True","1","1","False","","0","False","","0","1","False","","0","False","","False","False","False","False","False","False","False","False","False","False","False","False","False","False","True","True","True","True","True","0","False","","False","False","False","False","False","False","False","True","False","0","False","","255","False","","255","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","0","False","","False","True","1","False","","True","3","False","","True","True","0","False","","0","False","","False","True","1","LightMode=UniversalForward","False","False","0","False","","0","0","Standard","71","Category","0","0","  Instanced Terrain Normals","1","0","Lighting Model","0","0","Workflow","1","0","Surface","0","0","  Keep Alpha","0","0","  Refraction Model","0","0","  Blend","0","0","  Preserve Specular Lighting","0","0","Double-Sided","0","0","Alpha Clipping","0","0","  Use Shadow Threshold","0","0","Fragment Normal Space","0","0","Forward Only","0","0","  Keep GBuffer","0","0","Transmission","0","0","  Transmission Shadow","0.5,False,","0","Translucency","0","0","  Translucency Strength","1,False,","0","  Normal Distortion","0.5,False,","0","  Scattering","2,False,","0","  Direct","0.9,False,","0","  Ambient","0.1,False,","0","  Shadow","0.5,False,","0","Cast Shadows","1","0","Receive Shadows","2","0","Specular Highlights","2","0","Environment Reflections","2","0","Screen Space Reflections","2","0","Screen Space Reflections Contribute Transparent","2","0","Motion Vectors","1","0","  Additional Motion Vectors","1","0","  Alembic Motion Vectors","0","0","  XR Motion Vectors","0","0","_FinalColorxAlpha","0","0","Meta Pass","1","0","Override Baked GI","0","0","Extra Pre Pass","0","0","Tessellation","0","0","  Phong","0","0","  Strength","0.5,False,","0","  Type","0","0","  Tess","16,False,","0","  Min","10,False,","0","  Max","25,False,","0","  Edge Length","16,False,","0","  Max Displacement","25,False,","0","Write Depth","0","0","  Conservative","0","0","Vertex Position","0","639257213741980896","Clear Coat","0","0","Main Light Shadows","1","0","  Shadow Cascades","1","0","  Soft Shadows","1","0","Additional Lights","1","0","  Additional Light Shadows","1","0","Light Cookies","1","0","Rendering Layers","1","0","Lightmaps","1","0","  Directional Lightmaps","1","0","  Realtime GI (Enlighten)","1","0","Adaptive Probe Volumes","1","0","Reflection Probe Blending","1","0","Decals","1","0","Receive SSAO","1","0","Debug Display","1","0","GPU Instancing","1","0","DOTS Instancing","1","0","LOD CrossFade","1","0","Built-in Fog","1","0","  Receive Fog","1","0","0","12","ExtraPrePass","False","ForwardLit","True","ShadowCaster","True","DepthOnly","True","Meta","True","Universal2D","True","DepthNormals","True","GBuffer","True","SceneSelectionPass","True","ScenePickingPass","True","MotionVectors","True","XRMotionVectors","False","False","","False","0"]}
 {"wire":[10,0,24,5]}
-{"wire":[10,8,23,0]}
-{"wire":[10,10,23,7]}
+{"wire":[10,8,25,0]}
+{"wire":[10,10,25,7]}
 ASEEND*/
-//CHKSM=8159E34A9A6E5E3A04606A26DDDE26CEA2507391
+//CHKSM=AF0386E90415D3AEBB757A84F70337DD906D64DD
