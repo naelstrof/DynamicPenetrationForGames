@@ -16,7 +16,9 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Unity.Burst;
 using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -24,6 +26,7 @@ namespace DPG {
 
 [System.Serializable]
 public struct GirthFrame {
+    public const int GirthFrameSamples = 64;
     public static Matrix4x4 GetDefaultPenetratorPose() => Matrix4x4.TRS(Vector3.zero, Quaternion.LookRotation(Vector3.up,-Vector3.forward), Vector3.one);
 
     public float maxGirthRadius;
@@ -44,11 +47,15 @@ public struct GirthFrame {
             girthCurve.SetSample(i, slice);
         }
     }
+
+    public void OnValidate() {
+        girthCurve.OnValidate();
+    }
     
-    public GirthFrame(int sampleCount, float fullLength, float maxGirth) {
+    public GirthFrame(float fullLength, float maxGirth) {
         maxGirthRadius = maxGirth;
         maxLocalLength = fullLength;
-        girthCurve = new GirthSliceCurve(sampleCount);
+        girthCurve = new GirthSliceCurve(GirthFrameSamples);
     }
 
     public void DrawGizmos(int samples) {
@@ -87,15 +94,20 @@ public struct GirthFrame {
             girthCurve = girthCurve.Clone(),
         };
     }
+    public void Clone(ref GirthFrame output) {
+        output.maxGirthRadius = maxGirthRadius;
+        output.maxLocalLength = maxLocalLength;
+        girthCurve.Clone(ref output.girthCurve);
+    }
 
-    public void SampleBlendshapes(SkinnedMeshRenderer renderer, IList<GirthFrame> blendshapes) {
+    public void SampleBlendshapes(GirthFrame[] blendshapes, SkinnedMeshGirth.SkinnedMeshGirthSampler sampler) {
         var samples = girthCurve.GetSampleCount();
-        var blendshapeCount = blendshapes.Count;
+        var blendshapeCount = blendshapes.Length;
 
         for (int i = 0; i < samples; i++) {
             var girthSlice = girthCurve.GetSample(i);
             for (int j = 0; j < blendshapeCount; j++) {
-                float weight = renderer.GetBlendShapeWeight(j) * 0.01f;
+                float weight = sampler.blendshapes[j] * 0.01f;
                 if (weight == 0f) {
                     continue;
                 }
@@ -105,7 +117,7 @@ public struct GirthFrame {
         }
 
         for (int j = 0; j < blendshapeCount; j++) {
-            float weight = renderer.GetBlendShapeWeight(j) * 0.01f;
+            float weight = sampler.blendshapes[j] * 0.01f;
             if (weight == 0f) {
                 continue;
             }
@@ -114,31 +126,73 @@ public struct GirthFrame {
         }
     }
     
+    [BurstCompile]
+    public struct SampleTransformsJob : IJobParallelFor {
+        public NativeArray<GirthSlice> slices;
 
-    public void SampleTransforms(SkinnedMeshRenderer renderer, Matrix4x4 penetratorBindPose, Transform rootBone) {
-        var samples = girthCurve.GetSampleCount();
-        for (int i = 0; i < samples; i++) {
-            var slice = girthCurve.GetSample(i);
+        [ReadOnly] public NativeArray<Matrix4x4> boneMatrices;
+        [ReadOnly] public NativeArray<Matrix4x4> bindPoses;
+
+        public Matrix4x4 penetratorBindPose;
+        public Matrix4x4 worldToRoot;
+        public Matrix4x4 inversePenetratorPose;
+
+        public void Execute(int index) {
+            var slice = slices[index];
             var meshPos = penetratorBindPose.MultiplyPoint3x4(slice.position);
-            var bindposes = renderer.sharedMesh.bindposes;
-            var bones = renderer.bones;
+
             var worldPos =
-                bones[slice.boneIndex0].TransformPoint(bindposes[slice.boneIndex0].MultiplyPoint3x4(meshPos)) * slice.boneWeights.x +
-                bones[slice.boneIndex1].TransformPoint(bindposes[slice.boneIndex1].MultiplyPoint3x4(meshPos)) * slice.boneWeights.y +
-                bones[slice.boneIndex2].TransformPoint(bindposes[slice.boneIndex2].MultiplyPoint3x4(meshPos)) * slice.boneWeights.z +
-                bones[slice.boneIndex3].TransformPoint(bindposes[slice.boneIndex3].MultiplyPoint3x4(meshPos)) * slice.boneWeights.w;
-            
-            slice.position = GetDefaultPenetratorPose().inverse.MultiplyPoint3x4(rootBone.InverseTransformPoint(worldPos)); 
+                boneMatrices[slice.boneIndex0].MultiplyPoint3x4(
+                    bindPoses[slice.boneIndex0].MultiplyPoint3x4(meshPos)) * slice.boneWeights.x +
+                boneMatrices[slice.boneIndex1].MultiplyPoint3x4(
+                    bindPoses[slice.boneIndex1].MultiplyPoint3x4(meshPos)) * slice.boneWeights.y +
+                boneMatrices[slice.boneIndex2].MultiplyPoint3x4(
+                    bindPoses[slice.boneIndex2].MultiplyPoint3x4(meshPos)) * slice.boneWeights.z +
+                boneMatrices[slice.boneIndex3].MultiplyPoint3x4(
+                    bindPoses[slice.boneIndex3].MultiplyPoint3x4(meshPos)) * slice.boneWeights.w;
+
+            slice.position = inversePenetratorPose.MultiplyPoint3x4(
+                worldToRoot.MultiplyPoint3x4(worldPos));
+
             var meshRadial = penetratorBindPose.MultiplyVector(Vector3.right);
             var worldRadial =
-                bones[slice.boneIndex0].TransformVector(bindposes[slice.boneIndex0].MultiplyVector(meshRadial)) * slice.boneWeights.x +
-                bones[slice.boneIndex1].TransformVector(bindposes[slice.boneIndex1].MultiplyVector(meshRadial)) * slice.boneWeights.y +
-                bones[slice.boneIndex2].TransformVector(bindposes[slice.boneIndex2].MultiplyVector(meshRadial)) * slice.boneWeights.z +
-                bones[slice.boneIndex3].TransformVector(bindposes[slice.boneIndex3].MultiplyVector(meshRadial)) * slice.boneWeights.w;
-            slice.radius *= rootBone.InverseTransformVector(worldRadial).magnitude;
-            girthCurve.SetSample(i, slice);
+                boneMatrices[slice.boneIndex0].MultiplyVector(
+                    bindPoses[slice.boneIndex0].MultiplyVector(meshRadial)) * slice.boneWeights.x +
+                boneMatrices[slice.boneIndex1].MultiplyVector(
+                    bindPoses[slice.boneIndex1].MultiplyVector(meshRadial)) * slice.boneWeights.y +
+                boneMatrices[slice.boneIndex2].MultiplyVector(
+                    bindPoses[slice.boneIndex2].MultiplyVector(meshRadial)) * slice.boneWeights.z +
+                boneMatrices[slice.boneIndex3].MultiplyVector(
+                    bindPoses[slice.boneIndex3].MultiplyVector(meshRadial)) * slice.boneWeights.w;
+
+            slice.radius *= worldToRoot.MultiplyVector(worldRadial).magnitude;
+            slices[index] = slice;
         }
     }
+
+    public void SampleTransforms(Matrix4x4[] transformBindPoses, Matrix4x4[] localToWorlds, Matrix4x4 penetratorBindPose, Transform rootBone) {
+        int sampleCount = girthCurve.GetSampleCount();
+        var boneCount = localToWorlds.Length;
+        using var slices = new NativeArray<GirthSlice>(sampleCount, Allocator.TempJob);
+        using var boneMatrices = new NativeArray<Matrix4x4>(boneCount, Allocator.TempJob);
+        using var bindPoses = new NativeArray<Matrix4x4>(boneCount, Allocator.TempJob);
+        slices.CopyFrom(girthCurve.GetSamples());
+        boneMatrices.CopyFrom(localToWorlds);
+        bindPoses.CopyFrom(transformBindPoses);
+
+        var job = new SampleTransformsJob {
+            slices = slices,
+            boneMatrices = boneMatrices,
+            bindPoses = bindPoses,
+            penetratorBindPose = penetratorBindPose,
+            worldToRoot = rootBone.worldToLocalMatrix,
+            inversePenetratorPose = GetDefaultPenetratorPose().inverse
+        };
+        job.Schedule(sampleCount, 16).Complete();
+        slices.CopyTo(girthCurve.GetSamples());
+    }
+    
+    
     
     public void ConvertToBlendshape(GirthFrame baseShape) {
         var samples = girthCurve.GetSampleCount();
@@ -159,8 +213,8 @@ public struct GirthFrame {
     private static Material staticMaterialB;
     private static Material subtractBlit;
     public static async Task<GirthFrame> GenerateGirthFrame(RendererSubMeshMask rendererMask, Transform penetratorRoot, Matrix4x4 penetratorBindPose, int blendshapeIndex, float maxGirth, Shader girthUnwrapShader) {
-        GirthFrame girthFrame = new GirthFrame(2,1, maxGirth);
-        var girthMap = new RenderTexture(64, 64, 0, RenderTextureFormat.R8, RenderTextureReadWrite.Linear) {
+        GirthFrame girthFrame = new GirthFrame(1, maxGirth);
+        var girthMap = new RenderTexture(GirthFrameSamples, GirthFrameSamples, 0, RenderTextureFormat.R8, RenderTextureReadWrite.Linear) {
             useMipMap = true,
             autoGenerateMips = false,
             wrapModeU = TextureWrapMode.Clamp,

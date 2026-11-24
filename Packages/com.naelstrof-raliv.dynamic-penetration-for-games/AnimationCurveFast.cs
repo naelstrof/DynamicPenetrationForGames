@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace DPG {
 
@@ -77,6 +78,11 @@ public struct GirthSliceCurve {
         System.Array.Copy(samples, newCurve.samples, GetSampleCount());
         return newCurve;
     }
+    
+    public void Clone(ref GirthSliceCurve output) {
+        //Assert.IsTrue(output.samples.Length == GetSampleCount(), $"Output GirthSliceCurve must have the same sample count as the source. {output.samples.Length} != {GetSampleCount()}");
+        System.Array.Copy(samples, output.samples, GetSampleCount());
+    }
 
     public void SetSample(int index, GirthSlice value) {
         samples[index] = value;
@@ -84,6 +90,10 @@ public struct GirthSliceCurve {
 
     public GirthSlice GetSample(int index) {
         return samples[index];
+    }
+    
+    public GirthSlice[] GetSamples() {
+        return samples;
     }
 
     public GirthSlice Sample(float time) {
@@ -107,6 +117,17 @@ public struct GirthSliceCurve {
         GirthSlice a = Sample(time - epsilon);
         GirthSlice b = Sample(time + epsilon);
         return (b - a) * (1f/(epsilon * 2f));
+    }
+
+    public void OnValidate() {
+        samples ??= new GirthSlice[GirthFrame.GirthFrameSamples];
+        if (samples.Length != GirthFrame.GirthFrameSamples) {
+            var newSamples = new GirthSlice[GirthFrame.GirthFrameSamples];
+            for (int i=0;i<Mathf.Min(samples.Length, newSamples.Length);i++) {
+                newSamples[i] = samples[i];
+            }
+            samples = newSamples;
+        }
     }
 }
 

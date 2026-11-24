@@ -11,18 +11,48 @@ public struct SkinnedMeshGirth {
     [SerializeField] public GirthFrame[] girthDeltas;
     [SerializeField] public Matrix4x4 penetratorBindPose;
 
-    public void DrawGizmos(SkinnedMeshRenderer renderer, Transform rootBone, int sampleCount = 128) {
-        Gizmos.matrix = Matrix4x4.identity;
-        Gizmos.color = Color.green;
-        GetGirthFrame(renderer, rootBone).DrawGizmos(sampleCount);
+    public struct SkinnedMeshGirthSampler {
+        public Matrix4x4[] localToWorlds;
+        public Matrix4x4[] bindPoses;
+        public Transform[] bones;
+        public float[] blendshapes;
+
+        public SkinnedMeshGirthSampler(SkinnedMeshRenderer renderer) {
+            var boneCount = renderer.bones.Length;
+            localToWorlds = new Matrix4x4[boneCount];
+            bones = renderer.bones;
+            for(int i=0;i<boneCount;i++) {
+                localToWorlds[i] = bones[i].localToWorldMatrix;
+            }
+            bindPoses = renderer.sharedMesh.bindposes;
+            blendshapes = new float[renderer.sharedMesh.blendShapeCount];
+        }
+
+        public void Sample(SkinnedMeshRenderer renderer) {
+            var boneCount = bones.Length;
+            for(int i=0;i<boneCount;i++) {
+                localToWorlds[i] = bones[i].localToWorldMatrix;
+            }
+            var blendshapeLength = blendshapes.Length;
+            for(int i=0;i<blendshapeLength;i++) {
+                blendshapes[i] = renderer.GetBlendShapeWeight(i);
+            }
+        }
     }
 
-    public GirthFrame GetGirthFrame(SkinnedMeshRenderer renderer, Transform rootBone) {
-        var b = baseGirth.Clone();
-        b.SampleBlendshapes(renderer, girthDeltas);
-        b.SampleTransforms(renderer, penetratorBindPose, rootBone);
-        b.TransformToWorld(rootBone.localToWorldMatrix);
-        return b;
+    public void DrawGizmos(ref GirthFrame girthFrameMemory, SkinnedMeshRenderer renderer, SkinnedMeshGirthSampler sampler, Transform rootBone, int sampleCount = 128) {
+        Gizmos.matrix = Matrix4x4.identity;
+        Gizmos.color = Color.green;
+        GetGirthFrame(ref girthFrameMemory, renderer, sampler, rootBone);
+        girthFrameMemory.DrawGizmos(sampleCount);
+    }
+
+    public void GetGirthFrame(ref GirthFrame output, SkinnedMeshRenderer renderer, SkinnedMeshGirthSampler sampler, Transform rootBone) {
+        baseGirth.Clone(ref output);
+        sampler.Sample(renderer);
+        output.SampleBlendshapes(girthDeltas, sampler);
+        output.SampleTransforms(sampler.bindPoses, sampler.localToWorlds, penetratorBindPose, rootBone);
+        output.TransformToWorld(rootBone.localToWorldMatrix);
     }
 
     public static void GetBindPoseBoneLocalPositionRotation(Matrix4x4 boneMatrix, out Vector3 position, out Quaternion rotation, out float scale) {

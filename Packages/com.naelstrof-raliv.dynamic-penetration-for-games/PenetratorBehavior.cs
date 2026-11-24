@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using DPG;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Vector3 = UnityEngine.Vector3;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -17,9 +16,14 @@ public class PenetratorBehavior : MonoBehaviour {
     [SerializeField] private BoneChainOnCurve boneChainOnCurve;
     [SerializeField] private BoneChainCompression boneChainCompression;
     private List<Vector3> cachedPoints = new List<Vector3>();
+    private Transform[] rendererTransforms;
 
     private Penetration penetration;
     private GirthFrame penetrationGirthFrame;
+    private SkinnedMeshGirth.SkinnedMeshGirthSampler skinnedMeshGirthSampler;
+    
+    // TODO: Maybe splines should be a struct??
+    private Spline3D reusableSpline3D = new Spline3D();
 
 #if UNITY_EDITOR
     [ContextMenu("Generate Girth Lookup")]
@@ -50,13 +54,15 @@ public class PenetratorBehavior : MonoBehaviour {
     private void OnEnable() {
         boneChainOnCurve = new BoneChainOnCurve(bones);
         boneChainCompression = new BoneChainCompression(boneChainOnCurve.GetTotalLength());
+        skinnedMeshGirthSampler = new SkinnedMeshGirth.SkinnedMeshGirthSampler(skinnedMeshRendererMask.renderer);
+        penetrationGirthFrame = new GirthFrame(1f, 0.1f);
     }
 
     private void LateUpdate() {
-        var skinnedMeshRenderer = skinnedMeshRendererMask.renderer as SkinnedMeshRenderer;
+        var skinnedMeshRenderer = skinnedMeshRendererMask.renderer;
         Penetrator penetrator = GetPenetrator();
         var penetrable = penetrableBehavior.GetPenetrable();
-        penetration = new Penetration(penetrator, penetrable, cachedPoints);
+        penetration = new Penetration(penetrator, penetrable, cachedPoints, reusableSpline3D);
             
         var orificeDist = penetration.spline3D.GetDistanceFromTime(penetration.penetrableT);
         boneChainCompression.Tick(orificeDist);
@@ -83,7 +89,7 @@ public class PenetratorBehavior : MonoBehaviour {
         blendShapeIndex = skinnedMeshRenderer.sharedMesh.GetBlendShapeIndex("Throb");
         skinnedMeshRenderer.SetBlendShapeWeight(blendShapeIndex, (1f / lengthMultiplier * 100f - 100f) * 2f);
         
-        penetrationGirthFrame = skinnedMeshGirth.GetGirthFrame(skinnedMeshRenderer, bones[0]);
+        skinnedMeshGirth.GetGirthFrame(ref penetrationGirthFrame, skinnedMeshRenderer, skinnedMeshGirthSampler, bones[0]);
         PenetratorCollisionSpheresAuto.Render(penetrableBehavior.GetRenderers(), penetrationGirthFrame,0.25f, 0.5f, 32);
     }
 
@@ -93,9 +99,10 @@ public class PenetratorBehavior : MonoBehaviour {
             if (bones == null || bones.Length < 1 || bones[0] == null) return;
             penetrationGirthFrame.DrawGizmos(256);
         } else {
+            penetrationGirthFrame.OnValidate();
             if (skinnedMeshRendererMask.renderer == null) return;
             if (bones == null || bones.Length < 1 || bones[0] == null) return;
-            skinnedMeshGirth.DrawGizmos(skinnedMeshRendererMask.renderer, bones[0], 256);
+            skinnedMeshGirth.DrawGizmos(ref penetrationGirthFrame, skinnedMeshRendererMask.renderer, new SkinnedMeshGirth.SkinnedMeshGirthSampler(skinnedMeshRendererMask.renderer), bones[0], 256);
         }
     }
 }

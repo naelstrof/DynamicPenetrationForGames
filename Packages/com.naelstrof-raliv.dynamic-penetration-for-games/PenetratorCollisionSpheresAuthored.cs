@@ -154,15 +154,16 @@ public struct PenetratorCollisionSpheresAuthored {
     }
 #endif
 
-    public void Render(IList<Renderer> renderers) {
+    public void Render(Renderer[] renderers) {
         _sphereCasts ??= new SphereCasterRenderer.SphereCast[_penetratorCollisionSpheres.Length];
         Assert.IsTrue(_sphereCasts != null && _sphereCasts.Length == _penetratorCollisionSpheres.Length, "Please call Initialize() before calling Render() on PenetratorCollisionSpheres.");
         for (int i=0; i < _penetratorCollisionSpheres.Length; i++) {
             var sphere = _penetratorCollisionSpheres[i];
             _sphereCasts[i] = new SphereCasterRenderer.SphereCast(sphere.GetWorldMatrix(sphereCastInflation), 0.5f, 0f, true, true, true);
         }
-        foreach (var renderer in renderers) {
-            SphereCasterRenderer.Render(renderer, _sphereCasts);
+        var rendererCount = renderers.Length;
+        for (int i=0;i<rendererCount;i++) {
+            SphereCasterRenderer.Render(renderers[i], _sphereCasts);
         }
     }
     [HideInInspector] private SphereCasterRenderer.SphereCast[] _sphereCasts;
