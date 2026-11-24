@@ -1,2 +1,2 @@
 deploy:
-	git subtree push --prefix Packages/com.naelstrof-raliv.dynamic-penetration-for-games origin upm
+	git subtree push --prefix Packages/com.gator-dragon-games.dynamic-penetration-for-games origin upm
