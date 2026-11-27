@@ -126,7 +126,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1566842571}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c222ab56bf694d74096e6d709752b25f, type: 3}
   m_Name: 
@@ -343,35 +343,40 @@ MonoBehaviour:
       restLocalPosition: {x: -0.000010895506, y: 0.25244337, z: -0.26038933}
       restLocalRotation: {x: -0.6900219, y: 0.00008434664, z: 0.00006254192, w: 0.7237885}
     - bone: {fileID: 1566842577}
-      normalizedDistanceFromRoot: 0.16672425
+      normalizedDistanceFromRoot: 0.1393017
       lossyScale: 1.0000043
       restLocalPosition: {x: 1.4654944e-14, y: 0.22274262, z: 0}
       restLocalRotation: {x: -0.00000093877327, y: 0.00000023742604, z: -7.9554575e-12, w: 1}
     - bone: {fileID: 1566842576}
-      normalizedDistanceFromRoot: 0.33328137
+      normalizedDistanceFromRoot: 0.27846375
       lossyScale: 1.0000044
       restLocalPosition: {x: 3.429257e-14, y: 0.22251892, z: -0.000000076293944}
       restLocalRotation: {x: 0.0000011920929, y: -0.0000009536764, z: 2.4871435e-14, w: 1}
     - bone: {fileID: 1566842575}
-      normalizedDistanceFromRoot: 0.49982816
+      normalizedDistanceFromRoot: 0.41761717
       lossyScale: 1.0000043
       restLocalPosition: {x: 5.9721115e-14, y: 0.22250552, z: 0.000000038146972}
       restLocalRotation: {x: -0.00000071525585, y: 0.0000001192175, z: 6.1107266e-13, w: 1}
     - bone: {fileID: 1566842574}
-      normalizedDistanceFromRoot: 0.6663903
+      normalizedDistanceFromRoot: 0.55678344
       lossyScale: 1.0000043
       restLocalPosition: {x: 4.1682214e-14, y: 0.22252575, z: -0.000000038146972}
       restLocalRotation: {x: 0.00000038743025, y: 0.00000011920821, z: -2.2382056e-13, w: 1}
     - bone: {fileID: 1566842573}
-      normalizedDistanceFromRoot: 0.833059
+      normalizedDistanceFromRoot: 0.6960387
       lossyScale: 1.0000042
       restLocalPosition: {x: 1.349143e-14, y: 0.22266835, z: 0}
       restLocalRotation: {x: -0.0000001192093, y: 0.00000059604497, z: -1.4211022e-14, w: 1}
     - bone: {fileID: 1566842572}
-      normalizedDistanceFromRoot: 1
+      normalizedDistanceFromRoot: 0.8355215
       lossyScale: 1.0000044
       restLocalPosition: {x: 8.1090686e-14, y: 0.22303195, z: 0.000000028610229}
       restLocalRotation: {x: -0.000000014901161, y: -0.00000047684193, z: 2.8421638e-14, w: 1}
+    - bone: {fileID: 491362019}
+      normalizedDistanceFromRoot: 1
+      lossyScale: 1.0000044
+      restLocalPosition: {x: -0, y: 0.263, z: -0}
+      restLocalRotation: {x: 0, y: 0, z: 0, w: 1}
     jiggleColliders: []
   animatedParameters: 0
 --- !u!1 &230480069
@@ -425,6 +430,7 @@ MonoBehaviour:
   - {fileID: 1566842574}
   - {fileID: 1566842573}
   - {fileID: 1566842572}
+  - {fileID: 491362019}
   penetrableBehavior: {fileID: 438834076}
   skinnedMeshRendererMask:
     renderer: {fileID: 1855424068}
@@ -22626,6 +22632,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 438834077}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &491362018
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 491362019}
+  m_Layer: 0
+  m_Name: Tip
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &491362019
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 491362018}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: 0.263, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1566842572}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &517623546
 GameObject:
   m_ObjectHideFlags: 0
@@ -23467,7 +23504,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -396577800017752482, guid: 72cb7578927112b4294e7bd00de277db, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 491362019}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 72cb7578927112b4294e7bd00de277db, type: 3}
       insertIndex: -1

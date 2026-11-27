@@ -27,7 +27,7 @@ public class SplineTester : MonoBehaviour {
     }
     [SerializeField] private SplineKnot[] knots;
 
-    private Spline3D _spline3D = new Spline3D();
+    private Spline3D _spline3D;
 
     private void OnDrawGizmos() {
         UpdateSpline();
@@ -38,7 +38,6 @@ public class SplineTester : MonoBehaviour {
 
     private void UpdateSpline() {
         if (knots == null || knots.Length < 2) return;
-        _spline3D ??= new Spline3D();
         foreach(var knot in knots) {
             if (knot.knot == null) return;
             if (knot.frontHandle == null) return;

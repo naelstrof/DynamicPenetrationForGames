@@ -1739,7 +1739,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 924ef02da2b036b4b8121054880dd087, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SplineTester
-  splineType: 5
+  splineType: 3
   tension: -0.069
   preview: 0.847
   looped: 0
