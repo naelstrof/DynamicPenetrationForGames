@@ -32,7 +32,8 @@ public class SplineTester : MonoBehaviour {
     private void OnDrawGizmos() {
         UpdateSpline();
         _spline3D.GizmoDraw(Color.green, Color.yellow, 256);
-        Gizmos.matrix = _spline3D.GetReferenceFrameFromT(preview, Vector3.up);
+        var splineSpace = _spline3D.GetSplineSpace(Vector3.up);
+        Gizmos.matrix = splineSpace.GetReferenceFrameFromT(ref _spline3D, preview, Vector3.up);
         Gizmos.DrawWireCube(Vector3.zero, Vector3.one * 0.1f);
     }
 
